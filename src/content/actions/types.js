@@ -1,9 +1,6 @@
 // @flow
-import type { Summary } from '../../common/summarize-profile';
-import type { Profile, Thread, ThreadIndex, IndexIntoMarkersTable, IndexIntoFuncTable } from '../../common/types/profile';
+import type { Profile, Thread, ThreadIndex, IndexIntoFuncTable } from '../../common/types/profile';
 import type { State } from '../reducers/types';
-import type { GetLabel } from '../labeling-strategies';
-import type { GetCategory } from '../color-categories';
 
 export type ExpandedSet = Set<ThreadIndex>;
 export type PrefixCallTreeFilter = {
@@ -18,7 +15,6 @@ export type PostfixCallTreeFilter = {
 };
 export type CallTreeFilter = PrefixCallTreeFilter | PostfixCallTreeFilter;
 export type CallTreeFiltersPerThread = { [id: ThreadIndex]: CallTreeFilter[] };
-export type DataSource = 'none' | 'from-file' | 'public';
 export type ProfileSelection =
   { hasSelection: false, isModifying: false } |
   {
@@ -37,20 +33,13 @@ export type FunctionsUpdatePerThread = { [id: ThreadIndex]: {
 export type RequestedLib = { debugName: string, breakpadId: string };
 export type ImplementationFilter = 'combined' | 'js' | 'cpp';
 
-type ProfileSummaryAction =
-  { type: "PROFILE_SUMMARY_PROCESSED", summary: Summary } |
-  { type: "PROFILE_SUMMARY_EXPAND", threadIndex: ThreadIndex } |
-  { type: "PROFILE_SUMMARY_COLLAPSE", threadIndex: ThreadIndex };
-
 type ProfileAction =
-  { type: "FILE_NOT_FOUND", url: string } |
   { type: 'CHANGE_THREAD_ORDER', threadOrder: ThreadIndex[] } |
   { type: 'HIDE_THREAD', threadIndex: ThreadIndex } |
   { type: 'SHOW_THREAD', threads: Thread[], threadIndex: ThreadIndex } |
   { type: 'ASSIGN_TASK_TRACER_NAMES', addressIndices: number[], symbolNames: string[] } |
   { type: 'CHANGE_SELECTED_FUNC_STACK', threadIndex: ThreadIndex, selectedFuncStack: IndexIntoFuncTable[] } |
   { type: 'CHANGE_EXPANDED_FUNC_STACKS', threadIndex: ThreadIndex, expandedFuncStacks: Array<IndexIntoFuncTable[]> } |
-  { type: 'CHANGE_SELECTED_MARKER', threadIndex: ThreadIndex, selectedMarker: IndexIntoMarkersTable | -1 } |
   { type: 'UPDATE_PROFILE_SELECTION', selection: ProfileSelection } |
   { type: 'CHANGE_TAB_ORDER', tabOrder: number[] };
 
@@ -60,22 +49,21 @@ type ReceiveProfileAction =
     functionsUpdatePerThread: FunctionsUpdatePerThread,
   } |
   { type: 'DONE_SYMBOLICATING' } |
+  { type: 'ERROR_RECEIVING_PROFILE_FROM_TELEMETRY', error: any } |
   { type: 'ERROR_RECEIVING_PROFILE_FROM_FILE', error: any } |
   { type: 'ERROR_RECEIVING_PROFILE_FROM_WEB', error: any } |
   { type: 'PROFILE_PROCESSED', profile: Profile, toWorker: true } |
   { type: "RECEIVE_PROFILE_FROM_ADDON", profile: Profile } |
   { type: "RECEIVE_PROFILE_FROM_FILE", profile: Profile } |
   { type: "RECEIVE_PROFILE_FROM_WEB", profile: Profile } |
+  { type: "RECEIVE_PROFILE_FROM_TELEMETRY", profile: Profile } |
   { type: 'REQUESTING_SYMBOL_TABLE', requestedLib: RequestedLib } |
   { type: 'RECEIVED_SYMBOL_TABLE_REPLY', requestedLib: RequestedLib } |
   { type: 'START_SYMBOLICATING' } |
-  { type: 'SUMMARIZE_PROFILE', toWorker: true } |
   { type: 'WAITING_FOR_PROFILE_FROM_ADDON' } |
   { type: 'WAITING_FOR_PROFILE_FROM_WEB' };
 
 type TimelineAction =
-   { type: 'CHANGE_FLAME_CHART_COLOR_STRATEGY', getCategory: GetCategory } |
-   { type: 'CHANGE_FLAME_CHART_LABELING_STRATEGY', getLabel: GetLabel } |
    { type: 'CHANGE_TIMELINE_EXPANDED_THREAD', threadIndex: ThreadIndex, isExpanded: boolean };
 
 type URLEnhancerAction =
@@ -84,6 +72,7 @@ type URLEnhancerAction =
 
 type URLStateAction =
   { type: 'WAITING_FOR_PROFILE_FROM_FILE' } |
+  { type: 'WAITING_FOR_PROFILE_FROM_TELEMETRY' } |
   { type: 'PROFILE_PUBLISHED', hash: string } |
   { type: 'CHANGE_SELECTED_TAB', selectedTab: string } |
   { type: 'ADD_RANGE_FILTER', start: number, end: number } |
@@ -101,7 +90,6 @@ type IconsAction =
   { type: 'ICON_IN_ERROR', icon: string };
 
 export type Action =
-  ProfileSummaryAction |
   ProfileAction |
   ReceiveProfileAction |
   TimelineAction |

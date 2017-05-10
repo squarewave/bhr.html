@@ -8,20 +8,9 @@ import * as RangeFilters from '../range-filters';
 import type { ThreadIndex } from '../../common/types/profile';
 import type { StartEndRange } from '../../common/types/units';
 import type {
-  Action, CallTreeFiltersPerThread, CallTreeFilter, DataSource, ImplementationFilter,
+  Action, CallTreeFiltersPerThread, CallTreeFilter, ImplementationFilter,
 } from '../actions/types';
 import type { State, URLState, Reducer } from './types';
-
-function dataSource(state: DataSource = 'none', action: Action) {
-  switch (action.type) {
-    case 'WAITING_FOR_PROFILE_FROM_FILE':
-      return 'from-file';
-    case 'PROFILE_PUBLISHED':
-      return 'public';
-    default:
-      return state;
-  }
-}
 
 function hash(state: string = '', action: Action) {
   switch (action.type) {
@@ -59,7 +48,8 @@ function selectedThread(state: ThreadIndex = 0, action: Action) {
     case 'CHANGE_SELECTED_THREAD':
       return action.selectedThread;
     case 'RECEIVE_PROFILE_FROM_ADDON':
-    case 'RECEIVE_PROFILE_FROM_FILE': {
+    case 'RECEIVE_PROFILE_FROM_FILE':
+    case 'RECEIVE_PROFILE_FROM_TELEMETRY': {
       // When loading in a brand new profile, select either the GeckoMain [tab] thread,
       // or the first thread in the thread order. For profiles from the Web, the
       // selectedThread has already been initialized from the URL and does not require
@@ -143,7 +133,7 @@ const urlStateReducer: Reducer<URLState> = (regularUrlStateReducer => (state: UR
       return regularUrlStateReducer(state, action);
   }
 })(combineReducers({
-  dataSource, hash, selectedTab, rangeFilters, selectedThread,
+  hash, selectedTab, rangeFilters, selectedThread,
   callTreeSearchString, callTreeFilters, implementation, invertCallstack,
   hidePlatformDetails,
 }));
@@ -151,7 +141,6 @@ export default urlStateReducer;
 
 const getURLState = (state: State): URLState => state.urlState;
 
-export const getDataSource = (state: State) => getURLState(state).dataSource;
 export const getHash = (state: State) => getURLState(state).hash;
 export const getRangeFilters = (state: State) => getURLState(state).rangeFilters;
 export const getImplementationFilter = (state: State) => getURLState(state).implementation;

@@ -2,33 +2,15 @@
 import type {
   Profile,
   Thread,
-  SamplesTable,
+  AllDatesTable,
   StackTable,
-  FrameTable,
   FuncTable,
-  MarkersTable,
   IndexIntoFuncTable,
   IndexIntoStringTable,
-  IndexIntoSamplesTable,
   IndexIntoStackTable,
 } from '../common/types/profile';
-import type { FuncStackTable, IndexIntoFuncStackTable, TracingMarker } from '../common/types/profile-derived';
+import type { FuncStackTable, IndexIntoFuncStackTable } from '../common/types/profile-derived';
 import { timeCode } from '../common/time-code';
-import { getEmptyTaskTracerData } from './task-tracer';
-
-/**
- * Various helpers for dealing with the profile as a data structure.
- * @module profile-data
- */
-
-export const resourceTypes = {
-  unknown: 0,
-  library: 1,
-  addon: 2,
-  webhost: 3,
-  otherhost: 4,
-  url: 5,
-};
 
 /**
  * Takes the stack table and the frame table, creates a func stack table and
@@ -39,7 +21,7 @@ export const resourceTypes = {
  * @param  {Object} funcTable  The thread's funcTable.
  * @return {Object}            The funcStackTable and the stackIndexToFuncStackIndex map.
  */
-export function getFuncStackInfo(stackTable: StackTable, frameTable: FrameTable, funcTable: FuncTable) {
+export function getFuncStackInfo(stackTable: StackTable, funcTable: FuncTable) {
   return timeCode('getFuncStackInfo', () => {
     const stackIndexToFuncStackIndex = new Uint32Array(stackTable.length);
     const funcCount = funcTable.length;
@@ -67,8 +49,7 @@ export function getFuncStackInfo(stackTable: StackTable, frameTable: FrameTable,
       // assert(prefixStack === null || prefixStack < stackIndex);
       const prefixFuncStack = (prefixStack === null) ? -1 :
          stackIndexToFuncStackIndex[prefixStack];
-      const frameIndex = stackTable.frame[stackIndex];
-      const funcIndex = frameTable.func[frameIndex];
+      const funcIndex = stackTable.func[stackIndex];
       const prefixFuncStackAndFuncIndex = prefixFuncStack * funcCount + funcIndex;
       let funcStackIndex = prefixFuncStackAndFuncToFuncStackMap.get(prefixFuncStackAndFuncIndex);
       if (funcStackIndex === undefined) {
@@ -90,30 +71,44 @@ export function getFuncStackInfo(stackTable: StackTable, frameTable: FrameTable,
   });
 }
 
-export function getSampleFuncStacks(
-  samples: SamplesTable,
-  stackIndexToFuncStackIndex: { [key: IndexIntoStackTable]: IndexIntoFuncStackTable }
-): Array<IndexIntoFuncStackTable | null> {
-  return samples.stack.map(stack => {
-    return stack === null
-      ? null
-      : stackIndexToFuncStackIndex[stack];
-  });
+export function getDateFuncStacks(allDates: AllDatesTable, stackIndexToFuncStackIndex: Uint32Array) {
+  let result = {
+    length: allDates.length,
+    stackHangMs: new Float32Array(allDates.length),
+    stackHangCount: new Int32Array(allDates.length),
+  };
+
+  for (let i = 0; i < allDates.length; i++) {
+    let newIndex = stackIndexToFuncStackIndex[i];
+    result.stackHangMs[newIndex] += allDates.stackHangMs[i];
+    result.stackHangCount[newIndex] += allDates.stackHangCount[i];
+  }
+
+  return result;
 }
 
-function getTimeRangeForThread(thread: Thread, interval: number) {
-  if (thread.samples.length === 0) {
-    return { start: Infinity, end: -Infinity };
+function getTimeRangeForThread(thread: Thread) {
+  if (thread.dates.length === 0) {
+    return { start: "99991231", end: "00000101" };
   }
-  return { start: thread.samples.time[0], end: thread.samples.time[thread.samples.length - 1] + interval};
+  return { start: thread.dates[0].date, end: thread.dates[thread.dates.length - 1].date };
 }
 
 export function getTimeRangeIncludingAllThreads(profile: Profile) {
-  const completeRange = { start: Infinity, end: -Infinity };
+  const completeRange = { start: "99991231", end: "00000101" };
+
+  function min(a, b) {
+    return a < b ? a : b;
+  }
+
+  function max(a, b) {
+    return a < b ? b : a;
+  }
+
   profile.threads.forEach(thread => {
-    const threadRange = getTimeRangeForThread(thread, profile.meta.interval);
-    completeRange.start = Math.min(completeRange.start, threadRange.start);
-    completeRange.end = Math.max(completeRange.end, threadRange.end);
+    const threadRange = getTimeRangeForThread(thread);
+    completeRange.start = min(completeRange.start, threadRange.start);
+    completeRange.end = max(completeRange.end, threadRange.end);
   });
   return completeRange;
 }
@@ -132,34 +127,22 @@ export function defaultThreadOrder(threads: Thread[]) {
   return threadOrder;
 }
 
-export function filterThreadByImplementation(thread: Thread, implementation: string): Thread {
-  const { funcTable } = thread;
-
-  switch (implementation) {
-    case 'cpp':
-      return _filterThreadByFunc(thread, funcIndex => !funcTable.isJS[funcIndex]);
-    case 'js':
-      return _filterThreadByFunc(thread, funcIndex => funcTable.isJS[funcIndex]);
-  }
-  return thread;
-}
-
 function _filterThreadByFunc(
   thread: Thread,
   filter: IndexIntoFuncTable => boolean
 ): Thread {
   return timeCode('filterThread', () => {
-    const { stackTable, frameTable, samples } = thread;
+    const { stackTable, funcTable, allDates, dates } = thread;
 
     const newStackTable = {
       length: 0,
-      frame: [],
+      func: [],
       prefix: [],
     };
 
     const oldStackToNewStack = new Map();
-    const frameCount = frameTable.length;
-    const prefixStackAndFrameToStack = new Map(); // prefixNewStack * frameCount + frame => newStackIndex
+    const funcCount = funcTable.length;
+    const prefixStackAndFuncToStack = new Map(); // prefixNewStack * funcCount + func => newStackIndex
 
     function convertStack(stackIndex) {
       if (stackIndex === null) {
@@ -168,18 +151,17 @@ function _filterThreadByFunc(
       let newStack = oldStackToNewStack.get(stackIndex);
       if (newStack === undefined) {
         const prefixNewStack = convertStack(stackTable.prefix[stackIndex]);
-        const frameIndex = stackTable.frame[stackIndex];
-        const funcIndex = frameTable.func[frameIndex];
+        const funcIndex = stackTable.func[stackIndex];
         if (filter(funcIndex)) {
-          const prefixStackAndFrameIndex = (prefixNewStack === null ? -1 : prefixNewStack) * frameCount + frameIndex;
-          newStack = prefixStackAndFrameToStack.get(prefixStackAndFrameIndex);
+          const prefixStackAndFrameIndex = (prefixNewStack === null ? -1 : prefixNewStack) * funcCount + funcIndex;
+          newStack = prefixStackAndFuncToStack.get(prefixStackAndFrameIndex);
           if (newStack === undefined) {
             newStack = newStackTable.length++;
             newStackTable.prefix[newStack] = prefixNewStack;
-            newStackTable.frame[newStack] = frameIndex;
+            newStackTable.func[newStack] = funcIndex;
           }
           oldStackToNewStack.set(stackIndex, newStack);
-          prefixStackAndFrameToStack.set(prefixStackAndFrameIndex, newStack);
+          prefixStackAndFuncToStack.set(prefixStackAndFrameIndex, newStack);
         } else {
           newStack = prefixNewStack;
         }
@@ -187,142 +169,36 @@ function _filterThreadByFunc(
       return newStack;
     }
 
-    const newSamples = Object.assign({}, samples, {
-      stack: samples.stack.map(oldStack => convertStack(oldStack)),
-    });
+    let newStackHangMs = new Float32Array(newStackTable.length);
+    let newStackHangCount = new Int32Array(newStackTable.length);
+    let newDates = dates.map(d => ({
+      length: newStackTable.length,
+      date: d.date,
+      stackHangMs: new Float32Array(newStackTable.length),
+      stackHangCount: new Int32Array(newStackTable.length),
+    }));
 
-    return Object.assign({}, thread, {
-      samples: newSamples,
-      stackTable: newStackTable,
-    });
-  });
-}
+    for (let i = 0; i < stackTable.length; i++) {
+      let newIndex = convertStack(i);
+      if (newIndex) {
+        newStackHangMs[newIndex] += allDates.stackHangMs[i];
+        newStackHangCount[newIndex] += allDates.stackHangCount[i];
 
-/**
- * Given a thread with stacks like below, collapse together the platform stack frames into
- * a single pseudo platform stack frame. In the diagram "J" represents JavaScript stack
- * frame timing, and "P" Platform stack frame timing. New psuedo-stack frames are created
- * for the platform stacks.
- *
- * JJJJJJJJJJJJJJJJ  --->  JJJJJJJJJJJJJJJJ
- * PPPPPPPPPPPPPPPP        PPPPPPPPPPPPPPPP
- *     PPPPPPPPPPPP            JJJJJJJJ
- *     PPPPPPPP                JJJ  PPP
- *     JJJJJJJJ                     JJJ
- *     JJJ  PPP
- *          JJJ
- *
- * @param {Object} thread - A thread.
- * @returns {Object} The thread with collapsed samples.
- */
-export function collapsePlatformStackFrames(thread: Thread) {
-  return timeCode('collapsePlatformStackFrames', () => {
-    const { stackTable, funcTable, frameTable, samples, stringTable } = thread;
-
-    // Create new tables for the data.
-    const newStackTable = {
-      length: 0,
-      frame: [],
-      prefix: [],
-    };
-    const newFrameTable = {
-      length: frameTable.length,
-      implementation: frameTable.implementation.slice(),
-      optimizations: frameTable.optimizations.slice(),
-      line: frameTable.line.slice(),
-      category: frameTable.category.slice(),
-      func: frameTable.func.slice(),
-      address: frameTable.address.slice(),
-    };
-    const newFuncTable = {
-      length: funcTable.length,
-      name: funcTable.name.slice(),
-      resource: funcTable.resource.slice(),
-      address: funcTable.address.slice(),
-      isJS: funcTable.isJS.slice(),
-    };
-
-    // Create a Map that takes a prefix and frame as input, and maps it to the new stack
-    // index. Since Maps can't be keyed off of two values, do a little math to key off
-    // of both values: newStackPrefix * potentialFrameCount + frame => newStackIndex
-    const prefixStackAndFrameToStack = new Map();
-    const potentialFrameCount = newFrameTable.length * 2;
-    const oldStackToNewStack = new Map();
-
-    function convertStack(oldStack) {
-      if (oldStack === null) {
-        return null;
-      }
-      let newStack = oldStackToNewStack.get(oldStack);
-      if (newStack === undefined) {
-        // No stack was found, generate a new one.
-        const oldStackPrefix = stackTable.prefix[oldStack];
-        const newStackPrefix = convertStack(oldStackPrefix);
-        const frameIndex = stackTable.frame[oldStack];
-        const funcIndex = newFrameTable.func[frameIndex];
-        const oldStackIsPlatform = !newFuncTable.isJS[funcIndex];
-        let keepStackFrame = true;
-
-        if (oldStackIsPlatform) {
-          if (oldStackPrefix !== null) {
-            // Only keep the platform stack frame if the prefix is JS.
-            const prefixFrameIndex = stackTable.frame[oldStackPrefix];
-            const prefixFuncIndex = newFrameTable.func[prefixFrameIndex];
-            keepStackFrame = newFuncTable.isJS[prefixFuncIndex];
-          }
-        }
-
-        if (keepStackFrame) {
-          // Convert the old JS stack to a new JS stack.
-          const prefixStackAndFrameIndex = (newStackPrefix === null ? -1 : newStackPrefix) * potentialFrameCount + frameIndex;
-          newStack = prefixStackAndFrameToStack.get(prefixStackAndFrameIndex);
-          if (newStack === undefined) {
-            newStack = newStackTable.length++;
-            newStackTable.prefix[newStack] = newStackPrefix;
-            if (oldStackIsPlatform) {
-              // Create a new platform frame
-              const newFuncIndex = newFuncTable.length++;
-              newFuncTable.name.push(stringTable.indexForString('Platform'));
-              newFuncTable.resource.push(-1);
-              newFuncTable.address.push(-1);
-              newFuncTable.isJS.push(false);
-              if (newFuncTable.name.length !== newFuncTable.length) {
-                console.error('length is not correct', newFuncTable.name.length, newFuncTable.length);
-              }
-
-              newFrameTable.implementation.push(null);
-              newFrameTable.optimizations.push(null);
-              newFrameTable.line.push(null);
-              newFrameTable.category.push(null);
-              newFrameTable.func.push(newFuncIndex);
-              newFrameTable.address.push(-1);
-
-              newStackTable.frame[newStack] = newFrameTable.length++;
-            } else {
-              newStackTable.frame[newStack] = frameIndex;
-            }
-          }
-          oldStackToNewStack.set(oldStack, newStack);
-          prefixStackAndFrameToStack.set(prefixStackAndFrameIndex, newStack);
-        }
-
-        // If the the stack frame was not kept, use the prefix.
-        if (newStack === undefined) {
-          newStack = newStackPrefix;
+        for (let j = 0; j < dates.length; j++) {
+          newDates[j].stackHangMs[newIndex] += dates[j].stackHangMs[i];
+          newDates[j].stackHangCount[newIndex] += dates[j].stackHangCount[i];
         }
       }
-      return newStack;
     }
 
-    const newSamples = Object.assign({}, samples, {
-      stack: samples.stack.map(oldStack => convertStack(oldStack, true)),
-    });
-
     return Object.assign({}, thread, {
-      samples: newSamples,
+      allDates: {
+        length: newStackTable.length,
+        stackHangMs: newStackHangMs,
+        stackHangCount: newStackHangCount,
+      },
+      dates: newDates,
       stackTable: newStackTable,
-      frameTable: newFrameTable,
-      funcTable: newFuncTable,
     });
   });
 }
@@ -334,8 +210,7 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
     }
     const lowercaseSearchString = searchString.toLowerCase();
     const {
-      samples, funcTable, frameTable, stackTable, stringTable,
-      resourceTable,
+      allDates, dates, funcTable, stackTable, stringTable, libs
     } = thread;
 
     function computeFuncMatchesFilter(func) {
@@ -345,19 +220,10 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
         return true;
       }
 
-      const fileNameIndex = funcTable.fileName[func];
-      if (fileNameIndex !== null) {
-        const fileNameString = stringTable.getString(fileNameIndex);
-        if (fileNameString.toLowerCase().includes(lowercaseSearchString)) {
-          return true;
-        }
-      }
-
-      const resourceIndex = funcTable.resource[func];
-      const resourceNameIndex = resourceTable.name[resourceIndex];
-      if (resourceNameIndex !== undefined) {
-        const resourceNameString = stringTable.getString(resourceNameIndex);
-        if (resourceNameString.toLowerCase().includes(lowercaseSearchString)) {
+      const libIndex = funcTable.lib[func];
+      const lib = libs[libIndex];
+      if (lib !== undefined) {
+        if (lib.name.toLowerCase().includes(lowercaseSearchString)) {
           return true;
         }
       }
@@ -386,8 +252,7 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
         if (stackMatchesFilter(prefix)) {
           result = true;
         } else {
-          const frame = stackTable.frame[stackIndex];
-          const func = frameTable.func[frame];
+          const func = stackTable.func[stackIndex];
           result = funcMatchesFilter(func);
         }
         stackMatchesFilterCache.set(stackIndex, result);
@@ -396,9 +261,14 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
     }
 
     return Object.assign({}, thread, {
-      samples: Object.assign({}, samples, {
-        stack: samples.stack.map(s => stackMatchesFilter(s) ? s : null),
+      allDates: Object.assign({}, allDates, {
+        stackHangMs: allDates.stackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
+        stackHangCount: allDates.stackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
       }),
+      dates: dates.map(d => Object.assign({}, d, {
+        stackHangMs: d.stackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
+        stackHangCount: d.stackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
+      }))
     });
   });
 }
@@ -412,9 +282,9 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
  * @param  {bool} matchJSOnly   Ignore non-JS frames during matching.
  * @return {object}             The filtered thread.
  */
-export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexIntoFuncTable[], matchJSOnly: boolean) {
+export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexIntoFuncTable[]) {
   return timeCode('filterThreadToPrefixStack', () => {
-    const { stackTable, frameTable, funcTable, samples } = thread;
+    const { stackTable, funcTable, allDates, dates } = thread;
     const prefixDepth = prefixFuncs.length;
     const stackMatches = new Int32Array(stackTable.length);
     const oldStackToNewStack = new Map();
@@ -422,45 +292,64 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
     const newStackTable = {
       length: 0,
       prefix: [],
-      frame: [],
+      func: [],
     };
     for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
       const prefix = stackTable.prefix[stackIndex];
       const prefixMatchesUpTo = prefix !== null ? stackMatches[prefix] : 0;
       let stackMatchesUpTo = -1;
       if (prefixMatchesUpTo !== -1) {
-        const frame = stackTable.frame[stackIndex];
+        const func = stackTable.func[stackIndex];
         if (prefixMatchesUpTo === prefixDepth) {
           stackMatchesUpTo = prefixDepth;
         } else {
-          const func = frameTable.func[frame];
           if (func === prefixFuncs[prefixMatchesUpTo]) {
             stackMatchesUpTo = prefixMatchesUpTo + 1;
-          } else if (matchJSOnly && !funcTable.isJS[func]) {
-            stackMatchesUpTo = prefixMatchesUpTo;
           }
         }
         if (stackMatchesUpTo === prefixDepth) {
           const newStackIndex = newStackTable.length++;
           const newStackPrefix = oldStackToNewStack.get(prefix);
           newStackTable.prefix[newStackIndex] = newStackPrefix !== undefined ? newStackPrefix : null;
-          newStackTable.frame[newStackIndex] = frame;
+          newStackTable.func[newStackIndex] = func;
           oldStackToNewStack.set(stackIndex, newStackIndex);
         }
       }
       stackMatches[stackIndex] = stackMatchesUpTo;
     }
-    const newSamples = Object.assign({}, samples, {
-      stack: samples.stack.map(oldStack => {
-        if (oldStack === null || stackMatches[oldStack] !== prefixDepth) {
-          return null;
+
+    const newAllDates = {
+      length: newStackTable.length,
+      stackHangMs: new Float32Array(newStackTable.length),
+      stackHangCount: new Int32Array(newStackTable.length),
+    };
+    const newDates = dates.map(d => ({
+      length: newStackTable.length,
+      date: d.date,
+      stackHangMs: new Float32Array(newStackTable.length),
+      stackHangCount: new Int32Array(newStackTable.length),
+    }));
+
+    for (let i = 0; i < stackTable.length; i++) {
+      let newStack = null;
+      if (stackMatches[i] === prefixDepth) {
+        newStack = oldStackToNewStack.get(i);
+      }
+
+      if (newStack !== null && newStack !== undefined) {
+        newAllDates.stackHangMs[newStack] += allDates.stackHangMs[i];
+        newAllDates.stackHangCount[newStack] += allDates.stackHangCount[i];
+        for (let j = 0; j < dates.length; j++) {
+          newDates[j].stackHangMs[newStack] += dates[j].stackHangMs[newStack];
+          newAllDates.stackHangCount[newStack] += allDates.stackHangCount[i];
         }
-        return oldStackToNewStack.get(oldStack);
-      }),
-    });
+      }
+    }
+
     return Object.assign({}, thread, {
       stackTable: newStackTable,
-      samples: newSamples,
+      allDates: newAllDates,
+      dates: newDates,
     });
   });
 }
@@ -475,23 +364,20 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
  * @param  {bool} matchJSOnly   Ignore non-JS frames during matching.
  * @return {object}             The filtered thread.
  */
-export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIntoFuncTable[], matchJSOnly: boolean) {
+export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIntoFuncTable[]) {
   return timeCode('filterThreadToPostfixStack', () => {
     const postfixDepth = postfixFuncs.length;
-    const { stackTable, frameTable, funcTable, samples } = thread;
+    const { stackTable, funcTable, allDates, dates } = thread;
 
     function convertStack(leaf) {
       let matchesUpToDepth = 0; // counted from the leaf
       for (let stack = leaf; stack !== null; stack = stackTable.prefix[stack]) {
-        const frame = stackTable.frame[stack];
-        const func = frameTable.func[frame];
+        const func = stackTable.func[stack];
         if (func === postfixFuncs[matchesUpToDepth]) {
           matchesUpToDepth++;
           if (matchesUpToDepth === postfixDepth) {
             return stack;
           }
-        } else if (!matchJSOnly || funcTable.isJS[func]) {
-          return null;
         }
       }
       return null;
@@ -499,69 +385,62 @@ export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIn
 
     const oldStackToNewStack = new Map();
     oldStackToNewStack.set(null, null);
-    const newSamples = Object.assign({}, samples, {
-      stack: samples.stack.map(stackIndex => {
-        let newStackIndex = oldStackToNewStack.get(stackIndex);
-        if (newStackIndex === undefined) {
-          newStackIndex = convertStack(stackIndex);
-          oldStackToNewStack.set(stackIndex, newStackIndex);
+
+    const newAllDates = {
+      length: stackTable.length,
+      stackHangMs: new Float32Array(stackTable.length),
+      stackHangCount: new Int32Array(stackTable.length),
+    };
+    const newDates = dates.map(d => ({
+      length: stackTable.length,
+      date: d.date,
+      stackHangMs: new Float32Array(stackTable.length),
+      stackHangCount: new Int32Array(stackTable.length),
+    }));
+
+    for (let i = 0; i < stackTable.length; i++) {
+      let newStack = oldStackToNewStack.get(i);
+      if (newStack === undefined) {
+        newStack = convertStack(i);
+        oldStackToNewStack.set(i, newStack);
+      }
+
+      if (newStack !== null) {
+        newAllDates.stackHangMs[newStack] += allDates.stackHangMs[i];
+        newAllDates.stackHangCount[newStack] += allDates.stackHangCount[i];
+        for (let j = 0; j < dates.length; j++) {
+          newDates[j].stackHangMs[newStack] += dates[j].stackHangMs[newStack];
+          newAllDates.stackHangCount[newStack] += allDates.stackHangCount[i];
         }
-        return newStackIndex;
-      }),
-    });
+      }
+    }
+
     return Object.assign({}, thread, {
-      samples: newSamples,
+      allDates: newAllDates,
+      dates: newDates,
     });
   });
 }
 
-function getSampleIndexRangeForSelection(samples: SamplesTable, rangeStart: number, rangeEnd: number) {
-  // TODO: This should really use bisect. samples.time is sorted.
-  const firstSample = samples.time.findIndex(t => t >= rangeStart);
-  if (firstSample === -1) {
-    return [samples.length, samples.length];
-  }
-  const afterLastSample = samples.time.slice(firstSample).findIndex(t => t >= rangeEnd);
-  if (afterLastSample === -1) {
-    return [firstSample, samples.length];
-  }
-  return [firstSample, firstSample + afterLastSample];
-}
-
-function getMarkerIndexRangeForSelection(markers: MarkersTable, rangeStart: number, rangeEnd: number) {
-  // TODO: This should really use bisect. samples.time is sorted.
-  const firstMarker = markers.time.findIndex(t => t >= rangeStart);
-  if (firstMarker === -1) {
-    return [markers.length, markers.length];
-  }
-  const afterLastSample = markers.time.slice(firstMarker).findIndex(t => t >= rangeEnd);
-  if (afterLastSample === -1) {
-    return [firstMarker, markers.length];
-  }
-  return [firstMarker, firstMarker + afterLastSample];
-}
-
-export function filterThreadToRange(thread: Thread, rangeStart: number, rangeEnd: number) {
-  const { samples, markers } = thread;
-  const [sBegin, sEnd] = getSampleIndexRangeForSelection(samples, rangeStart, rangeEnd);
-  const newSamples = {
-    length: sEnd - sBegin,
-    time: samples.time.slice(sBegin, sEnd),
-    stack: samples.stack.slice(sBegin, sEnd),
-    responsiveness: samples.responsiveness.slice(sBegin, sEnd),
-    rss: samples.rss.slice(sBegin, sEnd),
-    uss: samples.uss.slice(sBegin, sEnd),
+export function filterThreadToRange(thread: Thread, rangeStart: string, rangeEnd: string) {
+  const { dates, stackTable } = thread;
+  let allDates = {
+    length: stackTable.length,
+    stackHangMs: new Float32Array(stackTable.length),
+    stackHangCount: new Int32Array(stackTable.length),
   };
-  const [mBegin, mEnd] = getMarkerIndexRangeForSelection(markers, rangeStart, rangeEnd);
-  const newMarkers = {
-    length: mEnd - mBegin,
-    time: markers.time.slice(mBegin, mEnd),
-    name: markers.name.slice(mBegin, mEnd),
-    data: markers.data.slice(mBegin, mEnd),
-  };
+
+  let newDates = dates.filter(d => d.date >= rangeStart && d.date < rangeEnd);
+  for (let date of newDates) {
+    for (let i = 0; i < stackTable.length; i++) {
+      allDates.stackHangMs[i] += date.stackHangMs[i];
+      allDates.stackHangCount[i] += date.stackHangCount[i];
+    }
+  }
+
   return Object.assign({}, thread, {
-    samples: newSamples,
-    markers: newMarkers,
+    allDates,
+    dates: newDates,
   });
 }
 
@@ -605,26 +484,26 @@ export function getStackAsFuncArray(funcStackIndex: IndexIntoFuncStackTable, fun
 
 export function invertCallstack(thread: Thread): Thread {
   return timeCode('invertCallstack', () => {
-    const { stackTable, frameTable, samples } = thread;
+    const { stackTable, funcTable, dates, allDates } = thread;
 
     const newStackTable = {
       length: 0,
-      frame: [],
+      func: [],
       prefix: [],
     };
     // Create a Map that keys off of two values, both the prefix and frame combination
-    // by using a bit of math: prefix * frameCount + frame => stackIndex
-    const prefixAndFrameToStack = new Map();
-    const frameCount = frameTable.length;
+    // by using a bit of math: prefix * funcCount + func => stackIndex
+    const prefixAndFuncToStack = new Map();
+    const funcCount = funcTable.length;
 
-    function stackFor(prefix, frame) {
-      const prefixAndFrameIndex = (prefix === null ? -1 : prefix) * frameCount + frame;
-      let stackIndex = prefixAndFrameToStack.get(prefixAndFrameIndex);
+    function stackFor(prefix, func) {
+      const prefixAndFuncIndex = (prefix === null ? -1 : prefix) * funcCount + func;
+      let stackIndex = prefixAndFuncToStack.get(prefixAndFuncIndex);
       if (stackIndex === undefined) {
         stackIndex = newStackTable.length++;
         newStackTable.prefix[stackIndex] = prefix;
-        newStackTable.frame[stackIndex] = frame;
-        prefixAndFrameToStack.set(prefixAndFrameIndex, stackIndex);
+        newStackTable.func[stackIndex] = func;
+        prefixAndFuncToStack.set(prefixAndFuncIndex, stackIndex);
       }
       return stackIndex;
     }
@@ -639,180 +518,50 @@ export function invertCallstack(thread: Thread): Thread {
       if (newStack === undefined) {
         newStack = null;
         for (let currentStack = stackIndex; currentStack !== null; currentStack = stackTable.prefix[currentStack]) {
-          newStack = stackFor(newStack, stackTable.frame[currentStack]);
+          newStack = stackFor(newStack, stackTable.func[currentStack]);
         }
         oldStackToNewStack.set(stackIndex, newStack);
       }
       return newStack;
     }
 
-    const newSamples = Object.assign({}, samples, {
-      stack: samples.stack.map(oldStack => convertStack(oldStack)),
-    });
+
+    let newStackHangMs = new Float32Array(newStackTable.length);
+    let newStackHangCount = new Int32Array(newStackTable.length);
+    let newDates = dates.map(d => ({
+      length: newStackTable.length,
+      date: d.date,
+      stackHangMs: new Float32Array(newStackTable.length),
+      stackHangCount: new Int32Array(newStackTable.length),
+    }));
+
+    for (let i = 0; i < stackTable.length; i++) {
+      let newIndex = convertStack(i);
+      if (newIndex) {
+        newStackHangMs[newIndex] += allDates.stackHangMs[i];
+        newStackHangCount[newIndex] += allDates.stackHangCount[i];
+
+        for (let j = 0; j < dates.length; j++) {
+          newDates[j].stackHangMs[newIndex] += dates[j].stackHangMs[i];
+          newDates[j].stackHangCount[newIndex] += dates[j].stackHangCount[i];
+        }
+      }
+    }
 
     return Object.assign({}, thread, {
-      samples: newSamples,
+      allDates: {
+        length: newStackTable.length,
+        stackHangMs: newStackHangMs,
+        stackHangCount: newStackHangCount,
+      },
+      dates: newDates,
       stackTable: newStackTable,
     });
   });
 }
 
-export function getSampleIndexClosestToTime(samples: SamplesTable, time: number): IndexIntoSamplesTable {
-  // TODO: This should really use bisect. samples.time is sorted.
-  for (let i = 0; i < samples.length; i++) {
-    if (samples.time[i] >= time) {
-      if (i === 0) {
-        return 0;
-      }
-      const distanceToThis = samples.time[i] - time;
-      const distanceToLast = time - samples.time[i - 1];
-      return distanceToThis < distanceToLast ? i : i - 1;
-    }
-  }
-  return samples.length - 1;
-}
-
-export function getJankInstances(samples: SamplesTable, processType: string, thresholdInMs: number): TracingMarker[] {
-  let lastResponsiveness = 0;
-  let lastTimestamp = 0;
-  const jankInstances = [];
-  for (let i = 0; i < samples.length; i++) {
-    const currentResponsiveness = samples.responsiveness[i];
-    if (currentResponsiveness < lastResponsiveness) {
-      if (lastResponsiveness >= thresholdInMs) {
-        jankInstances.push({
-          start: lastTimestamp - lastResponsiveness,
-          dur: lastResponsiveness,
-          title: `${lastResponsiveness.toFixed(2)}ms event processing delay on ${processType} thread`,
-          name: 'Jank',
-        });
-      }
-    }
-    lastResponsiveness = currentResponsiveness;
-    lastTimestamp = samples.time[i];
-  }
-  if (lastResponsiveness >= thresholdInMs) {
-    jankInstances.push({
-      start: lastTimestamp - lastResponsiveness,
-      dur: lastResponsiveness,
-      title: `${lastResponsiveness.toFixed(2)}ms event processing delay on ${processType} thread`,
-      name: 'Jank',
-    });
-  }
-  return jankInstances;
-}
-
-export function getTracingMarkers(thread: Thread): TracingMarker[] {
-  const { stringTable, markers } = thread;
-  const tracingMarkers: TracingMarker[] = [];
-  const openMarkers: Map<IndexIntoStringTable, TracingMarker> = new Map();
-  for (let i = 0; i < markers.length; i++) {
-    const data = markers.data[i];
-    if (!data) {
-      continue;
-    }
-    if (data.type === 'tracing') {
-      const time = markers.time[i];
-      const nameStringIndex = markers.name[i];
-      if (data.interval === 'start') {
-        openMarkers.set(nameStringIndex, {
-          start: time,
-          name: stringTable.getString(nameStringIndex),
-          dur: 0,
-          title: null,
-        });
-      } else if (data.interval === 'end') {
-        const marker = openMarkers.get(nameStringIndex);
-        if (marker === undefined) {
-          continue;
-        }
-        if (marker.start !== undefined) {
-          marker.dur = time - marker.start;
-        }
-        if (marker.name !== undefined && marker.dur !== undefined) {
-          marker.title = `${marker.name} for ${marker.dur.toFixed(2)}ms`;
-        }
-        tracingMarkers.push(marker);
-      }
-    } else if (('startTime' in data) && ('endTime' in data)) {
-      const { startTime, endTime } = data;
-      if (typeof startTime === 'number' && typeof endTime === 'number') {
-        const name = stringTable.getString(markers.name[i]);
-        if (name !== 'DOMEvent') {
-          const duration = endTime - startTime;
-          tracingMarkers.push({
-            start: startTime,
-            dur: duration,
-            name,
-            title: `${name} for ${duration.toFixed(2)}ms`,
-          });
-        }
-      }
-    }
-  }
-  tracingMarkers.sort((a, b) => a.start - b.start);
-  return tracingMarkers;
-}
-
-export function filterTracingMarkersToRange(tracingMarkers: TracingMarker[],
-                                            rangeStart: number,
-                                            rangeEnd: number): TracingMarker[] {
-  return tracingMarkers.filter(tm => tm.start < rangeEnd && tm.start + tm.dur >= rangeStart);
-}
-
-export function getFriendlyThreadName(threads: Thread[], thread: Thread): string {
-  let label;
-  switch (thread.name) {
-    case 'GeckoMain':
-      switch (thread.processType) {
-        case 'default':
-          label = 'Main Thread';
-          break;
-        case 'tab': {
-          const contentThreads = threads.filter(thread => {
-            return thread.name === 'GeckoMain' && thread.processType === 'tab';
-          });
-          if (contentThreads.length > 1) {
-            const index = 1 + contentThreads.indexOf(thread);
-            label = `Content (${index} of ${contentThreads.length})`;
-          } else {
-            label = 'Content';
-          }
-          break;
-        }
-        case 'plugin':
-          label = 'Plugin';
-          break;
-      }
-      break;
-  }
-
-  if (!label) {
-    label = thread.name;
-  }
-  return label;
-}
-
-export function getThreadProcessDetails(thread: Thread): string {
-  let label = `thread: "${thread.name}"`;
-  if (thread.tid !== undefined) {
-    label += ` (${thread.tid})`;
-  }
-
-  if (thread.processType) {
-    label += `\nprocess: "${thread.processType}"`;
-    if (thread.pid !== undefined) {
-      label += ` (${thread.pid})`;
-    }
-  }
-
-  return label;
-}
-
 export function getEmptyProfile(): Profile {
   return {
-    meta: { interval: 1 },
     threads: [],
-    tasktracer: getEmptyTaskTracerData(),
   };
 }

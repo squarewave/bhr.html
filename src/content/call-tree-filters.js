@@ -52,7 +52,8 @@ export function stringifyCallTreeFilters(arrayValue = []) {
   }).join('~');
 }
 
-export function getCallTreeFilterLabels(thread, threadName, callTreeFilters) {
+export function getCallTreeFilterLabels(thread, callTreeFilters) {
+  let threadName = thread.name;
   const { funcTable, stringTable } = thread;
   const labels = callTreeFilters.map(filter => {
     function lastFuncString(funcArray) {

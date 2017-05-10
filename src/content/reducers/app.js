@@ -6,11 +6,7 @@ import type { State, AppState, Reducer } from './types';
 
 function view(state: string = 'INITIALIZING', action: Action) {
   switch (action.type) {
-    case 'FILE_NOT_FOUND':
-      return 'FILE_NOT_FOUND';
-    case 'RECEIVE_PROFILE_FROM_ADDON':
-    case 'RECEIVE_PROFILE_FROM_WEB':
-    case 'RECEIVE_PROFILE_FROM_FILE':
+    case 'RECEIVE_PROFILE_FROM_TELEMETRY':
       return 'PROFILE';
     default:
       return state;
@@ -25,6 +21,7 @@ function isURLSetupDone(state: boolean = false, action: Action) {
       return state;
   }
 }
+
 const appStateReducer: Reducer<AppState> = combineReducers({ view, isURLSetupDone });
 export default appStateReducer;
 

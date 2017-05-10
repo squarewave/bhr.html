@@ -15,7 +15,7 @@ class ProfileTreeView extends Component {
   constructor(props) {
     super(props);
     this._fixedColumns = [
-      { propName: 'totalTime', title: 'Running Time' },
+      { propName: 'totalTime', title: 'Hang time / hour' },
       { propName: 'totalTimePercent', title: '' },
       { propName: 'selfTime', title: 'Self' },
       { propName: 'icon', title: '', component: NodeIcon },
@@ -123,11 +123,10 @@ class ProfileTreeView extends Component {
 
 ProfileTreeView.propTypes = {
   thread: PropTypes.shape({
-    samples: PropTypes.object.isRequired,
+    dates: PropTypes.array.isRequired,
   }).isRequired,
   threadIndex: PropTypes.number.isRequired,
   scrollToSelectionGeneration: PropTypes.number.isRequired,
-  interval: PropTypes.number.isRequired,
   tree: PropTypes.object.isRequired,
   funcStackInfo: PropTypes.shape({
     funcStackTable: PropTypes.object.isRequired,
@@ -149,7 +148,6 @@ export default connect(state => ({
   thread: selectedThreadSelectors.getFilteredThread(state),
   threadIndex: getSelectedThreadIndex(state),
   scrollToSelectionGeneration: getScrollToSelectionGeneration(state),
-  interval: getProfile(state).meta.interval,
   tree: selectedThreadSelectors.getCallTree(state),
   funcStackInfo: selectedThreadSelectors.getFuncStackInfo(state),
   selectedFuncStack: selectedThreadSelectors.getSelectedFuncStack(state),

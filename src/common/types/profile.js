@@ -3,12 +3,8 @@
 import type { Milliseconds } from './units';
 import type { UniqueStringArray } from '../../content/unique-string-array';
 export type IndexIntoStackTable = number;
-export type IndexIntoSamplesTable = number;
-export type IndexIntoMarkersTable = number;
-export type IndexIntoFrameTable = number;
 export type IndexIntoStringTable = number;
 export type IndexIntoFuncTable = number;
-export type IndexIntoResourceTable = number;
 export type IndexIntoLibs = number;
 export type categoryBitMask = number;
 export type resourceTypeEnum = number;
@@ -21,114 +17,31 @@ export type ThreadIndex = number;
  * came before it. Stacks can be shared between samples.
  */
 export type StackTable = {
-  frame: IndexIntoFrameTable[],
+  func: IndexIntoFuncTable[],
   prefix: Array<IndexIntoStackTable|null>,
   length: number,
 };
 
-/**
- * The Gecko Profiler records samples of what function was currently being executed, and
- * the callstack that is associated with it. This is done at a fixed but configurable
- * rate, e.g. every 1 millisecond. This table represents the minimal amount of
- * information that is needed to represent that sampled function. Most of the entries
- * are indices into other tables.
- */
-export type SamplesTable = {
-  responsiveness: number[],
-  stack: Array<IndexIntoStackTable|null>,
-  time: number[],
-  rss: any, // TODO
-  uss: any, // TODO
+export type AllDatesTable = {
   length: number,
+  stackHangMs: Float32Array,
+  stackHangCount: Int32Array,
 };
 
-/**
- * This is the base abstract class that marker payloads inherit from. This probably isn't
- * used directly in perf.html, but is provided here for mainly documentation purposes.
- */
-export type ProfilerMarkerPayload = {
-  type: string,
-  startTime?: Milliseconds,
-  endTime?: Milliseconds,
-  stack?: Thread,
-};
-
-/**
- * Measurement for how long draw calls take for the compositor.
- */
-export type GPUMarkerPayload = {
-  type: "gpu_timer_query",
-  startTime: Milliseconds, // Same as cpustart
-  endTime: Milliseconds, // Same as cpuend
-  cpustart: Milliseconds,
-  cpuend: Milliseconds,
-  gpustart: Milliseconds, // Always 0.
-  gpuend: Milliseconds, // The time the GPU took to execute the command.
-  stack?: Thread,
-};
-
-/**
- * These markers have a start and end time.
- */
-export type ProfilerMarkerTracing = {
-  type: "tracing",
-  startTime: Milliseconds, // Same as cpustart
-  endTime: Milliseconds, // Same as cpuend
-  stack?: Thread,
-  interval: "start" | "end",
-} & (
-  { category?: string } |
-  {
-    category: "Paint",
-    name: "RefreshDriverTick" |
-      "FireScrollEvent" |
-      "Scripts" |
-      "Styles" |
-      "Reflow" |
-      "DispatchSynthMouseMove" |
-      "DisplayList" |
-      "LayerBuilding" |
-      "Rasterize" |
-      "ForwardTransaction" |
-      "NotifyDidPaint" |
-      "LayerTransaction" |
-      "Composite",
-  }
-  // TODO - Add more markers.
-);
-
-/**
- * Markers represent arbitrary events that happen within the browser. They have a
- * name, time, and potentially a JSON data payload. These can come from all over the
- * system. For instance Paint markers instrument the rendering and layout process.
- * Engineers can easily add arbitrary markers to their code without coordinating with
- * perf.html to instrument their code.
- */
-export type MarkersTable = {
-  data: (
-    GPUMarkerPayload |
-    ProfilerMarkerTracing |
-    Object |
-    null |
-    void
-  )[],
-  name: IndexIntoStringTable[],
-  time: number[],
+export type DateTable = {
+  date: string,
   length: number,
+  stackHangMs: Float32Array,
+  stackHangCount: Int32Array,
 };
 
-/**
- * Frames contain the context information about the function execution at the moment in
- * time. The relationship between frames is defined by the StackTable.
- */
-export type FrameTable = {
-  address: IndexIntoStringTable[],
-  category: (categoryBitMask | null)[],
-  func: IndexIntoFuncTable[],
-  implementation: (IndexIntoStringTable | null)[],
-  line: (number | null)[],
-  optimizations: ({} | null)[],
-  length: number,
+export type Lib = {
+  breakpadId: string,
+  end: number,
+  name: string,
+  offset: number,
+  pdbName: string,
+  start: number,
 };
 
 /**
@@ -140,34 +53,13 @@ export type FrameTable = {
  */
 export type FuncTable = {
   address: MemoryOffset[],
-  libs: {
-    breakpadId: string,
-    end: number,
-    name: string,
-    offset: number,
-    pdbName: string,
-    start: number,
-  }[],
-  isJS: boolean[],
+  libs: IndexIntoLibs[],
   length: number,
   name: IndexIntoStringTable[],
-  resource: Array<IndexIntoResourceTable|-1>,
+  lib: Array<IndexIntoLibs|-1>,
   fileName: Array<IndexIntoStringTable|null>,
   lineNumber: Array<number|null>,
-}
-
-/**
- * The ResourceTable holds additional information about functions. It tends to contain
- * sparse arrays. Multiple functions can point to the same resource.
- */
-export type ResourceTable = {
-  addonId: any[], // TODO
-  icon: any[], // TODO
-  length: number,
-  lib: IndexIntoLibs[],
-  name: IndexIntoStringTable[],
-  type: resourceTypeEnum[],
-}
+};
 
 /**
  * Gecko has one or more processes. There can be multiple threads per processes. Each
@@ -178,38 +70,19 @@ export type Thread = {
   name: string,
   pid: number | void,
   tid: number | void,
-  samples: SamplesTable,
-  markers: MarkersTable,
   stackTable: StackTable,
-  frameTable: FrameTable,
   // Strings for profiles are collected into a single table, and are referred to by
   // their index by other tables.
   stringTable: UniqueStringArray,
-  libs: [],
+  libs: Lib[],
   funcTable: FuncTable,
-  resourceTable: ResourceTable,
-};
-
-/**
- * Meta information associated for the entire profile.
- */
-export type ProfileMeta = {
-  interval: number,
-};
-
-/**
- * TaskTracer data - TODO.
- */
-export type TaskTracer = {
-  taskTable: Object,
-  threadTable: Object,
+  dates: Array<DateTable>,
+  allDates: AllDatesTable,
 };
 
 /**
  * All of the data for a processed profile.
  */
 export type Profile = {
-  meta: ProfileMeta,
-  tasktracer: TaskTracer,
   threads: Thread[],
 };

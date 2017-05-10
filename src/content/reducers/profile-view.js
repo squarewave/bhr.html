@@ -1,24 +1,18 @@
 // @flow
-import { applyFunctionMerging, setFuncNames, setTaskTracerNames } from '../symbolication';
 import { combineReducers } from 'redux';
 import { createSelector } from 'reselect';
 import * as CallTreeFilters from '../call-tree-filters';
 import * as URLState from './url-state';
 import * as ProfileData from '../profile-data';
-import * as StackTiming from '../stack-timing';
 import * as ProfileTree from '../profile-tree';
-import * as TaskTracerTools from '../task-tracer';
-import { getCategoryColorStrategy } from './flame-chart';
 
 import type {
   Profile,
   Thread,
   ThreadIndex,
   IndexIntoFuncTable,
-  SamplesTable,
-  TaskTracer,
 } from '../../common/types/profile';
-import type { TracingMarker, FuncStackInfo, IndexIntoFuncStackTable } from '../../common/types/profile-derived';
+import type { FuncStackInfo, IndexIntoFuncStackTable } from '../../common/types/profile-derived';
 import type { Milliseconds, StartEndRange } from '../../common/types/units';
 import type { Action, CallTreeFilter, ProfileSelection } from '../actions/types';
 import type {
@@ -26,39 +20,13 @@ import type {
   Reducer,
   ProfileViewState,
   RequestedLib,
-  SymbolicationStatus,
   ThreadViewOptions,
 } from './types';
 
 function profile(state: Profile = ProfileData.getEmptyProfile(), action: Action) {
   switch (action.type) {
-    case 'RECEIVE_PROFILE_FROM_ADDON':
-    case 'RECEIVE_PROFILE_FROM_WEB':
-    case 'RECEIVE_PROFILE_FROM_FILE':
+    case 'RECEIVE_PROFILE_FROM_TELEMETRY':
       return action.profile;
-    case 'COALESCED_FUNCTIONS_UPDATE': {
-      if (!state.threads.length) {
-        return state;
-      }
-      const { functionsUpdatePerThread } = action;
-      const threads = state.threads.map((thread, threadIndex) => {
-        if (!functionsUpdatePerThread[threadIndex]) {
-          return thread;
-        }
-        const { oldFuncToNewFuncMap, funcIndices, funcNames } = functionsUpdatePerThread[threadIndex];
-        return setFuncNames(applyFunctionMerging(thread, oldFuncToNewFuncMap),
-                            funcIndices, funcNames);
-      });
-      return Object.assign({}, state, { threads });
-    }
-    case 'ASSIGN_TASK_TRACER_NAMES': {
-      if (!state.tasktracer.taskTable.length) {
-        return state;
-      }
-      const { addressIndices, symbolNames } = action;
-      const tasktracer = setTaskTracerNames(state.tasktracer, addressIndices, symbolNames);
-      return Object.assign({}, state, { tasktracer });
-    }
     default:
       return state;
   }
@@ -81,9 +49,7 @@ function removePrefixFromFuncArray(prefixFuncs: IndexIntoFuncTable[], funcArray:
 
 function threadOrder(state: ThreadIndex[] = [], action: Action) {
   switch (action.type) {
-    case 'RECEIVE_PROFILE_FROM_ADDON':
-    case 'RECEIVE_PROFILE_FROM_WEB':
-    case 'RECEIVE_PROFILE_FROM_FILE':
+    case 'RECEIVE_PROFILE_FROM_TELEMETRY':
       return ProfileData.defaultThreadOrder(action.profile.threads);
     case 'CHANGE_THREAD_ORDER':
       return action.threadOrder;
@@ -126,51 +92,13 @@ function threadOrder(state: ThreadIndex[] = [], action: Action) {
   }
 }
 
-function symbolicationStatus(state: SymbolicationStatus = 'DONE', action: Action) {
-  switch (action.type) {
-    case 'START_SYMBOLICATING':
-      return 'SYMBOLICATING';
-    case 'DONE_SYMBOLICATING':
-      return 'DONE';
-    default:
-      return state;
-  }
-}
-
 function viewOptionsPerThread(state: ThreadViewOptions[] = [], action: Action) {
   switch (action.type) {
-    case 'RECEIVE_PROFILE_FROM_ADDON':
-    case 'RECEIVE_PROFILE_FROM_WEB':
-    case 'RECEIVE_PROFILE_FROM_FILE':
+    case 'RECEIVE_PROFILE_FROM_TELEMETRY':
       return action.profile.threads.map(() => ({
         selectedFuncStack: [],
         expandedFuncStacks: [],
-        selectedMarker: -1,
       }));
-    case 'COALESCED_FUNCTIONS_UPDATE': {
-      const { functionsUpdatePerThread } = action;
-      // For each thread, apply oldFuncToNewFuncMap to that thread's
-      // selectedFuncStack and expandedFuncStacks.
-      return state.map((threadViewOptions, threadIndex) => {
-        if (!functionsUpdatePerThread[threadIndex]) {
-          return threadViewOptions;
-        }
-        const { oldFuncToNewFuncMap } = functionsUpdatePerThread[threadIndex];
-        return {
-          selectedFuncStack: threadViewOptions.selectedFuncStack.map(oldFunc => {
-            const newFunc = oldFuncToNewFuncMap.get(oldFunc);
-            return newFunc === undefined ? oldFunc : newFunc;
-          }),
-          expandedFuncStacks: threadViewOptions.expandedFuncStacks.map(oldFuncArray => {
-            return oldFuncArray.map(oldFunc => {
-              const newFunc = oldFuncToNewFuncMap.get(oldFunc);
-              return newFunc === undefined ? oldFunc : newFunc;
-            });
-          }),
-          selectedMarker: threadViewOptions.selectedMarker,
-        };
-      });
-    }
     case 'CHANGE_SELECTED_FUNC_STACK': {
       const { selectedFuncStack, threadIndex } = action;
       const expandedFuncStacks = state[threadIndex].expandedFuncStacks.slice();
@@ -191,14 +119,6 @@ function viewOptionsPerThread(state: ThreadViewOptions[] = [], action: Action) {
         ...state.slice(threadIndex + 1),
       ];
     }
-    case 'CHANGE_SELECTED_MARKER': {
-      const { threadIndex, selectedMarker } = action;
-      return [
-        ...state.slice(0, threadIndex),
-        Object.assign({}, state[threadIndex], { selectedMarker }),
-        ...state.slice(threadIndex + 1),
-      ];
-    }
     case 'ADD_CALL_TREE_FILTER': {
       const { threadIndex, filter } = action;
       const expandedFuncStacks = state[threadIndex].expandedFuncStacks.map(fs => funcStackAfterCallTreeFilter(fs, filter));
@@ -208,23 +128,6 @@ function viewOptionsPerThread(state: ThreadViewOptions[] = [], action: Action) {
         Object.assign({}, state[threadIndex], { selectedFuncStack, expandedFuncStacks }),
         ...state.slice(threadIndex + 1),
       ];
-    }
-    default:
-      return state;
-  }
-}
-
-function waitingForLibs(state: Set<RequestedLib> = new Set(), action: Action) {
-  switch (action.type) {
-    case 'REQUESTING_SYMBOL_TABLE': {
-      const newState = new Set(state);
-      newState.add(action.requestedLib);
-      return newState;
-    }
-    case 'RECEIVED_SYMBOL_TABLE_REPLY': {
-      const newState = new Set(state);
-      newState.delete(action.requestedLib);
-      return newState;
     }
     default:
       return state;
@@ -243,7 +146,6 @@ function selection(state: ProfileSelection = { hasSelection: false, isModifying:
 function scrollToSelectionGeneration(state: number = 0, action: Action) {
   switch (action.type) {
     case 'CHANGE_INVERT_CALLSTACK':
-    case 'CHANGE_JS_ONLY':
     case 'CHANGE_SELECTED_FUNC_STACK':
     case 'CHANGE_SELECTED_THREAD':
       return state + 1;
@@ -252,32 +154,19 @@ function scrollToSelectionGeneration(state: number = 0, action: Action) {
   }
 }
 
-function rootRange(state: StartEndRange = { start: 0, end: 1 }, action: Action) {
+function rootRange(state: StartEndRange = { start: '00000101', end: '00000102' }, action: Action) {
   switch (action.type) {
-    case 'RECEIVE_PROFILE_FROM_ADDON':
-    case 'RECEIVE_PROFILE_FROM_WEB':
-    case 'RECEIVE_PROFILE_FROM_FILE':
+    case 'RECEIVE_PROFILE_FROM_TELEMETRY':
       return ProfileData.getTimeRangeIncludingAllThreads(action.profile);
     default:
       return state;
   }
 }
 
-function zeroAt(state: Milliseconds = 0, action: Action) {
+function zeroAt(state: string = '00000101', action: Action) {
   switch (action.type) {
-    case 'RECEIVE_PROFILE_FROM_ADDON':
-    case 'RECEIVE_PROFILE_FROM_WEB':
-    case 'RECEIVE_PROFILE_FROM_FILE':
+    case 'RECEIVE_PROFILE_FROM_TELEMETRY':
       return ProfileData.getTimeRangeIncludingAllThreads(action.profile).start;
-    default:
-      return state;
-  }
-}
-
-function tabOrder(state: number[] = [0, 1, 2, 3, 4, 5], action: Action) {
-  switch (action.type) {
-    case 'CHANGE_TAB_ORDER':
-      return action.tabOrder;
     default:
       return state;
   }
@@ -286,9 +175,8 @@ function tabOrder(state: number[] = [0, 1, 2, 3, 4, 5], action: Action) {
 const profileViewReducer: Reducer<ProfileViewState> = combineReducers({
   viewOptions: combineReducers({
     perThread: viewOptionsPerThread,
-    threadOrder, symbolicationStatus, waitingForLibs,
+    threadOrder,
     selection, scrollToSelectionGeneration, rootRange, zeroAt,
-    tabOrder,
   }),
   profile,
 });
@@ -331,43 +219,25 @@ export const getDisplayRange = createSelector(
   }
 );
 
-export const getTasksByThread = createSelector(
-  (state: State) => getProfileTaskTracerData(state).taskTable,
-  (state: State) => getProfileTaskTracerData(state).threadTable,
-  TaskTracerTools.getTasksByThread
-);
-
 /**
  * Profile
  */
 export const getProfile = (state: State): Profile => getProfileView(state).profile;
-export const getProfileInterval = (state: State): Milliseconds => getProfile(state).meta.interval;
 export const getThreads = (state: State): Thread[] => getProfile(state).threads;
 export const getThreadNames = (state: State): string[] => getProfile(state).threads.map(t => t.name);
-export const getProfileTaskTracerData = (state: State): TaskTracer => getProfile(state).tasktracer;
 
 export type SelectorsForThread = {
   getThread: State => Thread,
-  getFriendlyThreadName: State => string,
-  getThreadProcessDetails: State => string,
   getViewOptions: State => ThreadViewOptions,
   getCallTreeFilters: State => CallTreeFilter[],
   getCallTreeFilterLabels: State => string[],
   getRangeFilteredThread: State => Thread,
-  getJankInstances: State => TracingMarker[],
-  getTracingMarkers: State => TracingMarker[],
-  getRangeSelectionFilteredTracingMarkers: State => TracingMarker[],
   getFilteredThread: State => Thread,
   getRangeSelectionFilteredThread: State => Thread,
   getFuncStackInfo: State => FuncStackInfo,
   getSelectedFuncStack: State => IndexIntoFuncStackTable,
   getExpandedFuncStacks: State => IndexIntoFuncStackTable[],
   getCallTree: State => ProfileTree.ProfileTreeClass,
-  getFilteredThreadForFlameChart: State => Thread,
-  getFuncStackInfoOfFilteredThreadForFlameChart: State => FuncStackInfo,
-  getFuncStackMaxDepthForFlameChart: State => number,
-  getStackTimingByDepthForFlameChart: State => StackTiming.StackTimingByDepth,
-  getLeafCategoryStackTimingForFlameChart: State => StackTiming.StackTimingByDepth,
 };
 
 const selectorsForThreads: { [key: ThreadIndex]: SelectorsForThread } = {};
@@ -377,18 +247,8 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
     const getThread = (state: State): Thread => getProfile(state).threads[threadIndex];
     const getViewOptions = (state: State): ThreadViewOptions => getProfileViewOptions(state).perThread[threadIndex];
     const getCallTreeFilters = (state: State): CallTreeFilter[] => URLState.getCallTreeFilters(state, threadIndex);
-    const getFriendlyThreadName = createSelector(
-      getThreads,
-      getThread,
-      ProfileData.getFriendlyThreadName
-    );
-    const getThreadProcessDetails = createSelector(
-      getThread,
-      ProfileData.getThreadProcessDetails
-    );
     const getCallTreeFilterLabels: (state: State) => string[] = createSelector(
       getThread,
-      getFriendlyThreadName,
       getCallTreeFilters,
       CallTreeFilters.getCallTreeFilterLabels
     );
@@ -398,27 +258,6 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
       (thread, range): Thread => {
         const { start, end } = range;
         return ProfileData.filterThreadToRange(thread, start, end);
-      }
-    );
-    const _getRangeFilteredThreadSamples = createSelector(
-      getRangeFilteredThread,
-      (thread): SamplesTable => thread.samples
-    );
-    const getJankInstances = createSelector(
-      _getRangeFilteredThreadSamples,
-      (state: State): string => getThread(state).processType,
-      (samples, processType): TracingMarker[] => ProfileData.getJankInstances(samples, processType, 50)
-    );
-    const getTracingMarkers = createSelector(
-      getThread,
-      ProfileData.getTracingMarkers
-    );
-    const getRangeSelectionFilteredTracingMarkers = createSelector(
-      getTracingMarkers,
-      getDisplayRange,
-      (markers, range): TracingMarker[] => {
-        const { start, end } = range;
-        return ProfileData.filterTracingMarkersToRange(markers, start, end);
       }
     );
     const _getRangeAndCallTreeFilteredThread = createSelector(
@@ -438,13 +277,8 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
         return result;
       }
     );
-    const _getImplementationFilteredThread = createSelector(
-      _getRangeAndCallTreeFilteredThread,
-      URLState.getImplementationFilter,
-      ProfileData.filterThreadByImplementation
-    );
     const _getImplementationAndSearchFilteredThread = createSelector(
-      _getImplementationFilteredThread,
+      _getRangeAndCallTreeFilteredThread,
       URLState.getSearchString,
       (thread, searchString): Thread => {
         return ProfileData.filterThreadToSearchString(thread, searchString);
@@ -470,8 +304,8 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
     );
     const getFuncStackInfo = createSelector(
       getFilteredThread,
-      ({stackTable, frameTable, funcTable}: Thread): FuncStackInfo => {
-        return ProfileData.getFuncStackInfo(stackTable, frameTable, funcTable);
+      ({stackTable, funcTable}: Thread): FuncStackInfo => {
+        return ProfileData.getFuncStackInfo(stackTable, funcTable);
       }
     );
     const _getSelectedFuncStackAsFuncArray = createSelector(
@@ -498,65 +332,9 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
     );
     const getCallTree = createSelector(
       getRangeSelectionFilteredThread,
-      getProfileInterval,
       getFuncStackInfo,
       URLState.getImplementationFilter,
       ProfileTree.getCallTree
-    );
-
-    // The selectors below diverge from the thread filtering that's done above;
-    // they respect the "hidePlatformDetails" setting instead of the "jsOnly"
-    // setting. This type of filtering is needed for the flame chart.
-    // This divergence is hopefully temporary, as we figure out how to filter
-    // out unneeded detail from stacks in a way that satisfy both the flame
-    // chart and the call tree.
-    const getFilteredThreadForFlameChart = createSelector(
-      getRangeFilteredThread,
-      URLState.getHidePlatformDetails,
-      URLState.getInvertCallstack,
-      URLState.getSearchString,
-      (
-        thread: Thread,
-        shouldHidePlatformDetails: boolean,
-        shouldInvertCallstack: boolean,
-        searchString: string
-      ): Thread => {
-        // Unlike for the call tree filtered profile, the individual steps of
-        // this filtering are not memoized. I hope it's not too bad.
-        let filteredThread = thread;
-        filteredThread = ProfileData.filterThreadToSearchString(filteredThread, searchString);
-        if (shouldHidePlatformDetails) {
-          filteredThread = ProfileData.collapsePlatformStackFrames(filteredThread);
-        }
-        if (shouldInvertCallstack) {
-          filteredThread = ProfileData.invertCallstack(filteredThread);
-        }
-        return filteredThread;
-      }
-    );
-    const getFuncStackInfoOfFilteredThreadForFlameChart = createSelector(
-      getFilteredThreadForFlameChart,
-      ({stackTable, frameTable, funcTable}): FuncStackInfo => {
-        return ProfileData.getFuncStackInfo(stackTable, frameTable, funcTable);
-      }
-    );
-    const getFuncStackMaxDepthForFlameChart = createSelector(
-      getFilteredThreadForFlameChart,
-      getFuncStackInfoOfFilteredThreadForFlameChart,
-      StackTiming.computeFuncStackMaxDepth
-    );
-    const getStackTimingByDepthForFlameChart = createSelector(
-      getFilteredThreadForFlameChart,
-      getFuncStackInfoOfFilteredThreadForFlameChart,
-      getFuncStackMaxDepthForFlameChart,
-      getProfileInterval,
-      StackTiming.getStackTimingByDepth
-    );
-    const getLeafCategoryStackTimingForFlameChart = createSelector(
-      getFilteredThreadForFlameChart,
-      getProfileInterval,
-      getCategoryColorStrategy,
-      StackTiming.getLeafCategoryStackTiming
     );
 
     selectorsForThreads[threadIndex] = {
@@ -565,22 +343,12 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
       getCallTreeFilters,
       getCallTreeFilterLabels,
       getRangeFilteredThread,
-      getJankInstances,
-      getTracingMarkers,
-      getRangeSelectionFilteredTracingMarkers,
       getFilteredThread,
       getRangeSelectionFilteredThread,
       getFuncStackInfo,
       getSelectedFuncStack,
       getExpandedFuncStacks,
       getCallTree,
-      getFilteredThreadForFlameChart,
-      getFuncStackInfoOfFilteredThreadForFlameChart,
-      getFuncStackMaxDepthForFlameChart,
-      getStackTimingByDepthForFlameChart,
-      getLeafCategoryStackTimingForFlameChart,
-      getFriendlyThreadName,
-      getThreadProcessDetails,
     };
   }
   return selectorsForThreads[threadIndex];

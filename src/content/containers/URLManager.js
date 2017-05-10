@@ -14,14 +14,13 @@ type Props = {
   isURLSetupDone: boolean,
   updateURLState: string => void,
   urlSetupDone: void => void,
-  show404: string => void,
 };
 
 class URLManager extends Component {
   props: Props;
 
   _updateState() {
-    const { updateURLState, stateFromCurrentLocation, show404 } = this.props;
+    const { updateURLState, stateFromCurrentLocation } = this.props;
     if (window.history.state) {
       updateURLState(window.history.state);
     } else {
@@ -30,7 +29,6 @@ class URLManager extends Component {
         updateURLState(urlState);
       } catch (e) {
         console.error(e);
-        show404(window.location.pathname + window.location.search);
       }
     }
   }
@@ -68,7 +66,6 @@ URLManager.propTypes = {
   isURLSetupDone: PropTypes.bool.isRequired,
   updateURLState: PropTypes.func.isRequired,
   urlSetupDone: PropTypes.func.isRequired,
-  show404: PropTypes.func.isRequired,
 };
 
 export default connect(state => ({
@@ -77,5 +74,4 @@ export default connect(state => ({
 }), (dispatch: Dispatch) => ({
   updateURLState: urlState => dispatch({ type: '@@urlenhancer/updateURLState', urlState }),
   urlSetupDone: () => dispatch({ type: '@@urlenhancer/urlSetupDone' }),
-  show404: url => dispatch({ type: 'FILE_NOT_FOUND', url }),
 }))(URLManager);

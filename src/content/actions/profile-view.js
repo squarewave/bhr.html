@@ -2,7 +2,7 @@
 import type {
   Action, ThunkAction, ProfileSelection, CallTreeFilter, ImplementationFilter,
 } from './types';
-import type { Thread, ThreadIndex, IndexIntoFuncTable, IndexIntoMarkersTable } from '../../common/types/profile';
+import type { Thread, ThreadIndex, IndexIntoFuncTable, } from '../../common/types/profile';
 
 /**
  * The actions that pertain to changing the view on the profile, including searching
@@ -62,16 +62,6 @@ export function changeExpandedFuncStacks(
   return {
     type: 'CHANGE_EXPANDED_FUNC_STACKS',
     threadIndex, expandedFuncStacks,
-  };
-}
-
-export function changeSelectedMarker(
-  threadIndex: ThreadIndex,
-  selectedMarker: IndexIntoMarkersTable | -1
-): Action {
-  return {
-    type: 'CHANGE_SELECTED_MARKER',
-    selectedMarker, threadIndex,
   };
 }
 

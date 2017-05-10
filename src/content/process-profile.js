@@ -3,7 +3,6 @@ import { UniqueStringArray } from './unique-string-array';
 import { resourceTypes } from './profile-data';
 import { provideHostSide } from './promise-worker';
 import { CURRENT_VERSION, upgradeProcessedProfileToCurrentVersion, isProcessedProfile } from './processed-profile-versioning';
-import { upgradeGeckoProfileToCurrentVersion } from './gecko-profile-versioning';
 import { isOldCleopatraFormat, convertOldCleopatraProfile } from './old-cleopatra-profile-format';
 import { getEmptyTaskTracerData } from './task-tracer';
 
