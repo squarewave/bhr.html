@@ -13,7 +13,7 @@ import type {
   IndexIntoFuncTable,
 } from '../../common/types/profile';
 import type { FuncStackInfo, IndexIntoFuncStackTable } from '../../common/types/profile-derived';
-import type { Milliseconds, StartEndRange } from '../../common/types/units';
+import type { Days, StartEndRange } from '../../common/types/units';
 import type { Action, CallTreeFilter, ProfileSelection } from '../actions/types';
 import type {
   State,
@@ -154,7 +154,7 @@ function scrollToSelectionGeneration(state: number = 0, action: Action) {
   }
 }
 
-function rootRange(state: StartEndRange = { start: '00000101', end: '00000102' }, action: Action) {
+function rootRange(state: StartEndRange = { start: 0, end: 1 }, action: Action) {
   switch (action.type) {
     case 'RECEIVE_PROFILE_FROM_TELEMETRY':
       return ProfileData.getTimeRangeIncludingAllThreads(action.profile);
@@ -163,7 +163,7 @@ function rootRange(state: StartEndRange = { start: '00000101', end: '00000102' }
   }
 }
 
-function zeroAt(state: string = '00000101', action: Action) {
+function zeroAt(state: Days = 0, action: Action) {
   switch (action.type) {
     case 'RECEIVE_PROFILE_FROM_TELEMETRY':
       return ProfileData.getTimeRangeIncludingAllThreads(action.profile).start;
@@ -228,6 +228,7 @@ export const getThreadNames = (state: State): string[] => getProfile(state).thre
 
 export type SelectorsForThread = {
   getThread: State => Thread,
+  getFriendlyThreadName: State => string,
   getViewOptions: State => ThreadViewOptions,
   getCallTreeFilters: State => CallTreeFilter[],
   getCallTreeFilterLabels: State => string[],
@@ -247,6 +248,11 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
     const getThread = (state: State): Thread => getProfile(state).threads[threadIndex];
     const getViewOptions = (state: State): ThreadViewOptions => getProfileViewOptions(state).perThread[threadIndex];
     const getCallTreeFilters = (state: State): CallTreeFilter[] => URLState.getCallTreeFilters(state, threadIndex);
+    const getFriendlyThreadName = createSelector(
+      getThreads,
+      getThread,
+      ProfileData.getFriendlyThreadName
+    );
     const getCallTreeFilterLabels: (state: State) => string[] = createSelector(
       getThread,
       getCallTreeFilters,
@@ -339,6 +345,7 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
 
     selectorsForThreads[threadIndex] = {
       getThread,
+      getFriendlyThreadName,
       getViewOptions,
       getCallTreeFilters,
       getCallTreeFilterLabels,

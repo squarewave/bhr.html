@@ -43,12 +43,12 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
           let stackHangMs = new Float32Array(thread.stackTable.length);
           let stackHangCount = new Int32Array(thread.stackTable.length);
 
-          for (let i = 0; i < d.stack_hang_ms.length; i++) {
-            stackHangMs[i] = d.stack_hang_ms[i] || 0;
+          for (let i = 0; i < d.stackHangMs.length; i++) {
+            stackHangMs[i] = d.stackHangMs[i] || 0;
           }
 
-          for (let i = 0; i < d.stack_hang_count.length; i++) {
-            stackHangCount[i] = d.stack_hang_count[i] || 0;
+          for (let i = 0; i < d.stackHangCount.length; i++) {
+            stackHangCount[i] = d.stackHangCount[i] || 0;
           }
 
           return  {

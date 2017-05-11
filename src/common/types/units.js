@@ -1,4 +1,4 @@
-export type Milliseconds = number;
+export type Days = number;
 
 /**
  * The pixels represented by the px unit of CSS, e.g. the height of a div by setting the
@@ -26,6 +26,6 @@ export type HorizontalViewport = {
   left: UnitIntervalOfProfileRange,
   right: UnitIntervalOfProfileRange,
   length: UnitIntervalOfProfileRange,
-}
+};
 
-export type StartEndRange = { start: Milliseconds, end: Milliseconds };
+export type StartEndRange = { start: Days, end: Days };

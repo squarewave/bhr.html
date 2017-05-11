@@ -17,31 +17,31 @@ class TimeRuler extends Component {
 
   _getNotches() {
     if (this.props.width === 0) {
-      return { notches: [], decimalPlaces: 0 };
+      return [];
     }
 
     const { zeroAt, rangeStart, rangeEnd, width } = this.props;
-    const pixelsPerMilliSecond = width / (rangeEnd - rangeStart);
+    const pixelsPerDay = width / (rangeEnd - rangeStart);
     const minimumNotchWidth = 55; // pixels
-    const { number: notchTime, exponent } = this._findNiceNumberGreaterOrEqualTo(minimumNotchWidth / pixelsPerMilliSecond);
+    const notchTime = 1;
     const firstNotchIndex = Math.ceil((rangeStart - zeroAt) / notchTime);
     const lastNotchIndex = Math.floor((rangeEnd - zeroAt) / notchTime);
     const notches = [];
     for (let i = firstNotchIndex; i <= lastNotchIndex; i++) {
-      notches.push({ time: i * notchTime / 1000, pos: (i * notchTime - (rangeStart - zeroAt)) * pixelsPerMilliSecond});
+      notches.push({ time: i * notchTime, pos: (i * notchTime - (rangeStart - zeroAt)) * pixelsPerDay});
     }
-    return { notches, decimalPlaces: Math.max(0, -(exponent - 3)) };
+    return notches;
   }
 
   render() {
     const { className } = this.props;
-    const { notches, decimalPlaces } = this._getNotches();
+    const notches = this._getNotches();
     return (<div className={className}>
       <ol className='timeRulerContainer'>
         {
           notches.map(({ time, pos }, i) => (
             <li className='timeRulerNotch' key={i} style={{left: `${pos}px`}}>
-              <span className='timeRulerNotchText'>{`${time.toFixed(decimalPlaces)}s`}</span>
+              <span className='timeRulerNotchText'>{time}</span>
             </li>
           ))
         }

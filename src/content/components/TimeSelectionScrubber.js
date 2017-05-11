@@ -35,7 +35,7 @@ class TimeSelectionScrubberImpl extends PureComponent {
     // browsers.
     e.preventDefault();
 
-    const { rangeStart, rangeEnd, minSelectionStartWidth } = this.props;
+    const { rangeStart, rangeEnd } = this.props;
     const mouseDownTime = (e.pageX - r.left) / r.width * (rangeEnd - rangeStart) + rangeStart;
 
     let isRangeSelecting = false;
@@ -44,7 +44,7 @@ class TimeSelectionScrubberImpl extends PureComponent {
       const mouseMoveTime = (e.pageX - r.left) / r.width * (rangeEnd - rangeStart) + rangeStart;
       const selectionStart = clamp(Math.min(mouseDownTime, mouseMoveTime), rangeStart, rangeEnd);
       const selectionEnd = clamp(Math.max(mouseDownTime, mouseMoveTime), rangeStart, rangeEnd);
-      if (isRangeSelecting || selectionEnd - selectionStart >= minSelectionStartWidth) {
+      if (isRangeSelecting || selectionEnd - selectionStart >= 1) {
         isRangeSelecting = true;
         this.props.onSelectionChange({
           hasSelection: true,
@@ -161,7 +161,6 @@ TimeSelectionScrubberImpl.propTypes = {
   zeroAt: PropTypes.number.isRequired,
   rangeStart: PropTypes.number.isRequired,
   rangeEnd: PropTypes.number.isRequired,
-  minSelectionStartWidth: PropTypes.number.isRequired,
   hasSelection: PropTypes.bool.isRequired,
   isModifying: PropTypes.bool.isRequired,
   selectionStart: PropTypes.number,

@@ -1,6 +1,5 @@
 // @flow
 
-import type { Milliseconds } from './units';
 import type { UniqueStringArray } from '../../content/unique-string-array';
 export type IndexIntoStackTable = number;
 export type IndexIntoStringTable = number;
@@ -39,6 +38,7 @@ export type Lib = {
   breakpadId: string,
   end: number,
   name: string,
+  debugName: string,
   offset: number,
   pdbName: string,
   start: number,

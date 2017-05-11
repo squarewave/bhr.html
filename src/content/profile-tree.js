@@ -4,10 +4,10 @@ import { getDateFuncStacks } from './profile-data';
 import { UniqueStringArray } from './unique-string-array';
 import type { Thread, FuncTable, Lib, IndexIntoFuncTable } from '../common/types/profile';
 import type { FuncStackTable, IndexIntoFuncStackTable, FuncStackInfo, Node } from '../common/types/profile-derived';
-import type { Milliseconds } from '../common/types/units';
+import type { Days } from '../common/types/units';
 
 type FuncStackChildren = IndexIntoFuncStackTable[];
-type FuncStackTimes = { selfTime: Milliseconds, totalTime: Milliseconds };
+type FuncStackTimes = { selfTime: Days, totalTime: Days };
 
 function extractFaviconFromLibname(libname: string): string | null {
   const url = new URL('/favicon.ico', libname);

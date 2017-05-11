@@ -89,26 +89,18 @@ export function getDateFuncStacks(allDates: AllDatesTable, stackIndexToFuncStack
 
 function getTimeRangeForThread(thread: Thread) {
   if (thread.dates.length === 0) {
-    return { start: "99991231", end: "00000101" };
+    return { start: 0, end: 1 };
   }
-  return { start: thread.dates[0].date, end: thread.dates[thread.dates.length - 1].date };
+  return { start: 0, end: thread.dates.length - 1 };
 }
 
 export function getTimeRangeIncludingAllThreads(profile: Profile) {
-  const completeRange = { start: "99991231", end: "00000101" };
-
-  function min(a, b) {
-    return a < b ? a : b;
-  }
-
-  function max(a, b) {
-    return a < b ? b : a;
-  }
+  const completeRange = { start: Infinity, end: -Infinity };
 
   profile.threads.forEach(thread => {
     const threadRange = getTimeRangeForThread(thread);
-    completeRange.start = min(completeRange.start, threadRange.start);
-    completeRange.end = max(completeRange.end, threadRange.end);
+    completeRange.start = Math.min(completeRange.start, threadRange.start);
+    completeRange.end = Math.max(completeRange.end, threadRange.end);
   });
   return completeRange;
 }
@@ -422,7 +414,7 @@ export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIn
   });
 }
 
-export function filterThreadToRange(thread: Thread, rangeStart: string, rangeEnd: string) {
+export function filterThreadToRange(thread: Thread, rangeStart: number, rangeEnd: number) {
   const { dates, stackTable } = thread;
   let allDates = {
     length: stackTable.length,
@@ -430,7 +422,7 @@ export function filterThreadToRange(thread: Thread, rangeStart: string, rangeEnd
     stackHangCount: new Int32Array(stackTable.length),
   };
 
-  let newDates = dates.filter(d => d.date >= rangeStart && d.date < rangeEnd);
+  let newDates = dates.slice(rangeStart, rangeEnd);
   for (let date of newDates) {
     for (let i = 0; i < stackTable.length; i++) {
       allDates.stackHangMs[i] += date.stackHangMs[i];
@@ -462,6 +454,23 @@ export function getFuncStackFromFuncArray(funcArray: IndexIntoFuncTable[], funcS
     fs = nextFS;
   }
   return fs;
+}
+
+export function getFriendlyThreadName(threads: Thread[], thread: Thread): string {
+  let label;
+  switch (thread.name) {
+    case 'Gecko':
+      label = 'Main Thread';
+      break;
+    case 'Gecko_Child':
+      label = 'Content';
+      break;
+  }
+
+  if (!label) {
+    label = thread.name;
+  }
+  return label;
 }
 
 export function getStackAsFuncArray(funcStackIndex: IndexIntoFuncStackTable, funcStackTable: FuncStackTable): IndexIntoFuncTable[] {

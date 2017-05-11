@@ -16,7 +16,7 @@
     "flow-coverage": "flow-coverage-report -i 'src/content/reducers/**/*.js' -t html -t text",
     "flow-generate-libdefs": "flow-typed install",
     "publish": "rimraf public_html && cp -r dist public_html",
-    "serve-static": "ws -d dist/ -s index.html -p 4242",
+    "serve-static": "ws -d dist/ -s index.html -p 4216",
     "start": "mkdir -p dist && cp res/zee-worker.js dist/ && NODE_ENV=development node server.js",
     "start-no-hot": "npm run start",
     "start-prod": "npm run build-prod && npm run serve-static",

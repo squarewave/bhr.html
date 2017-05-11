@@ -42,21 +42,20 @@ class ProfileThreadHeaderBar extends Component {
 
   render() {
     const {
-      thread, interval, rangeStart, rangeEnd, funcStackInfo, selectedFuncStack,
-      isSelected, style, threadName, processDetails,
+      thread, rangeStart, rangeEnd, funcStackInfo, selectedFuncStack,
+      isSelected, style, threadName,
     } = this.props;
 
     return (
       <li className={'profileThreadHeaderBar' + (isSelected ? ' selected' : '')} style={style}>
         <ContextMenuTrigger id={'ProfileThreadHeaderContextMenu'}
                             renderTag='h1'
-                            title={processDetails}
+                            title={threadName}
                             onMouseDown={this._onLabelMouseDown}
                             attributes={{ className: 'grippy' }}>
           {threadName}
         </ContextMenuTrigger>
-        <ThreadStackGraph interval={interval}
-                          thread={thread}
+        <ThreadStackGraph thread={thread}
                           className='threadStackGraph'
                           rangeStart={rangeStart}
                           rangeEnd={rangeEnd}
@@ -76,14 +75,12 @@ ProfileThreadHeaderBar.propTypes = {
   funcStackInfo: PropTypes.object.isRequired,
   changeSelectedThread: PropTypes.func.isRequired,
   changeSelectedFuncStack: PropTypes.func.isRequired,
-  interval: PropTypes.number.isRequired,
   rangeStart: PropTypes.number.isRequired,
   rangeEnd: PropTypes.number.isRequired,
   selectedFuncStack: PropTypes.number.isRequired,
   isSelected: PropTypes.bool.isRequired,
   style: PropTypes.object,
   threadName: PropTypes.string,
-  processDetails: PropTypes.string,
 };
 
 export default connect((state, props) => {
@@ -93,7 +90,6 @@ export default connect((state, props) => {
   return {
     thread: selectors.getFilteredThread(state),
     threadName: selectors.getFriendlyThreadName(state),
-    processDetails: selectors.getThreadProcessDetails(state),
     funcStackInfo: selectors.getFuncStackInfo(state),
     selectedFuncStack: threadIndex === selectedThread ? selectors.getSelectedFuncStack(state) : -1,
     isSelected: threadIndex === selectedThread,

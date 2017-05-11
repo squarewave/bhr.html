@@ -3,6 +3,8 @@ import { connect } from 'react-redux';
 import ProfileCallTreeView from '../containers/ProfileCallTreeView';
 import actions from '../actions';
 import ProfileCallTreeContextMenu from '../containers/ProfileCallTreeContextMenu';
+import ProfileFilterNavigator from '../containers/ProfileFilterNavigator';
+import ProfileViewerHeader from '../containers/ProfileViewerHeader';
 
 class ProfileViewer extends PureComponent {
   constructor(props) {
@@ -15,6 +17,10 @@ class ProfileViewer extends PureComponent {
     } = this.props;
     return (
       <div className={className}>
+        <div className={`${className}TopBar`}>
+          <ProfileFilterNavigator />
+        </div>
+        <ProfileViewerHeader />
         <ProfileCallTreeView />
         <ProfileCallTreeContextMenu />
       </div>

@@ -4,7 +4,7 @@ import type {
   Action, ExpandedSet, CallTreeFiltersPerThread, ProfileSelection,
   ImplementationFilter,
 } from '../actions/types';
-import type { Milliseconds, StartEndRange } from '../../common/types/units';
+import type { Days, StartEndRange } from '../../common/types/units';
 import type { IndexIntoFuncTable, Profile, ThreadIndex } from '../../common/types/profile';
 
 export type Reducer<T> = (T, Action) => T;
@@ -21,7 +21,7 @@ export type ProfileViewState = {
     selection: ProfileSelection,
     scrollToSelectionGeneration: number,
     rootRange: StartEndRange,
-    zeroAt: Milliseconds,
+    zeroAt: Days,
   },
   profile: Profile,
 };
