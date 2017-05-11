@@ -38,24 +38,32 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
       return res.json();
     }).then(profile => {
       for (let thread of profile.threads) {
-        thread.dates.sort((lhs, rhs) => lhs - rhs);
+        thread.dates.sort((lhs, rhs) => lhs.date - rhs.date);
         thread.dates = thread.dates.map(d => {
           let stackHangMs = new Float32Array(thread.stackTable.length);
           let stackHangCount = new Int32Array(thread.stackTable.length);
+          let totalStackHangMs = new Float32Array(thread.stackTable.length);
+          let totalStackHangCount = new Int32Array(thread.stackTable.length);
 
-          for (let i = 0; i < d.stackHangMs.length; i++) {
+          for (let i = thread.stackTable.length - 1; i >= 0; i--) {
             stackHangMs[i] = d.stackHangMs[i] || 0;
-          }
-
-          for (let i = 0; i < d.stackHangCount.length; i++) {
             stackHangCount[i] = d.stackHangCount[i] || 0;
+            totalStackHangMs[i] += stackHangMs[i];
+            totalStackHangCount[i] += stackHangCount[i];
+            const prefix = thread.stackTable.prefix[i];
+            if (prefix !== null) {
+              totalStackHangMs[prefix] += totalStackHangMs[i];
+              totalStackHangCount[prefix] += totalStackHangCount[i];
+            }
           }
 
           return  {
             date: d.date,
             length: thread.stackTable.length,
             stackHangMs,
-            stackHangCount, 
+            stackHangCount,
+            totalStackHangCount,
+            totalStackHangMs,
           };
         });
 

@@ -44,56 +44,38 @@ class ThreadStackGraph extends Component {
   }
 
   drawCanvas(c) {
-    return;
     const { thread, rangeStart, rangeEnd, funcStackInfo, selectedFuncStack } = this.props;
+    const { dates } = thread;
 
     const devicePixelRatio = c.ownerDocument ? c.ownerDocument.defaultView.devicePixelRatio : 1;
     const r = c.getBoundingClientRect();
     c.width = Math.round(r.width * devicePixelRatio);
     c.height = Math.round(r.height * devicePixelRatio);
     const ctx = c.getContext('2d');
-    let maxDepth = 0;
-    const { funcStackTable, stackIndexToFuncStackIndex } = funcStackInfo;
-    const sampleFuncStacks = getSampleFuncStacks(thread.samples, stackIndexToFuncStackIndex);
-    for (let i = 0; i < funcStackTable.depth.length; i++) {
-      if (funcStackTable.depth[i] > maxDepth) {
-        maxDepth = funcStackTable.depth[i];
-      }
-    }
     const range = [rangeStart, rangeEnd];
     const rangeLength = range[1] - range[0];
-    const xPixelsPerDay = c.width / rangeLength;
-    const yPixelsPerDepth = c.height / maxDepth;
-    const trueIntervalPixelWidth = xPixelsPerDay;
-    const multiplier = trueIntervalPixelWidth < 2.0 ? 1.2 : 1.0;
-    const drawnIntervalWidth = Math.max(0.8, trueIntervalPixelWidth * multiplier);
-    let selectedFuncStackDepth = 0;
-    if (selectedFuncStack !== -1 && selectedFuncStack !== null) {
-      selectedFuncStackDepth = funcStackTable.depth[selectedFuncStack];
-    }
-    function hasSelectedFuncStackPrefix(funcStackPrefix) {
-      let funcStack = funcStackPrefix;
-      for (let depth = funcStackTable.depth[funcStack];
-           depth > selectedFuncStackDepth; depth--) {
-        funcStack = funcStackTable.prefix[funcStack];
+
+    let maxHangMs = 0;
+    for (let i = 0; i < dates.length; i++) {
+      if (dates[i].totalStackHangMs[selectedFuncStack] > maxHangMs) {
+        maxHangMs = dates[i].totalStackHangMs[selectedFuncStack];
       }
-      return funcStack === selectedFuncStack;
-    }
-    for (let i = 0; i < sampleFuncStacks.length; i++) {
-      const sampleTime = thread.samples.time[i];
-      if (sampleTime + drawnIntervalWidth / xPixelsPerDay < range[0] || sampleTime > range[1]) {
-        continue;
-      }
-      const funcStack = sampleFuncStacks[i];
-      const isHighlighted = hasSelectedFuncStackPrefix(funcStack);
-      const sampleHeight = funcStackTable.depth[funcStack] * yPixelsPerDepth;
-      const startY = c.height - sampleHeight;
-      // const responsiveness = thread.samples.responsiveness[i];
-      // const jankSeverity = Math.min(1, responsiveness / 100);
-      ctx.fillStyle = isHighlighted ? '#38445f' : '#7990c8';
-      ctx.fillRect((sampleTime - range[0]) * xPixelsPerDay, startY, drawnIntervalWidth, sampleHeight);
     }
 
+    const xPixelsPerDay = c.width / rangeLength;
+    const yPixelsPerHangMs = c.height / maxHangMs;
+
+    console.log(selectedFuncStack);
+
+    for (let i = rangeStart; i < rangeEnd; i++) {
+      const date = dates[i];
+      console.log(date.totalStackHangMs[selectedFuncStack]);
+      const dateHeight = date.totalStackHangMs[selectedFuncStack] * yPixelsPerHangMs;
+      const startY = c.height - dateHeight;
+      ctx.fillStyle = '#7990c8';
+      ctx.fillRect((i - range[0]) * xPixelsPerDay, startY, xPixelsPerDay, dateHeight);
+      console.log([(i - range[0]) * xPixelsPerDay, startY, xPixelsPerDay, dateHeight]);
+    }
   }
 
   _onMouseUp(e) {
@@ -129,7 +111,7 @@ class ThreadStackGraph extends Component {
 
 ThreadStackGraph.propTypes = {
   thread: PropTypes.shape({
-    dates: PropTypes.array.isRequired,
+    allDates: PropTypes.object.isRequired,
   }).isRequired,
   rangeStart: PropTypes.number.isRequired,
   rangeEnd: PropTypes.number.isRequired,

@@ -32,6 +32,8 @@ export type DateTable = {
   length: number,
   stackHangMs: Float32Array,
   stackHangCount: Int32Array,
+  totalStackHangMs: Float32Array,
+  totalStackHangCount: Float32Array,
 };
 
 export type Lib = {

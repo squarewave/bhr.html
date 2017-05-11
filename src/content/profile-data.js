@@ -76,12 +76,16 @@ export function getDateFuncStacks(allDates: AllDatesTable, stackIndexToFuncStack
     length: allDates.length,
     stackHangMs: new Float32Array(allDates.length),
     stackHangCount: new Int32Array(allDates.length),
+    totalStackHangMs: new Float32Array(allDates.length),
+    totalStackHangCount: new Int32Array(allDates.length),
   };
 
   for (let i = 0; i < allDates.length; i++) {
     let newIndex = stackIndexToFuncStackIndex[i];
     result.stackHangMs[newIndex] += allDates.stackHangMs[i];
     result.stackHangCount[newIndex] += allDates.stackHangCount[i];
+    result.totalStackHangMs[newIndex] += allDates.totalStackHangMs[i];
+    result.totalStackHangCount[newIndex] += allDates.totalStackHangCount[i];
   }
 
   return result;
@@ -163,11 +167,15 @@ function _filterThreadByFunc(
 
     let newStackHangMs = new Float32Array(newStackTable.length);
     let newStackHangCount = new Int32Array(newStackTable.length);
+    let newTotalStackHangMs = new Float32Array(newStackTable.length);
+    let newTotalStackHangCount = new Int32Array(newStackTable.length);
     let newDates = dates.map(d => ({
       length: newStackTable.length,
       date: d.date,
       stackHangMs: new Float32Array(newStackTable.length),
       stackHangCount: new Int32Array(newStackTable.length),
+      totalStackHangMs: new Float32Array(newStackTable.length),
+      totalStackHangCount: new Int32Array(newStackTable.length),
     }));
 
     for (let i = 0; i < stackTable.length; i++) {
@@ -175,10 +183,14 @@ function _filterThreadByFunc(
       if (newIndex) {
         newStackHangMs[newIndex] += allDates.stackHangMs[i];
         newStackHangCount[newIndex] += allDates.stackHangCount[i];
+        newTotalStackHangMs[newIndex] += allDates.totalStackHangMs[i];
+        newTotalStackHangCount[newIndex] += allDates.totalStackHangCount[i];
 
         for (let j = 0; j < dates.length; j++) {
           newDates[j].stackHangMs[newIndex] += dates[j].stackHangMs[i];
+          newDates[j].totalStackHangMs[newIndex] += dates[j].totalStackHangMs[i];
           newDates[j].stackHangCount[newIndex] += dates[j].stackHangCount[i];
+          newDates[j].totalStackHangCount[newIndex] += dates[j].totalStackHangCount[i];
         }
       }
     }
@@ -188,6 +200,8 @@ function _filterThreadByFunc(
         length: newStackTable.length,
         stackHangMs: newStackHangMs,
         stackHangCount: newStackHangCount,
+        totalStackHangMs: newTotalStackHangMs,
+        totalStackHangCount: newTotalStackHangCount,
       },
       dates: newDates,
       stackTable: newStackTable,
@@ -254,10 +268,14 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
 
     return Object.assign({}, thread, {
       allDates: Object.assign({}, allDates, {
+        totalStackHangMs: allDates.totalStackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
+        totalStackHangCount: allDates.totalStackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
         stackHangMs: allDates.stackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
         stackHangCount: allDates.stackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
       }),
       dates: dates.map(d => Object.assign({}, d, {
+        totalStackHangMs: d.totalStackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
+        totalStackHangCount: d.totalStackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
         stackHangMs: d.stackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
         stackHangCount: d.stackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
       }))
@@ -314,12 +332,16 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
       length: newStackTable.length,
       stackHangMs: new Float32Array(newStackTable.length),
       stackHangCount: new Int32Array(newStackTable.length),
+      totalStackHangMs: new Float32Array(newStackTable.length),
+      totalStackHangCount: new Int32Array(newStackTable.length),
     };
     const newDates = dates.map(d => ({
       length: newStackTable.length,
       date: d.date,
       stackHangMs: new Float32Array(newStackTable.length),
       stackHangCount: new Int32Array(newStackTable.length),
+      totalStackHangMs: new Float32Array(newStackTable.length),
+      totalStackHangCount: new Int32Array(newStackTable.length),
     }));
 
     for (let i = 0; i < stackTable.length; i++) {
@@ -331,9 +353,13 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
       if (newStack !== null && newStack !== undefined) {
         newAllDates.stackHangMs[newStack] += allDates.stackHangMs[i];
         newAllDates.stackHangCount[newStack] += allDates.stackHangCount[i];
+        newAllDates.totalStackHangMs[newStack] += allDates.totalStackHangMs[i];
+        newAllDates.totalStackHangCount[newStack] += allDates.totalStackHangCount[i];
         for (let j = 0; j < dates.length; j++) {
           newDates[j].stackHangMs[newStack] += dates[j].stackHangMs[newStack];
-          newAllDates.stackHangCount[newStack] += allDates.stackHangCount[i];
+          newDates[j].stackHangCount[newStack] += dates[j].stackHangCount[i];
+          newDates[j].totalStackHangMs[newStack] += dates[j].totalStackHangMs[newStack];
+          newDates[j].totalStackHangCount[newStack] += dates[j].totalStackHangCount[i];
         }
       }
     }
@@ -382,12 +408,16 @@ export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIn
       length: stackTable.length,
       stackHangMs: new Float32Array(stackTable.length),
       stackHangCount: new Int32Array(stackTable.length),
+      totalStackHangMs: new Float32Array(stackTable.length),
+      totalStackHangCount: new Int32Array(stackTable.length),
     };
     const newDates = dates.map(d => ({
       length: stackTable.length,
       date: d.date,
       stackHangMs: new Float32Array(stackTable.length),
       stackHangCount: new Int32Array(stackTable.length),
+      totalStackHangMs: new Float32Array(stackTable.length),
+      totalStackHangCount: new Int32Array(stackTable.length),
     }));
 
     for (let i = 0; i < stackTable.length; i++) {
@@ -400,9 +430,13 @@ export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIn
       if (newStack !== null) {
         newAllDates.stackHangMs[newStack] += allDates.stackHangMs[i];
         newAllDates.stackHangCount[newStack] += allDates.stackHangCount[i];
+        newAllDates.totalStackHangMs[newStack] += allDates.totalStackHangMs[i];
+        newAllDates.totalStackHangCount[newStack] += allDates.totalStackHangCount[i];
         for (let j = 0; j < dates.length; j++) {
           newDates[j].stackHangMs[newStack] += dates[j].stackHangMs[newStack];
-          newAllDates.stackHangCount[newStack] += allDates.stackHangCount[i];
+          newDates[j].stackHangCount[newStack] += newDates[j].stackHangCount[i];
+          newDates[j].totalStackHangMs[newStack] += dates[j].totalStackHangMs[newStack];
+          newDates[j].totalStackHangCount[newStack] += newDates[j].totalStackHangCount[i];
         }
       }
     }
@@ -420,6 +454,8 @@ export function filterThreadToRange(thread: Thread, rangeStart: number, rangeEnd
     length: stackTable.length,
     stackHangMs: new Float32Array(stackTable.length),
     stackHangCount: new Int32Array(stackTable.length),
+    totalStackHangMs: new Float32Array(stackTable.length),
+    totalStackHangCount: new Int32Array(stackTable.length),
   };
 
   let newDates = dates.slice(rangeStart, rangeEnd);
@@ -427,6 +463,8 @@ export function filterThreadToRange(thread: Thread, rangeStart: number, rangeEnd
     for (let i = 0; i < stackTable.length; i++) {
       allDates.stackHangMs[i] += date.stackHangMs[i];
       allDates.stackHangCount[i] += date.stackHangCount[i];
+      allDates.totalStackHangMs[i] += date.totalStackHangMs[i];
+      allDates.totalStackHangCount[i] += date.totalStackHangCount[i];
     }
   }
 
@@ -542,6 +580,8 @@ export function invertCallstack(thread: Thread): Thread {
       date: d.date,
       stackHangMs: new Float32Array(newStackTable.length),
       stackHangCount: new Int32Array(newStackTable.length),
+      totalStackHangMs: new Float32Array(newStackTable.length),
+      totalStackHangCount: new Int32Array(newStackTable.length),
     }));
 
     for (let i = 0; i < stackTable.length; i++) {
@@ -549,10 +589,14 @@ export function invertCallstack(thread: Thread): Thread {
       if (newIndex) {
         newStackHangMs[newIndex] += allDates.stackHangMs[i];
         newStackHangCount[newIndex] += allDates.stackHangCount[i];
+        newtotalStackHangMs[newIndex] += allDates.totalStackHangMs[i];
+        newtotalStackHangCount[newIndex] += allDates.totalStackHangCount[i];
 
         for (let j = 0; j < dates.length; j++) {
           newDates[j].stackHangMs[newIndex] += dates[j].stackHangMs[i];
           newDates[j].stackHangCount[newIndex] += dates[j].stackHangCount[i];
+          newDates[j].totalStackHangMs[newIndex] += dates[j].totalStackHangMs[i];
+          newDates[j].totalStackHangCount[newIndex] += dates[j].totalStackHangCount[i];
         }
       }
     }
@@ -562,6 +606,8 @@ export function invertCallstack(thread: Thread): Thread {
         length: newStackTable.length,
         stackHangMs: newStackHangMs,
         stackHangCount: newStackHangCount,
+        totalStackHangMs: newTotalStackHangMs,
+        totalStackHangCount: newTotalStackHangCount,
       },
       dates: newDates,
       stackTable: newStackTable,
