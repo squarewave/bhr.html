@@ -9,87 +9,7 @@ import type {
   IndexIntoStringTable,
   IndexIntoStackTable,
 } from '../common/types/profile';
-import type { FuncStackTable, IndexIntoFuncStackTable } from '../common/types/profile-derived';
 import { timeCode } from '../common/time-code';
-
-/**
- * Takes the stack table and the frame table, creates a func stack table and
- * returns a map from each stack to its corresponding func stack which can be
- * used to provide funcStack information for the samples data.
- * @param  {Object} stackTable The thread's stackTable.
- * @param  {Object} frameTable The thread's frameTable.
- * @param  {Object} funcTable  The thread's funcTable.
- * @return {Object}            The funcStackTable and the stackIndexToFuncStackIndex map.
- */
-export function getFuncStackInfo(stackTable: StackTable, funcTable: FuncTable) {
-  return timeCode('getFuncStackInfo', () => {
-    const stackIndexToFuncStackIndex = new Uint32Array(stackTable.length);
-    const funcCount = funcTable.length;
-    const prefixFuncStackAndFuncToFuncStackMap = new Map(); // prefixFuncStack * funcCount + func => funcStack
-
-    // The funcStackTable components.
-    const prefix: Array<number> = [];
-    const func: Array<number> = [];
-    const depth: Array<number> = [];
-    let length = 0;
-
-    function addFuncStack(prefixIndex, funcIndex) {
-      const index = length++;
-      prefix[index] = prefixIndex;
-      func[index] = funcIndex;
-      if (prefixIndex === -1) {
-        depth[index] = 0;
-      } else {
-        depth[index] = depth[prefixIndex] + 1;
-      }
-    }
-
-    for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
-      const prefixStack = stackTable.prefix[stackIndex];
-      // assert(prefixStack === null || prefixStack < stackIndex);
-      const prefixFuncStack = (prefixStack === null) ? -1 :
-         stackIndexToFuncStackIndex[prefixStack];
-      const funcIndex = stackTable.func[stackIndex];
-      const prefixFuncStackAndFuncIndex = prefixFuncStack * funcCount + funcIndex;
-      let funcStackIndex = prefixFuncStackAndFuncToFuncStackMap.get(prefixFuncStackAndFuncIndex);
-      if (funcStackIndex === undefined) {
-        funcStackIndex = length;
-        addFuncStack(prefixFuncStack, funcIndex);
-        prefixFuncStackAndFuncToFuncStackMap.set(prefixFuncStackAndFuncIndex, funcStackIndex);
-      }
-      stackIndexToFuncStackIndex[stackIndex] = funcStackIndex;
-    }
-
-    const funcStackTable: FuncStackTable = {
-      prefix: new Int32Array(prefix),
-      func: new Int32Array(func),
-      depth,
-      length,
-    };
-
-    return { funcStackTable, stackIndexToFuncStackIndex };
-  });
-}
-
-export function getDateFuncStacks(allDates: AllDatesTable, stackIndexToFuncStackIndex: Uint32Array) {
-  let result = {
-    length: allDates.length,
-    stackHangMs: new Float32Array(allDates.length),
-    stackHangCount: new Int32Array(allDates.length),
-    totalStackHangMs: new Float32Array(allDates.length),
-    totalStackHangCount: new Int32Array(allDates.length),
-  };
-
-  for (let i = 0; i < allDates.length; i++) {
-    let newIndex = stackIndexToFuncStackIndex[i];
-    result.stackHangMs[newIndex] += allDates.stackHangMs[i];
-    result.stackHangCount[newIndex] += allDates.stackHangCount[i];
-    result.totalStackHangMs[newIndex] += allDates.totalStackHangMs[i];
-    result.totalStackHangCount[newIndex] += allDates.totalStackHangCount[i];
-  }
-
-  return result;
-}
 
 function getTimeRangeForThread(thread: Thread) {
   if (thread.dates.length === 0) {
@@ -132,8 +52,9 @@ function _filterThreadByFunc(
 
     const newStackTable = {
       length: 0,
-      func: [],
-      prefix: [],
+      func: new Int32Array(stackTable.length),
+      prefix: new Int32Array(stackTable.length),
+      depth: new Int32Array(stackTable.length),
     };
 
     const oldStackToNewStack = new Map();
@@ -141,20 +62,22 @@ function _filterThreadByFunc(
     const prefixStackAndFuncToStack = new Map(); // prefixNewStack * funcCount + func => newStackIndex
 
     function convertStack(stackIndex) {
-      if (stackIndex === null) {
-        return null;
+      if (stackIndex == -1) {
+        return -1;
       }
       let newStack = oldStackToNewStack.get(stackIndex);
       if (newStack === undefined) {
         const prefixNewStack = convertStack(stackTable.prefix[stackIndex]);
         const funcIndex = stackTable.func[stackIndex];
+        const depth = stackTable.depth[stackIndex];
         if (filter(funcIndex)) {
-          const prefixStackAndFrameIndex = (prefixNewStack === null ? -1 : prefixNewStack) * funcCount + funcIndex;
+          const prefixStackAndFrameIndex = prefixNewStack * funcCount + funcIndex;
           newStack = prefixStackAndFuncToStack.get(prefixStackAndFrameIndex);
           if (newStack === undefined) {
             newStack = newStackTable.length++;
             newStackTable.prefix[newStack] = prefixNewStack;
             newStackTable.func[newStack] = funcIndex;
+            newStackTable.depth[newStack] = depth;
           }
           oldStackToNewStack.set(stackIndex, newStack);
           prefixStackAndFuncToStack.set(prefixStackAndFrameIndex, newStack);
@@ -180,7 +103,7 @@ function _filterThreadByFunc(
 
     for (let i = 0; i < stackTable.length; i++) {
       let newIndex = convertStack(i);
-      if (newIndex) {
+      if (newIndex != -1) {
         newStackHangMs[newIndex] += allDates.stackHangMs[i];
         newStackHangCount[newIndex] += allDates.stackHangCount[i];
         newTotalStackHangMs[newIndex] += allDates.totalStackHangMs[i];
@@ -249,7 +172,7 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
 
     const stackMatchesFilterCache = new Map();
     function stackMatchesFilter(stackIndex) {
-      if (stackIndex === null) {
+      if (stackIndex === -1) {
         return false;
       }
       let result = stackMatchesFilterCache.get(stackIndex);
@@ -298,18 +221,20 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
     const prefixDepth = prefixFuncs.length;
     const stackMatches = new Int32Array(stackTable.length);
     const oldStackToNewStack = new Map();
-    oldStackToNewStack.set(null, null);
+    oldStackToNewStack.set(-1, -1);
     const newStackTable = {
       length: 0,
-      prefix: [],
-      func: [],
+      prefix: new Int32Array(),
+      func: new Int32Array(),
+      depth: new Int32Array(),
     };
     for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
       const prefix = stackTable.prefix[stackIndex];
-      const prefixMatchesUpTo = prefix !== null ? stackMatches[prefix] : 0;
+      const prefixMatchesUpTo = prefix !== -1 ? stackMatches[prefix] : 0;
       let stackMatchesUpTo = -1;
       if (prefixMatchesUpTo !== -1) {
         const func = stackTable.func[stackIndex];
+        const depth = stackTable.depth[stackIndex];
         if (prefixMatchesUpTo === prefixDepth) {
           stackMatchesUpTo = prefixDepth;
         } else {
@@ -320,8 +245,9 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
         if (stackMatchesUpTo === prefixDepth) {
           const newStackIndex = newStackTable.length++;
           const newStackPrefix = oldStackToNewStack.get(prefix);
-          newStackTable.prefix[newStackIndex] = newStackPrefix !== undefined ? newStackPrefix : null;
+          newStackTable.prefix[newStackIndex] = newStackPrefix !== undefined ? newStackPrefix : -1;
           newStackTable.func[newStackIndex] = func;
+          newStackTable.depth[newStackIndex] = depth;
           oldStackToNewStack.set(stackIndex, newStackIndex);
         }
       }
@@ -345,12 +271,12 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
     }));
 
     for (let i = 0; i < stackTable.length; i++) {
-      let newStack = null;
+      let newStack = -1;
       if (stackMatches[i] === prefixDepth) {
         newStack = oldStackToNewStack.get(i);
       }
 
-      if (newStack !== null && newStack !== undefined) {
+      if (newStack !== -1 && newStack !== undefined) {
         newAllDates.stackHangMs[newStack] += allDates.stackHangMs[i];
         newAllDates.stackHangCount[newStack] += allDates.stackHangCount[i];
         newAllDates.totalStackHangMs[newStack] += allDates.totalStackHangMs[i];
@@ -389,7 +315,7 @@ export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIn
 
     function convertStack(leaf) {
       let matchesUpToDepth = 0; // counted from the leaf
-      for (let stack = leaf; stack !== null; stack = stackTable.prefix[stack]) {
+      for (let stack = leaf; stack !== -1; stack = stackTable.prefix[stack]) {
         const func = stackTable.func[stack];
         if (func === postfixFuncs[matchesUpToDepth]) {
           matchesUpToDepth++;
@@ -398,11 +324,11 @@ export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIn
           }
         }
       }
-      return null;
+      return -1;
     }
 
     const oldStackToNewStack = new Map();
-    oldStackToNewStack.set(null, null);
+    oldStackToNewStack.set(-1, -1);
 
     const newAllDates = {
       length: stackTable.length,
@@ -427,7 +353,7 @@ export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIn
         oldStackToNewStack.set(i, newStack);
       }
 
-      if (newStack !== null) {
+      if (newStack != -1) {
         newAllDates.stackHangMs[newStack] += allDates.stackHangMs[i];
         newAllDates.stackHangCount[newStack] += allDates.stackHangCount[i];
         newAllDates.totalStackHangMs[newStack] += allDates.totalStackHangMs[i];
@@ -474,20 +400,20 @@ export function filterThreadToRange(thread: Thread, rangeStart: number, rangeEnd
   });
 }
 
-export function getFuncStackFromFuncArray(funcArray: IndexIntoFuncTable[], funcStackTable: FuncStackTable) {
+export function getStackFromFuncArray(funcArray: IndexIntoFuncTable[], stackTable: StackTable) {
   let fs = -1;
   for (let i = 0; i < funcArray.length; i++) {
     const func = funcArray[i];
     let nextFS = -1;
-    for (let funcStackIndex = fs + 1; funcStackIndex < funcStackTable.length; funcStackIndex++) {
-      if (funcStackTable.prefix[funcStackIndex] === fs &&
-          funcStackTable.func[funcStackIndex] === func) {
-        nextFS = funcStackIndex;
+    for (let stackIndex = fs + 1; stackIndex < stackTable.length; stackIndex++) {
+      if (stackTable.prefix[stackIndex] === fs &&
+          stackTable.func[stackIndex] === func) {
+        nextFS = stackIndex;
         break;
       }
     }
     if (nextFS === -1) {
-      return null;
+      return nextFS;
     }
     fs = nextFS;
   }
@@ -511,19 +437,19 @@ export function getFriendlyThreadName(threads: Thread[], thread: Thread): string
   return label;
 }
 
-export function getStackAsFuncArray(funcStackIndex: IndexIntoFuncStackTable, funcStackTable: FuncStackTable): IndexIntoFuncTable[] {
-  if (funcStackIndex === null) {
+export function getStackAsFuncArray(stackIndex: IndexIntoStackTable, stackTable: StackTable): IndexIntoFuncTable[] {
+  if (stackIndex === -1) {
     return [];
   }
-  if (funcStackIndex * 1 !== funcStackIndex) {
-    console.log('bad funcStackIndex in getStackAsFuncArray:', funcStackIndex);
+  if (stackIndex * 1 !== stackIndex) {
+    console.log('bad stackIndex in getStackAsFuncArray:', stackIndex);
     return [];
   }
   const funcArray = [];
-  let fs = funcStackIndex;
+  let fs = stackIndex;
   while (fs !== -1) {
-    funcArray.push(funcStackTable.func[fs]);
-    fs = funcStackTable.prefix[fs];
+    funcArray.push(stackTable.func[fs]);
+    fs = stackTable.prefix[fs];
   }
   funcArray.reverse();
   return funcArray;
@@ -535,8 +461,9 @@ export function invertCallstack(thread: Thread): Thread {
 
     const newStackTable = {
       length: 0,
-      func: [],
-      prefix: [],
+      prefix: new Int32Array(),
+      func: new Int32Array(),
+      depth: new Int32Array(),
     };
     // Create a Map that keys off of two values, both the prefix and frame combination
     // by using a bit of math: prefix * funcCount + func => stackIndex
@@ -544,7 +471,7 @@ export function invertCallstack(thread: Thread): Thread {
     const funcCount = funcTable.length;
 
     function stackFor(prefix, func) {
-      const prefixAndFuncIndex = (prefix === null ? -1 : prefix) * funcCount + func;
+      const prefixAndFuncIndex = prefix * funcCount + func;
       let stackIndex = prefixAndFuncToStack.get(prefixAndFuncIndex);
       if (stackIndex === undefined) {
         stackIndex = newStackTable.length++;
@@ -558,13 +485,13 @@ export function invertCallstack(thread: Thread): Thread {
     const oldStackToNewStack = new Map();
 
     function convertStack(stackIndex) {
-      if (stackIndex === null) {
-        return null;
+      if (stackIndex === -1) {
+        return -1;
       }
       let newStack = oldStackToNewStack.get(stackIndex);
       if (newStack === undefined) {
-        newStack = null;
-        for (let currentStack = stackIndex; currentStack !== null; currentStack = stackTable.prefix[currentStack]) {
+        newStack = -1;
+        for (let currentStack = stackIndex; currentStack !== -1; currentStack = stackTable.prefix[currentStack]) {
           newStack = stackFor(newStack, stackTable.func[currentStack]);
         }
         oldStackToNewStack.set(stackIndex, newStack);
@@ -572,9 +499,10 @@ export function invertCallstack(thread: Thread): Thread {
       return newStack;
     }
 
-
     let newStackHangMs = new Float32Array(newStackTable.length);
     let newStackHangCount = new Int32Array(newStackTable.length);
+    let newTotalStackHangMs = new Float32Array(newStackTable.length);
+    let newTotalStackHangCount = new Int32Array(newStackTable.length);
     let newDates = dates.map(d => ({
       length: newStackTable.length,
       date: d.date,
@@ -586,11 +514,11 @@ export function invertCallstack(thread: Thread): Thread {
 
     for (let i = 0; i < stackTable.length; i++) {
       let newIndex = convertStack(i);
-      if (newIndex) {
+      if (newIndex != -1) {
         newStackHangMs[newIndex] += allDates.stackHangMs[i];
         newStackHangCount[newIndex] += allDates.stackHangCount[i];
-        newtotalStackHangMs[newIndex] += allDates.totalStackHangMs[i];
-        newtotalStackHangCount[newIndex] += allDates.totalStackHangCount[i];
+        newTotalStackHangMs[newIndex] += allDates.totalStackHangMs[i];
+        newTotalStackHangCount[newIndex] += allDates.totalStackHangCount[i];
 
         for (let j = 0; j < dates.length; j++) {
           newDates[j].stackHangMs[newIndex] += dates[j].stackHangMs[i];
@@ -598,6 +526,14 @@ export function invertCallstack(thread: Thread): Thread {
           newDates[j].totalStackHangMs[newIndex] += dates[j].totalStackHangMs[i];
           newDates[j].totalStackHangCount[newIndex] += dates[j].totalStackHangCount[i];
         }
+      }
+    }
+
+    for (let i = 0; i < newStackTable.length; i++) {
+      if (newStackTable.prefix[i] == -1) {
+        newStackTable.depth[i] = 0;
+      } else {
+        newStackTable.depth[i] = 1 + newStackTable.depth[newStackTable.prefix[i]];
       }
     }
 

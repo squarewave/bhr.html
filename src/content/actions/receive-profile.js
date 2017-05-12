@@ -38,6 +38,25 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
       return res.json();
     }).then(profile => {
       for (let thread of profile.threads) {
+        let prefix = new Int32Array(thread.stackTable.length);
+        let func = new Int32Array(thread.stackTable.length);
+        let depth = new Int32Array(thread.stackTable.length);
+        for (let i = 0; i < thread.stackTable.length; i++) {
+          if (thread.stackTable.prefix[i] === null) {
+            prefix[i] = -1;
+            depth[i] = 0;
+          } else {
+            prefix[i] = thread.stackTable.prefix[i];
+            depth[i] = 1 + depth[prefix[i]];
+          }
+          func[i] = thread.stackTable.func[i];
+        }
+        Object.assign(thread.stackTable, {
+          prefix,
+          func,
+          depth,
+        });
+
         thread.dates.sort((lhs, rhs) => lhs.date - rhs.date);
         thread.dates = thread.dates.map(d => {
           let stackHangMs = new Float32Array(thread.stackTable.length);
@@ -51,7 +70,7 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
             totalStackHangMs[i] += stackHangMs[i];
             totalStackHangCount[i] += stackHangCount[i];
             const prefix = thread.stackTable.prefix[i];
-            if (prefix !== null) {
+            if (prefix !== -1) {
               totalStackHangMs[prefix] += totalStackHangMs[i];
               totalStackHangCount[prefix] += totalStackHangCount[i];
             }

@@ -16,8 +16,9 @@ export type ThreadIndex = number;
  * came before it. Stacks can be shared between samples.
  */
 export type StackTable = {
-  func: IndexIntoFuncTable[],
-  prefix: Array<IndexIntoStackTable|null>,
+  func: Int32Array,
+  prefix: Int32Array,
+  depth: Int32Array,
   length: number,
 };
 
@@ -25,6 +26,8 @@ export type AllDatesTable = {
   length: number,
   stackHangMs: Float32Array,
   stackHangCount: Int32Array,
+  totalStackHangMs: Float32Array,
+  totalStackHangCount: Int32Array,
 };
 
 export type DateTable = {

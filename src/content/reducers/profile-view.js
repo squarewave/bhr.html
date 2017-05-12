@@ -11,8 +11,8 @@ import type {
   Thread,
   ThreadIndex,
   IndexIntoFuncTable,
+  IndexIntoStackTable,
 } from '../../common/types/profile';
-import type { FuncStackInfo, IndexIntoFuncStackTable } from '../../common/types/profile-derived';
 import type { Days, StartEndRange } from '../../common/types/units';
 import type { Action, CallTreeFilter, ProfileSelection } from '../actions/types';
 import type {
@@ -32,7 +32,7 @@ function profile(state: Profile = ProfileData.getEmptyProfile(), action: Action)
   }
 }
 
-function funcStackAfterCallTreeFilter(funcArray: IndexIntoFuncTable[], filter: CallTreeFilter) {
+function stackAfterCallTreeFilter(funcArray: IndexIntoFuncTable[], filter: CallTreeFilter) {
   if (filter.type === 'prefix' && !filter.matchJSOnly) {
     return removePrefixFromFuncArray(filter.prefixFuncs, funcArray);
   }
@@ -96,36 +96,36 @@ function viewOptionsPerThread(state: ThreadViewOptions[] = [], action: Action) {
   switch (action.type) {
     case 'RECEIVE_PROFILE_FROM_TELEMETRY':
       return action.profile.threads.map(() => ({
-        selectedFuncStack: [],
-        expandedFuncStacks: [],
+        selectedStack: [],
+        expandedStacks: [],
       }));
-    case 'CHANGE_SELECTED_FUNC_STACK': {
-      const { selectedFuncStack, threadIndex } = action;
-      const expandedFuncStacks = state[threadIndex].expandedFuncStacks.slice();
-      for (let i = 1; i < selectedFuncStack.length; i++) {
-        expandedFuncStacks.push(selectedFuncStack.slice(0, i));
+    case 'CHANGE_SELECTED_STACK': {
+      const { selectedStack, threadIndex } = action;
+      const expandedStacks = state[threadIndex].expandedStacks.slice();
+      for (let i = 1; i < selectedStack.length; i++) {
+        expandedStacks.push(selectedStack.slice(0, i));
       }
       return [
         ...state.slice(0, threadIndex),
-        Object.assign({}, state[threadIndex], { selectedFuncStack, expandedFuncStacks }),
+        Object.assign({}, state[threadIndex], { selectedStack, expandedStacks }),
         ...state.slice(threadIndex + 1),
       ];
     }
-    case 'CHANGE_EXPANDED_FUNC_STACKS': {
-      const { threadIndex, expandedFuncStacks } = action;
+    case 'CHANGE_EXPANDED_STACKS': {
+      const { threadIndex, expandedStacks } = action;
       return [
         ...state.slice(0, threadIndex),
-        Object.assign({}, state[threadIndex], { expandedFuncStacks }),
+        Object.assign({}, state[threadIndex], { expandedStacks }),
         ...state.slice(threadIndex + 1),
       ];
     }
     case 'ADD_CALL_TREE_FILTER': {
       const { threadIndex, filter } = action;
-      const expandedFuncStacks = state[threadIndex].expandedFuncStacks.map(fs => funcStackAfterCallTreeFilter(fs, filter));
-      const selectedFuncStack = funcStackAfterCallTreeFilter(state[threadIndex].selectedFuncStack, filter);
+      const expandedStacks = state[threadIndex].expandedStacks.map(fs => stackAfterCallTreeFilter(fs, filter));
+      const selectedStack = stackAfterCallTreeFilter(state[threadIndex].selectedStack, filter);
       return [
         ...state.slice(0, threadIndex),
-        Object.assign({}, state[threadIndex], { selectedFuncStack, expandedFuncStacks }),
+        Object.assign({}, state[threadIndex], { selectedStack, expandedStacks }),
         ...state.slice(threadIndex + 1),
       ];
     }
@@ -235,9 +235,8 @@ export type SelectorsForThread = {
   getRangeFilteredThread: State => Thread,
   getFilteredThread: State => Thread,
   getRangeSelectionFilteredThread: State => Thread,
-  getFuncStackInfo: State => FuncStackInfo,
-  getSelectedFuncStack: State => IndexIntoFuncStackTable,
-  getExpandedFuncStacks: State => IndexIntoFuncStackTable[],
+  getSelectedStack: State => IndexIntoStackTable,
+  getExpandedStacks: State => IndexIntoStackTable[],
   getCallTree: State => ProfileTree.ProfileTreeClass,
 };
 
@@ -308,38 +307,30 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
         return ProfileData.filterThreadToRange(thread, selectionStart, selectionEnd);
       }
     );
-    const getFuncStackInfo = createSelector(
+    const _getSelectedStackAsFuncArray = createSelector(
+      getViewOptions,
+      (threadViewOptions): IndexIntoFuncTable[] => threadViewOptions.selectedStack
+    );
+    const getSelectedStack = createSelector(
       getFilteredThread,
-      ({stackTable, funcTable}: Thread): FuncStackInfo => {
-        return ProfileData.getFuncStackInfo(stackTable, funcTable);
+      _getSelectedStackAsFuncArray,
+      ({stackTable}, funcArray): IndexIntoStackTable => {
+        return ProfileData.getStackFromFuncArray(funcArray, stackTable);
       }
     );
-    const _getSelectedFuncStackAsFuncArray = createSelector(
+    const _getExpandedStacksAsFuncArrays = createSelector(
       getViewOptions,
-      (threadViewOptions): IndexIntoFuncTable[] => threadViewOptions.selectedFuncStack
+      (threadViewOptions): Array<IndexIntoFuncTable[]> => threadViewOptions.expandedStacks
     );
-    const getSelectedFuncStack = createSelector(
-      getFuncStackInfo,
-      _getSelectedFuncStackAsFuncArray,
-      (funcStackInfo, funcArray): IndexIntoFuncStackTable | null => {
-        return ProfileData.getFuncStackFromFuncArray(funcArray, funcStackInfo.funcStackTable);
-      }
-    );
-    const _getExpandedFuncStacksAsFuncArrays = createSelector(
-      getViewOptions,
-      (threadViewOptions): Array<IndexIntoFuncTable[]> => threadViewOptions.expandedFuncStacks
-    );
-    const getExpandedFuncStacks = createSelector(
-      getFuncStackInfo,
-      _getExpandedFuncStacksAsFuncArrays,
-      (funcStackInfo, funcArrays): (IndexIntoFuncStackTable|null)[] => {
-        return funcArrays.map(funcArray => ProfileData.getFuncStackFromFuncArray(funcArray, funcStackInfo.funcStackTable));
+    const getExpandedStacks = createSelector(
+      getFilteredThread,
+      _getExpandedStacksAsFuncArrays,
+      ({stackTable}, funcArrays): IndexIntoStackTable[] => {
+        return funcArrays.map(funcArray => ProfileData.getStackFromFuncArray(funcArray, stackTable));
       }
     );
     const getCallTree = createSelector(
       getRangeSelectionFilteredThread,
-      getFuncStackInfo,
-      URLState.getImplementationFilter,
       ProfileTree.getCallTree
     );
 
@@ -352,9 +343,8 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
       getRangeFilteredThread,
       getFilteredThread,
       getRangeSelectionFilteredThread,
-      getFuncStackInfo,
-      getSelectedFuncStack,
-      getExpandedFuncStacks,
+      getSelectedStack,
+      getExpandedStacks,
       getCallTree,
     };
   }

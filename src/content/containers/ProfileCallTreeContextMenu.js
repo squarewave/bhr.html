@@ -6,14 +6,12 @@ import { connect } from 'react-redux';
 import { selectedThreadSelectors } from '../reducers/profile-view';
 import copy from 'copy-to-clipboard';
 
-import type { IndexIntoFuncStackTable, FuncStackInfo } from '../../common/types/profile-derived';
-import type { Thread } from '../../common/types/profile';
+import type { Thread, IndexIntoStackTable } from '../../common/types/profile';
 
 type Props = {
   thread: Thread,
-  funcStackInfo: FuncStackInfo,
-  selectedFuncStack: IndexIntoFuncStackTable,
-}
+  selectedStack: IndexIntoStackTable,
+};
 
 class ProfileCallTreeContextMenu extends PureComponent {
 
@@ -24,12 +22,11 @@ class ProfileCallTreeContextMenu extends PureComponent {
 
   copyFunctionName(): void {
     const {
-      selectedFuncStack,
-      thread: { stringTable, funcTable },
-      funcStackInfo: { funcStackTable },
+      selectedStack,
+      thread: { stringTable, funcTable, stackTable },
     } = this.props;
 
-    const funcIndex = funcStackTable.func[selectedFuncStack];
+    const funcIndex = stackTable.func[selectedStack];
     const stringIndex = funcTable.name[funcIndex];
     const name = stringTable.getString(stringIndex);
     copy(name);
@@ -37,20 +34,19 @@ class ProfileCallTreeContextMenu extends PureComponent {
 
   copyStack(): void {
     const {
-      selectedFuncStack,
-      thread: { stringTable, funcTable },
-      funcStackInfo: { funcStackTable },
+      selectedStack,
+      thread: { stringTable, funcTable, stackTable },
     } = this.props;
 
     let stack = '';
-    let funcStackIndex = selectedFuncStack;
+    let stackIndex = selectedStack;
 
     do {
-      const funcIndex = funcStackTable.func[funcStackIndex];
+      const funcIndex = stackTable.func[stackIndex];
       const stringIndex = funcTable.name[funcIndex];
       stack += stringTable.getString(stringIndex) + '\n';
-      funcStackIndex = funcStackTable.prefix[funcStackIndex];
-    } while (funcStackIndex !== -1);
+      stackIndex = stackTable.prefix[stackIndex];
+    } while (stackIndex !== -1);
 
     copy(stack);
   }
@@ -80,6 +76,5 @@ class ProfileCallTreeContextMenu extends PureComponent {
 
 export default connect(state => ({
   thread: selectedThreadSelectors.getFilteredThread(state),
-  funcStackInfo: selectedThreadSelectors.getFuncStackInfo(state),
-  selectedFuncStack: selectedThreadSelectors.getSelectedFuncStack(state),
+  selectedStack: selectedThreadSelectors.getSelectedStack(state),
 }), actions)(ProfileCallTreeContextMenu);

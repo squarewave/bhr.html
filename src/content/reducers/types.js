@@ -11,8 +11,8 @@ export type Reducer<T> = (T, Action) => T;
 
 export type RequestedLib = { pdbName: string, breakpadId: string };
 export type ThreadViewOptions = {
-  selectedFuncStack: IndexIntoFuncTable[],
-  expandedFuncStacks: Array<IndexIntoFuncTable[]>,
+  selectedStack: IndexIntoFuncTable[],
+  expandedStacks: Array<IndexIntoFuncTable[]>,
 };
 export type ProfileViewState = {
   viewOptions: {

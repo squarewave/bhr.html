@@ -38,8 +38,8 @@ type ProfileAction =
   { type: 'HIDE_THREAD', threadIndex: ThreadIndex } |
   { type: 'SHOW_THREAD', threads: Thread[], threadIndex: ThreadIndex } |
   { type: 'ASSIGN_TASK_TRACER_NAMES', addressIndices: number[], symbolNames: string[] } |
-  { type: 'CHANGE_SELECTED_FUNC_STACK', threadIndex: ThreadIndex, selectedFuncStack: IndexIntoFuncTable[] } |
-  { type: 'CHANGE_EXPANDED_FUNC_STACKS', threadIndex: ThreadIndex, expandedFuncStacks: Array<IndexIntoFuncTable[]> } |
+  { type: 'CHANGE_SELECTED_STACK', threadIndex: ThreadIndex, selectedStack: IndexIntoFuncTable[] } |
+  { type: 'CHANGE_EXPANDED_STACKS', threadIndex: ThreadIndex, expandedStacks: Array<IndexIntoFuncTable[]> } |
   { type: 'UPDATE_PROFILE_SELECTION', selection: ProfileSelection } |
   { type: 'CHANGE_TAB_ORDER', tabOrder: number[] };
 

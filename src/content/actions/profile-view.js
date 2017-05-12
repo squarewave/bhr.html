@@ -9,13 +9,13 @@ import type { Thread, ThreadIndex, IndexIntoFuncTable, } from '../../common/type
  * and filtering. Currently the call tree's actions are in this file, but should be
  * split apart. These actions should most likely affect every panel.
  */
-export function changeSelectedFuncStack(
+export function changeSelectedStack(
   threadIndex: ThreadIndex,
-  selectedFuncStack: IndexIntoFuncTable[]
+  selectedStack: IndexIntoFuncTable[]
 ): Action {
   return {
-    type: 'CHANGE_SELECTED_FUNC_STACK',
-    selectedFuncStack, threadIndex,
+    type: 'CHANGE_SELECTED_STACK',
+    selectedStack, threadIndex,
   };
 }
 
@@ -55,13 +55,13 @@ export function changeCallTreeSearchString(searchString: string): Action {
   };
 }
 
-export function changeExpandedFuncStacks(
+export function changeExpandedStacks(
   threadIndex: ThreadIndex,
-  expandedFuncStacks: Array<IndexIntoFuncTable[]>
+  expandedStacks: Array<IndexIntoFuncTable[]>
 ): Action {
   return {
-    type: 'CHANGE_EXPANDED_FUNC_STACKS',
-    threadIndex, expandedFuncStacks,
+    type: 'CHANGE_EXPANDED_STACKS',
+    threadIndex, expandedStacks,
   };
 }
 

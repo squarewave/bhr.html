@@ -25,16 +25,7 @@ class ProfileThreadHeaderBar extends Component {
   }
 
   _onGraphClick(time) {
-    const { threadIndex, changeSelectedThread } = this.props;
-    changeSelectedThread(threadIndex);
-    if (time !== undefined) {
-      const { thread, funcStackInfo, changeSelectedFuncStack } = this.props;
-      const sampleIndex = getSampleIndexClosestToTime(thread.samples, time);
-      const newSelectedStack = thread.samples.stack[sampleIndex];
-      const newSelectedFuncStack = newSelectedStack === null ? -1 : funcStackInfo.stackIndexToFuncStackIndex[newSelectedStack];
-      changeSelectedFuncStack(threadIndex,
-        getStackAsFuncArray(newSelectedFuncStack, funcStackInfo.funcStackTable));
-    }
+    throw new Error('TODO');
   }
 
   _onMarkerSelect(/* markerIndex */) {
@@ -42,7 +33,7 @@ class ProfileThreadHeaderBar extends Component {
 
   render() {
     const {
-      thread, rangeStart, rangeEnd, funcStackInfo, selectedFuncStack,
+      thread, rangeStart, rangeEnd, selectedStack,
       isSelected, style, threadName,
     } = this.props;
 
@@ -59,8 +50,7 @@ class ProfileThreadHeaderBar extends Component {
                           className='threadStackGraph'
                           rangeStart={rangeStart}
                           rangeEnd={rangeEnd}
-                          funcStackInfo={funcStackInfo}
-                          selectedFuncStack={selectedFuncStack}
+                          selectedStack={selectedStack}
                           onClick={this._onGraphClick}
                           onMarkerSelect={this._onMarkerSelect}/>
       </li>
@@ -72,12 +62,11 @@ class ProfileThreadHeaderBar extends Component {
 ProfileThreadHeaderBar.propTypes = {
   threadIndex: PropTypes.number.isRequired,
   thread: PropTypes.object.isRequired,
-  funcStackInfo: PropTypes.object.isRequired,
   changeSelectedThread: PropTypes.func.isRequired,
-  changeSelectedFuncStack: PropTypes.func.isRequired,
+  changeSelectedStack: PropTypes.func.isRequired,
   rangeStart: PropTypes.number.isRequired,
   rangeEnd: PropTypes.number.isRequired,
-  selectedFuncStack: PropTypes.number.isRequired,
+  selectedStack: PropTypes.number.isRequired,
   isSelected: PropTypes.bool.isRequired,
   style: PropTypes.object,
   threadName: PropTypes.string,
@@ -90,8 +79,7 @@ export default connect((state, props) => {
   return {
     thread: selectors.getFilteredThread(state),
     threadName: selectors.getFriendlyThreadName(state),
-    funcStackInfo: selectors.getFuncStackInfo(state),
-    selectedFuncStack: threadIndex === selectedThread ? selectors.getSelectedFuncStack(state) : -1,
+    selectedStack: threadIndex === selectedThread ? selectors.getSelectedStack(state) : -1,
     isSelected: threadIndex === selectedThread,
     threadIndex,
   };

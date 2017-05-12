@@ -2,7 +2,6 @@ import React, { Component, PropTypes } from 'react';
 import shallowCompare from 'react-addons-shallow-compare';
 import classNames from 'classnames';
 import { timeCode } from '../../common/time-code';
-import { getSampleFuncStacks } from '../profile-data';
 
 class ThreadStackGraph extends Component {
 
@@ -44,7 +43,7 @@ class ThreadStackGraph extends Component {
   }
 
   drawCanvas(c) {
-    const { thread, rangeStart, rangeEnd, funcStackInfo, selectedFuncStack } = this.props;
+    const { thread, rangeStart, rangeEnd, selectedStack } = this.props;
     const { dates } = thread;
 
     const devicePixelRatio = c.ownerDocument ? c.ownerDocument.defaultView.devicePixelRatio : 1;
@@ -57,24 +56,20 @@ class ThreadStackGraph extends Component {
 
     let maxHangMs = 0;
     for (let i = 0; i < dates.length; i++) {
-      if (dates[i].totalStackHangMs[selectedFuncStack] > maxHangMs) {
-        maxHangMs = dates[i].totalStackHangMs[selectedFuncStack];
+      if (dates[i].totalStackHangMs[selectedStack] > maxHangMs) {
+        maxHangMs = dates[i].totalStackHangMs[selectedStack];
       }
     }
 
     const xPixelsPerDay = c.width / rangeLength;
     const yPixelsPerHangMs = c.height / maxHangMs;
 
-    console.log(selectedFuncStack);
-
     for (let i = rangeStart; i < rangeEnd; i++) {
       const date = dates[i];
-      console.log(date.totalStackHangMs[selectedFuncStack]);
-      const dateHeight = date.totalStackHangMs[selectedFuncStack] * yPixelsPerHangMs;
+      const dateHeight = date.totalStackHangMs[selectedStack] * yPixelsPerHangMs;
       const startY = c.height - dateHeight;
       ctx.fillStyle = '#7990c8';
       ctx.fillRect((i - range[0]) * xPixelsPerDay, startY, xPixelsPerDay, dateHeight);
-      console.log([(i - range[0]) * xPixelsPerDay, startY, xPixelsPerDay, dateHeight]);
     }
   }
 
@@ -115,11 +110,7 @@ ThreadStackGraph.propTypes = {
   }).isRequired,
   rangeStart: PropTypes.number.isRequired,
   rangeEnd: PropTypes.number.isRequired,
-  funcStackInfo: PropTypes.shape({
-    funcStackTable: PropTypes.object.isRequired,
-    stackIndexToFuncStackIndex: PropTypes.any.isRequired,
-  }).isRequired,
-  selectedFuncStack: PropTypes.number,
+  selectedStack: PropTypes.number,
   className: PropTypes.string,
   onClick: PropTypes.func,
   onMarkerSelect: PropTypes.func,
