@@ -37,6 +37,29 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
     fetch(TELEMETRY_PROFILE_URL).then(res => {
       return res.json();
     }).then(profile => {
+
+      function intersection(setA, setB) {
+          let intersection = new Set();
+          for (let elem of setB) {
+              if (setA.has(elem)) {
+                  intersection.add(elem);
+              }
+          }
+          return intersection;
+      }
+
+      let validDates;
+      if (profile.threads.length !== 0) {
+        let dateSets = profile.threads.map(t => new Set(t.dates.map(d => d.date)));
+        validDates = dateSets[0];
+        dateSets.slice(1).forEach(ds => {
+          validDates = intersection(validDates, ds);
+        });
+
+      } else {
+        validDates = new Set();
+      }
+
       for (let thread of profile.threads) {
         let prefix = new Int32Array(thread.stackTable.length);
         let func = new Int32Array(thread.stackTable.length);
@@ -56,6 +79,8 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
           func,
           depth,
         });
+
+        thread.dates = thread.dates.filter(d => validDates.has(d.date));
 
         thread.dates.sort((lhs, rhs) => lhs.date - rhs.date);
         thread.dates = thread.dates.map(d => {
@@ -88,6 +113,7 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
 
         thread.stringTable = new UniqueStringArray(thread.stringArray);
       }
+
       if (profile.threads.length !== 0) {
         profile.dates = profile.threads[0].dates.map(d => d.date);
       } else {
