@@ -1,4 +1,5 @@
 export type Days = number;
+export type Milliseconds = number;
 
 /**
  * The pixels represented by the px unit of CSS, e.g. the height of a div by setting the

@@ -3,10 +3,11 @@ import { timeCode } from '../common/time-code';
 import { UniqueStringArray } from './unique-string-array';
 import type { Thread, StackTable, FuncTable, Lib, IndexIntoFuncTable, IndexIntoStackTable } from '../common/types/profile';
 import type { Node } from '../common/types/profile-derived';
-import type { Days } from '../common/types/units';
+import type { Milliseconds } from '../common/types/units';
 
 type StackChildren = IndexIntoStackTable[];
-type StackTimes = { selfTime: Days, totalTime: Days };
+type StackTimes = { selfTime: Milliseconds, totalTime: Milliseconds };
+type StackCounts = { selfCount: Milliseconds, totalCount: Milliseconds };
 
 function extractFaviconFromLibname(libname: string): string | null {
   const url = new URL('/favicon.ico', libname);
@@ -17,11 +18,13 @@ class ProfileTree {
 
   _stackTable: StackTable;
   _stackTimes: StackTimes;
+  _stackCounts: StackCounts;
   _stackChildCount: Uint32Array; // A table column matching the stackTable
   _funcTable: FuncTable;
   _libs: Lib[];
   _stringTable: UniqueStringArray;
   _rootTotalTime: number;
+  _rootTotalCount: number;
   _rootCount: number;
   _nodes: Map<IndexIntoStackTable, Node>;
   _children: Map<IndexIntoStackTable, StackChildren>;
@@ -29,20 +32,24 @@ class ProfileTree {
   constructor(
     stackTable: StackTable,
     stackTimes: StackTimes,
+    stackCounts: StackCounts,
     stackChildCount: Uint32Array,
     funcTable: FuncTable,
     libs: Lib[],
     stringTable: UniqueStringArray,
     rootTotalTime: number,
+    rootTotalCount: number,
     rootCount: number
   ) {
     this._stackTable = stackTable;
     this._stackTimes = stackTimes;
+    this._stackCounts = stackCounts;
     this._stackChildCount = stackChildCount;
     this._funcTable = funcTable;
     this._libs = libs;
     this._stringTable = stringTable;
     this._rootTotalTime = rootTotalTime;
+    this._rootTotalCount = rootTotalCount;
     this._rootCount = rootCount;
     this._nodes = new Map();
     this._children = new Map();
@@ -108,6 +115,8 @@ class ProfileTree {
         totalTime: `${this._stackTimes.totalTime[stackIndex].toFixed(1)}ms`,
         totalTimePercent: `${(100 * this._stackTimes.totalTime[stackIndex] / this._rootTotalTime).toFixed(1)}%`,
         selfTime: `${this._stackTimes.selfTime[stackIndex].toFixed(1)}ms`,
+        totalCount: `${this._stackCounts.totalCount[stackIndex]}`,
+        totalCountPercent: `${(100 * this._stackCounts.totalCount[stackIndex] / this._rootTotalCount).toFixed(1)}%`,
         name: funcName,
         lib: libName,
         dim: false,
@@ -136,6 +145,7 @@ export function getCallTree(
     const { allDates, stackTable } = thread;
     const numChildren = new Uint32Array(allDates.length);
     let rootTotalTime = 0;
+    let rootTotalCount = 0;
     let numRoots = 0;
     for (let stackIndex = allDates.totalStackHangMs.length - 1; stackIndex >= 0; stackIndex--) {
       if (allDates.totalStackHangMs[stackIndex] === 0) {
@@ -144,15 +154,17 @@ export function getCallTree(
       const prefixStack = stackTable.prefix[stackIndex];
       if (prefixStack === -1) {
         rootTotalTime += allDates.totalStackHangMs[stackIndex];
+        rootTotalCount += allDates.totalStackHangCount[stackIndex];
         numRoots++;
       } else {
         numChildren[prefixStack]++;
       }
     }
     const stackTimes = { selfTime: allDates.stackHangMs, totalTime: allDates.totalStackHangMs };
+    const stackCounts = { selfCount: allDates.stackHangCount, totalCount: allDates.totalStackHangCount };
     return new ProfileTree(
-      stackTable, stackTimes, numChildren, thread.funcTable,
-      thread.libs, thread.stringTable, rootTotalTime, numRoots
+      stackTable, stackTimes, stackCounts, numChildren, thread.funcTable,
+      thread.libs, thread.stringTable, rootTotalTime, rootTotalCount, numRoots
     );
   });
 }

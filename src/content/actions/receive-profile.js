@@ -60,9 +60,9 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
         thread.dates.sort((lhs, rhs) => lhs.date - rhs.date);
         thread.dates = thread.dates.map(d => {
           let stackHangMs = new Float32Array(thread.stackTable.length);
-          let stackHangCount = new Int32Array(thread.stackTable.length);
+          let stackHangCount = new Float32Array(thread.stackTable.length);
           let totalStackHangMs = new Float32Array(thread.stackTable.length);
-          let totalStackHangCount = new Int32Array(thread.stackTable.length);
+          let totalStackHangCount = new Float32Array(thread.stackTable.length);
 
           for (let i = thread.stackTable.length - 1; i >= 0; i--) {
             stackHangMs[i] = d.stackHangMs[i] || 0;

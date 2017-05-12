@@ -55,21 +55,30 @@ class ThreadStackGraph extends Component {
     const rangeLength = range[1] - range[0];
 
     let maxHangMs = 0;
+    let maxHangCount = 0;
     for (let i = 0; i < dates.length; i++) {
       if (dates[i].totalStackHangMs[selectedStack] > maxHangMs) {
         maxHangMs = dates[i].totalStackHangMs[selectedStack];
+      }
+      if (dates[i].totalStackHangCount[selectedStack] > maxHangCount) {
+        maxHangCount = dates[i].totalStackHangCount[selectedStack];
       }
     }
 
     const xPixelsPerDay = c.width / rangeLength;
     const yPixelsPerHangMs = c.height / maxHangMs;
+    const yPixelsPerHangCount = c.height / maxHangCount;
 
     for (let i = rangeStart; i < rangeEnd; i++) {
       const date = dates[i];
-      const dateHeight = date.totalStackHangMs[selectedStack] * yPixelsPerHangMs;
-      const startY = c.height - dateHeight;
+      const timeHeight = date.totalStackHangMs[selectedStack] * yPixelsPerHangMs;
+      const countHeight = date.totalStackHangCount[selectedStack] * yPixelsPerHangCount;
+      const timeStartY = c.height - timeHeight;
+      const countStartY = c.height - countHeight;
       ctx.fillStyle = '#7990c8';
-      ctx.fillRect((i - range[0]) * xPixelsPerDay, startY, xPixelsPerDay, dateHeight);
+      ctx.fillRect((i - range[0]) * xPixelsPerDay, timeStartY, xPixelsPerDay * 0.9, timeHeight);
+      ctx.fillStyle = '#a7b9e5';
+      ctx.fillRect((i - range[0]) * xPixelsPerDay + (xPixelsPerDay * 0.9), countStartY, xPixelsPerDay * 0.1, countHeight);
     }
   }
 

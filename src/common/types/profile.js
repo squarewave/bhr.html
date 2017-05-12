@@ -25,16 +25,16 @@ export type StackTable = {
 export type AllDatesTable = {
   length: number,
   stackHangMs: Float32Array,
-  stackHangCount: Int32Array,
+  stackHangCount: Float32Array,
   totalStackHangMs: Float32Array,
-  totalStackHangCount: Int32Array,
+  totalStackHangCount: Float32Array,
 };
 
 export type DateTable = {
   date: string,
   length: number,
   stackHangMs: Float32Array,
-  stackHangCount: Int32Array,
+  stackHangCount: Float32Array,
   totalStackHangMs: Float32Array,
   totalStackHangCount: Float32Array,
 };

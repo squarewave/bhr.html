@@ -25,7 +25,17 @@ class ProfileThreadHeaderBar extends Component {
   }
 
   _onGraphClick(time) {
-    throw new Error('TODO');
+    const { threadIndex, changeSelectedThread } = this.props;
+    changeSelectedThread(threadIndex);
+    // TODO
+    // if (time !== undefined) {
+    //   const { thread, changeSelectedFuncStack } = this.props;
+    //   const sampleIndex = getSampleIndexClosestToTime(thread.samples, time);
+    //   const newSelectedStack = thread.samples.stack[sampleIndex];
+    //   const newSelectedFuncStack = newSelectedStack === null ? -1 : funcStackInfo.stackIndexToFuncStackIndex[newSelectedStack];
+    //   changeSelectedFuncStack(threadIndex,
+    //     getStackAsFuncArray(newSelectedFuncStack, funcStackInfo.funcStackTable));
+    // }
   }
 
   _onMarkerSelect(/* markerIndex */) {
