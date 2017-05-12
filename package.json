@@ -1,7 +1,7 @@
 {
-  "name": "perf.html",
+  "name": "hangs.html",
   "version": "0.0.1",
-  "description": "perf.html, the gecko profiler UI",
+  "description": "hangs.html",
   "main": "src/content/index.js",
   "scripts": {
     "build": "npm run build:quiet -- --progress",
@@ -27,11 +27,11 @@
     "test-file": "NODE_ENV=test mocha --compilers js:babel-core/register",
     "test-report": "nyc report --reporter=text-lcov > coverage.lcov"
   },
-  "author": "Markus Stange <mstange@themasta.com>",
+  "author": "Doug Thayer <dothayer@mozilla.com>",
   "license": "MPL-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/devtools-html/perf.html"
+    "url": "https://github.com/squarewave/hangs.html"
   },
   "devDependencies": {
     "array-move": "^1.0.0",

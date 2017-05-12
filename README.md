@@ -16,9 +16,9 @@ TODO
 ### Development
 
 ```bash
-git clone git@github.com:devtools-html/perf.html.git
+git clone git@github.com:squarewave/hangs.html.git
 
-cd perf.html
+cd hangs.html
 npm install
 
 npm start

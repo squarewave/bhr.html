@@ -73,7 +73,7 @@ if (process.env.NODE_ENV === 'development') {
 const contentConfig = Object.assign({}, baseConfig, {
   plugins: basePlugins.concat(
     new HtmlWebpackPlugin({
-      title: 'perf.html',
+      title: 'hangs.html',
       template: 'res/index.html',
       favicon: 'res/favicon.png',
     })),
