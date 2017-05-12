@@ -554,5 +554,6 @@ export function invertCallstack(thread: Thread): Thread {
 export function getEmptyProfile(): Profile {
   return {
     threads: [],
+    dates: [],
   };
 }

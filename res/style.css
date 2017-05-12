@@ -121,13 +121,6 @@ body, #root, .profileViewer {
   left: 120px;
   width: 50px;
 }
-.treeViewFixedColumn.icon {
-  left: 190px;
-  width: 19px;
-  display: flex;
-  flex-flow: column nowrap;
-  align-items: center;
-}
 .treeViewRowColumn.totalTimePercent,
 .treeViewRowColumn.totalCountPercent,
 .treeViewRowColumn.selfTime,
@@ -372,7 +365,7 @@ body, #root, .profileViewer {
 .profileThreadHeaderBar {
   margin: 0;
   padding: 0;
-  height: 30px;
+  height: 60px;
   display: flex;
   flex-flow: row nowrap;
   border-top: 1px solid #D6D6D6;
@@ -410,7 +403,7 @@ body, #root, .profileViewer {
 
 .threadStackGraphCanvas {
   display: block;
-  height: 30px;
+  height: 60px;
   width: 100%;
 }
 

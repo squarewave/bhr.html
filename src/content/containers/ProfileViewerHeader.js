@@ -34,12 +34,13 @@ class ProfileViewerHeader extends PureComponent {
   render() {
     const {
       profile, className, threadOrder, changeThreadOrder, selection,
-      updateProfileSelection, timeRange, zeroAt,
+      updateProfileSelection, timeRange, zeroAt
     } = this.props;
-    const threads = profile.threads;
+    const { threads, dates } = profile;
     const { hasSelection, isModifying, selectionStart, selectionEnd } = selection;
 
     return <TimeSelectionScrubber className={`${className}Header`}
+                           dates={dates}
                            zeroAt={zeroAt}
                            rangeStart={timeRange.start}
                            rangeEnd={timeRange.end}

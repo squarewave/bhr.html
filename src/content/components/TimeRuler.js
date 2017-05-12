@@ -15,6 +15,12 @@ class TimeRuler extends Component {
     return { number: Math.pow(10, b + 1), exponent: b + 1 };
   }
 
+  _formatDate(date) {
+    let month = date.substr(4, 2).replace(/^0/, '');
+    let day = date.substr(6, 2).replace(/^0/, '');
+    return `${month}/${day}`;
+  }
+
   _getNotches() {
     if (this.props.width === 0) {
       return [];
@@ -28,7 +34,8 @@ class TimeRuler extends Component {
     const lastNotchIndex = Math.floor((rangeEnd - zeroAt) / notchTime);
     const notches = [];
     for (let i = firstNotchIndex; i <= lastNotchIndex; i++) {
-      notches.push({ time: i * notchTime, pos: (i * notchTime - (rangeStart - zeroAt)) * pixelsPerDay});
+      let date = this.props.dates[i];
+      notches.push({ date, pos: (i * notchTime - (rangeStart - zeroAt)) * pixelsPerDay});
     }
     return notches;
   }
@@ -39,9 +46,9 @@ class TimeRuler extends Component {
     return (<div className={className}>
       <ol className='timeRulerContainer'>
         {
-          notches.map(({ time, pos }, i) => (
+          notches.map(({ date, pos }, i) => (
             <li className='timeRulerNotch' key={i} style={{left: `${pos}px`}}>
-              <span className='timeRulerNotchText'>{time}</span>
+              <span className='timeRulerNotchText'>{this._formatDate(date)}</span>
             </li>
           ))
         }
@@ -56,6 +63,7 @@ TimeRuler.propTypes = {
   zeroAt: PropTypes.number.isRequired,
   rangeStart: PropTypes.number.isRequired,
   rangeEnd: PropTypes.number.isRequired,
+  dates: PropTypes.array.isRequired,
   width: PropTypes.number.isRequired,
 };
 

@@ -90,4 +90,5 @@ export type Thread = {
  */
 export type Profile = {
   threads: Thread[],
+  dates: string[],
 };

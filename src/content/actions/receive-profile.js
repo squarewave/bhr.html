@@ -88,6 +88,12 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
 
         thread.stringTable = new UniqueStringArray(thread.stringArray);
       }
+      if (profile.threads.length !== 0) {
+        profile.dates = profile.threads[0].dates.map(d => d.date);
+      } else {
+        profile.dates = [];
+      }
+
       dispatch(receiveProfileFromTelemetry(profile));
     }).catch(error => {
       dispatch(errorReceivingProfileFromTelemetry(error));

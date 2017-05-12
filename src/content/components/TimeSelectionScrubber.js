@@ -119,7 +119,7 @@ class TimeSelectionScrubberImpl extends PureComponent {
     const {
       className, zeroAt, rangeStart, rangeEnd, children,
       hasSelection, isModifying, selectionStart, selectionEnd,
-      width, onSelectionChange, onZoomButtonClick,
+      width, onSelectionChange, onZoomButtonClick, dates
     } = this.props;
 
     const {
@@ -132,6 +132,7 @@ class TimeSelectionScrubberImpl extends PureComponent {
            onMouseDown={this._onMouseDown}
            onMouseMove={this._onMouseMove}>
         <TimeRuler className={`${className}TimeRuler`}
+                  dates={dates}
                   zeroAt={zeroAt}
                   rangeStart={rangeStart}
                   rangeEnd={rangeEnd}
@@ -169,6 +170,7 @@ TimeSelectionScrubberImpl.propTypes = {
   onSelectionChange: PropTypes.func,
   onZoomButtonClick: PropTypes.func,
   children: PropTypes.node,
+  dates: PropTypes.array.isRequired,
 };
 
 const TimeSelectionScrubber = withSize(TimeSelectionScrubberImpl);
