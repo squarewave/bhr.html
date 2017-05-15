@@ -32,13 +32,20 @@ export function getTimeRangeIncludingAllThreads(profile: Profile) {
 export function defaultThreadOrder(threads: Thread[]) {
   // Put the compositor thread last.
   const threadOrder = threads.map((thread, i) => i);
+  const knownOrders = {
+    'Gecko': -3,
+    'Gecko_Child': -2,
+    'Gecko_Child_ForcePaint': -1,
+  };
   threadOrder.sort((a, b) => {
     const nameA = threads[a].name;
     const nameB = threads[b].name;
-    if (nameA === nameB) {
-      return a - b;
+    const orderingA = knownOrders[nameA] || 0;
+    const orderingB = knownOrders[nameB] || 0;
+    if (!orderingA && !orderingB) {
+      return nameA.localeCompare(nameB);
     }
-    return (nameA === 'Compositor') ? 1 : -1;
+    return orderingA - orderingB;
   });
   return threadOrder;
 }

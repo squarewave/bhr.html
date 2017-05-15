@@ -5,6 +5,7 @@ import actions from '../actions';
 import ProfileCallTreeContextMenu from '../containers/ProfileCallTreeContextMenu';
 import ProfileFilterNavigator from '../containers/ProfileFilterNavigator';
 import ProfileViewerHeader from '../containers/ProfileViewerHeader';
+import ProfileThreadHeaderContextMenu from '../containers/ProfileThreadHeaderContextMenu';
 
 class ProfileViewer extends PureComponent {
   constructor(props) {
@@ -22,7 +23,9 @@ class ProfileViewer extends PureComponent {
         </div>
         <ProfileViewerHeader />
         <ProfileCallTreeView />
+
         <ProfileCallTreeContextMenu />
+        <ProfileThreadHeaderContextMenu />
       </div>
     );
   }

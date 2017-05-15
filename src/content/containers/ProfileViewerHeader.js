@@ -1,10 +1,12 @@
 import React, { PureComponent, PropTypes } from 'react';
 import ProfileThreadHeaderBar from '../components/ProfileThreadHeaderBar';
 import Reorderable from '../components/Reorderable';
+import ThreadStackGraph from '../components/ThreadStackGraph';
 import TimeSelectionScrubber from '../components/TimeSelectionScrubber';
 import OverflowEdgeIndicator from '../components/OverflowEdgeIndicator';
 import { connect } from 'react-redux';
-import { getProfile, getProfileViewOptions, getThreadOrder, getDisplayRange, getZeroAt } from '../reducers/profile-view';
+import { getProfile, getProfileViewOptions, getThreadOrder, getDisplayRange, getZeroAt, selectorsForThread } from '../reducers/profile-view';
+import { getSelectedThreadIndex } from '../reducers/url-state';
 import actions from '../actions';
 
 class ProfileViewerHeader extends PureComponent {
@@ -34,7 +36,8 @@ class ProfileViewerHeader extends PureComponent {
   render() {
     const {
       profile, className, threadOrder, changeThreadOrder, selection,
-      updateProfileSelection, timeRange, zeroAt
+      updateProfileSelection, timeRange, zeroAt, selectedThread,
+      selectedStack,
     } = this.props;
     const { threads, dates } = profile;
     const { hasSelection, isModifying, selectionStart, selectionEnd } = selection;
@@ -50,7 +53,7 @@ class ProfileViewerHeader extends PureComponent {
                            selectionEnd={selectionEnd}
                            onSelectionChange={updateProfileSelection}
                            onZoomButtonClick={this._onZoomButtonClick}>
-      <OverflowEdgeIndicator className={`${className}HeaderOverflowEdgeIndicator`}>
+      <div>
         {<Reorderable tagName='ol'
                      className={`${className}HeaderThreadList`}
                      order={threadOrder}
@@ -65,7 +68,12 @@ class ProfileViewerHeader extends PureComponent {
             )
           }
         </Reorderable>}
-      </OverflowEdgeIndicator>
+      </div>
+      <ThreadStackGraph thread={selectedThread}
+                        className='threadStackGraph'
+                        rangeStart={timeRange.start}
+                        rangeEnd={timeRange.end}
+                        selectedStack={selectedStack}/>
     </TimeSelectionScrubber>;
   }
 }
@@ -83,11 +91,17 @@ ProfileViewerHeader.propTypes = {
   changeSelectedThread: PropTypes.func.isRequired,
 };
 
-export default connect(state => ({
-  profile: getProfile(state),
-  selection: getProfileViewOptions(state).selection,
-  className: 'profileViewer',
-  threadOrder: getThreadOrder(state),
-  timeRange: getDisplayRange(state),
-  zeroAt: getZeroAt(state),
-}), actions)(ProfileViewerHeader);
+export default connect(state => {
+  const threadIndex = getSelectedThreadIndex(state);
+  const selectors = selectorsForThread(threadIndex);
+  return {
+    selectedThread: selectors.getFilteredThread(state),
+    selectedStack: selectors.getSelectedStack(state),
+    profile: getProfile(state),
+    selection: getProfileViewOptions(state).selection,
+    className: 'profileViewer',
+    threadOrder: getThreadOrder(state),
+    timeRange: getDisplayRange(state),
+    zeroAt: getZeroAt(state),
+  };
+}, actions)(ProfileViewerHeader);

@@ -21,13 +21,7 @@ export function stringifyRangeFilters(arrayValue = []) {
 }
 
 export function getFormattedTimeLength(length: number) {
-  if (length >= 10000) {
-    return `${(length / 1000).toFixed(0)} sec`;
-  }
-  if (length >= 1000) {
-    return `${(length / 1000).toFixed(1)} sec`;
-  }
-  return `${(length).toFixed(0)} ms`;
+  return `${(length).toFixed(0)} days`;
 }
 
 export function getRangeFilterLabels(rangeFilters) {

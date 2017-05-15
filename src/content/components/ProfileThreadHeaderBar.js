@@ -1,6 +1,5 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
-import ThreadStackGraph from './ThreadStackGraph';
 import { selectorsForThread } from '../reducers/profile-view';
 import { getSelectedThreadIndex } from '../reducers/url-state';
 import { getSampleIndexClosestToTime, getStackAsFuncArray } from '../profile-data';
@@ -12,8 +11,6 @@ class ProfileThreadHeaderBar extends Component {
   constructor(props) {
     super(props);
     this._onLabelMouseDown = this._onLabelMouseDown.bind(this);
-    this._onGraphClick = this._onGraphClick.bind(this);
-    this._onMarkerSelect = this._onMarkerSelect.bind(this);
   }
 
   _onLabelMouseDown(e) {
@@ -22,23 +19,6 @@ class ProfileThreadHeaderBar extends Component {
 
     // Don't allow clicks on the threads list to steal focus from the tree view.
     e.preventDefault();
-  }
-
-  _onGraphClick(time) {
-    const { threadIndex, changeSelectedThread } = this.props;
-    changeSelectedThread(threadIndex);
-    // TODO
-    // if (time !== undefined) {
-    //   const { thread, changeSelectedFuncStack } = this.props;
-    //   const sampleIndex = getSampleIndexClosestToTime(thread.samples, time);
-    //   const newSelectedStack = thread.samples.stack[sampleIndex];
-    //   const newSelectedFuncStack = newSelectedStack === null ? -1 : funcStackInfo.stackIndexToFuncStackIndex[newSelectedStack];
-    //   changeSelectedFuncStack(threadIndex,
-    //     getStackAsFuncArray(newSelectedFuncStack, funcStackInfo.funcStackTable));
-    // }
-  }
-
-  _onMarkerSelect(/* markerIndex */) {
   }
 
   render() {
@@ -52,17 +32,11 @@ class ProfileThreadHeaderBar extends Component {
         <ContextMenuTrigger id={'ProfileThreadHeaderContextMenu'}
                             renderTag='h1'
                             title={threadName}
-                            onMouseDown={this._onLabelMouseDown}
                             attributes={{ className: 'grippy' }}>
-          {threadName}
+          <div onMouseDown={this._onLabelMouseDown} className={'profileThreadHeaderBarThreadName'}>
+            {threadName}
+          </div>
         </ContextMenuTrigger>
-        <ThreadStackGraph thread={thread}
-                          className='threadStackGraph'
-                          rangeStart={rangeStart}
-                          rangeEnd={rangeEnd}
-                          selectedStack={selectedStack}
-                          onClick={this._onGraphClick}
-                          onMarkerSelect={this._onMarkerSelect}/>
       </li>
     );
   }

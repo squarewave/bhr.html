@@ -16,7 +16,7 @@ class ProfileTreeView extends Component {
     super(props);
     this._fixedColumns = [
       { propName: 'totalTimePercent', title: 'Time' },
-      { propName: 'selfTime', title: 'Self' },
+      { propName: 'selfTime', title: 'Self time' },
       { propName: 'totalCountPercent', title: 'Count' },
     ];
     this._mainColumn = { propName: 'name', title: '' };

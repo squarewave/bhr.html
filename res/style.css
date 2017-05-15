@@ -358,6 +358,8 @@ body, #root, .profileViewer {
 .profileViewerHeaderThreadList {
   list-style: none;
   margin: 0 0 0 -150px;
+  width: 150px;
+  position: absolute;
   padding: 0;
   box-shadow: inset 0 1px #D6D6D6;
 }
@@ -365,7 +367,7 @@ body, #root, .profileViewer {
 .profileThreadHeaderBar {
   margin: 0;
   padding: 0;
-  height: 60px;
+  height: 30px;
   display: flex;
   flex-flow: row nowrap;
   border-top: 1px solid #D6D6D6;
@@ -395,15 +397,20 @@ body, #root, .profileViewer {
   text-overflow: ellipsis;
 }
 
+.profileThreadHeaderBarThreadName {
+  width: 100%;
+  height: 100%;
+}
+
 .threadStackGraph {
-  height: 30px;
-  width: calc(100% - 150px);
+  height: 120px;
+  width: 100%;
   position: relative;
 }
 
 .threadStackGraphCanvas {
   display: block;
-  height: 60px;
+  height: 120px;
   width: 100%;
 }
 

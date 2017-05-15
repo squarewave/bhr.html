@@ -112,10 +112,8 @@ class ProfileTree {
       const libName = this._getOriginAnnotation(funcIndex);
 
       node = {
-        totalTime: `${this._stackTimes.totalTime[stackIndex].toFixed(1)}ms`,
         totalTimePercent: `${(100 * this._stackTimes.totalTime[stackIndex] / this._rootTotalTime).toFixed(1)}%`,
-        selfTime: `${this._stackTimes.selfTime[stackIndex].toFixed(1)}ms`,
-        totalCount: `${this._stackCounts.totalCount[stackIndex]}`,
+        selfTime: `${(100 * this._stackTimes.selfTime[stackIndex] / this._rootTotalTime).toFixed(1)}%`,
         totalCountPercent: `${(100 * this._stackCounts.totalCount[stackIndex] / this._rootTotalCount).toFixed(1)}%`,
         name: funcName,
         lib: libName,
