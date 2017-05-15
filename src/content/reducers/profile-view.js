@@ -146,7 +146,7 @@ function selection(state: ProfileSelection = { hasSelection: false, isModifying:
 function scrollToSelectionGeneration(state: number = 0, action: Action) {
   switch (action.type) {
     case 'CHANGE_INVERT_CALLSTACK':
-    case 'CHANGE_SELECTED_FUNC_STACK':
+    case 'CHANGE_SELECTED_STACK':
     case 'CHANGE_SELECTED_THREAD':
       return state + 1;
     default:
