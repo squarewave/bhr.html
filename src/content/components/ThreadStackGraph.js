@@ -15,7 +15,6 @@ class ThreadStackGraph extends Component {
     this._resizeListener = () => this.forceUpdate();
     this._requestedAnimationFrame = false;
     this._onMouseUp = this._onMouseUp.bind(this);
-    this._onMarkerSelected = this._onMarkerSelected.bind(this);
     this._onMouseMove = this._onMouseMove.bind(this);
     this._onMouseOut = this._onMouseOut.bind(this);
 
@@ -54,8 +53,12 @@ class ThreadStackGraph extends Component {
   }
 
   drawCanvas(c) {
-    const { thread, rangeStart, rangeEnd, selectedStack } = this.props;
+    let { thread, rangeStart, rangeEnd, selectedStack } = this.props;
     const { dates } = thread;
+
+    if (selectedStack === -1) {
+      selectedStack = 0;
+    }
 
     const devicePixelRatio = c.ownerDocument ? c.ownerDocument.defaultView.devicePixelRatio : 1;
     const r = c.getBoundingClientRect();
@@ -166,13 +169,6 @@ class ThreadStackGraph extends Component {
   _onMouseOut(e) {
     this.mouseIn = false;
     this._scheduleDraw();
-  }
-
-  _onMarkerSelected(markerIndex) {
-    if (this.props.onMarkerSelect) {
-      this.props.onMarkerSelect(markerIndex);
-    }
-    this.props.onClick();
   }
 
   render() {

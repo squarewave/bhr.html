@@ -1,6 +1,6 @@
 // @flow
 import type {
-  Action, ThunkAction, ProfileSelection, CallTreeFilter, ImplementationFilter,
+  Action, ThunkAction, ProfileSelection, CallTreeFilter
 } from './types';
 import type { Thread, ThreadIndex, IndexIntoFuncTable, } from '../../common/types/profile';
 
@@ -62,13 +62,6 @@ export function changeExpandedStacks(
   return {
     type: 'CHANGE_EXPANDED_STACKS',
     threadIndex, expandedStacks,
-  };
-}
-
-export function changeImplementationFilter(implementation: ImplementationFilter): Action {
-  return {
-    type: 'CHANGE_IMPLEMENTATION_FILTER',
-    implementation,
   };
 }
 

@@ -19,7 +19,7 @@ class ProfileViewerHeader extends PureComponent {
 
   _onZoomButtonClick(start, end) {
     const { addRangeFilterAndUnsetSelection, zeroAt } = this.props;
-    addRangeFilterAndUnsetSelection(start - zeroAt, end - zeroAt);
+    addRangeFilterAndUnsetSelection(Math.ceil(start - zeroAt), Math.floor(end - zeroAt));
   }
 
   _onIntervalMarkerSelect(threadIndex, start, end) {

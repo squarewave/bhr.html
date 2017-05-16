@@ -1,7 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import actions from '../actions';
-import { getImplementationFilter, getInvertCallstack, getSearchString } from '../reducers/url-state';
+import { getInvertCallstack, getSearchString } from '../reducers/url-state';
 import IdleSearchField from '../components/IdleSearchField';
 
 import './ProfileCallTreeSettings.css';
@@ -9,13 +9,8 @@ import './ProfileCallTreeSettings.css';
 class ProfileCallTreeSettings extends Component {
   constructor(props) {
     super(props);
-    this._onImplementationFilterChange = this._onImplementationFilterChange.bind(this);
     this._onInvertCallstackClick = this._onInvertCallstackClick.bind(this);
     this._onSearchFieldIdleAfterChange = this._onSearchFieldIdleAfterChange.bind(this);
-  }
-
-  _onImplementationFilterChange(e) {
-    this.props.changeImplementationFilter(e.target.value);
   }
 
   _onInvertCallstackClick(e) {
@@ -27,23 +22,10 @@ class ProfileCallTreeSettings extends Component {
   }
 
   render() {
-    const { implementationFilter, invertCallstack, searchString } = this.props;
+    const { invertCallstack, searchString } = this.props;
     return (
       <div className='profileCallTreeSettings'>
         <ul className='profileCallTreeSettingsList'>
-          <li className='profileCallTreeSettingsListItem'>
-            <label className='profileCallTreeSettingsLabel'>
-              Filter:
-              <select
-                     className='profileCallTreeSettingsSelect'
-                     onChange={this._onImplementationFilterChange}
-                     value={implementationFilter}>
-                <option value='combined'>Combined stacks</option>
-                <option value='js'>JS only</option>
-                <option value='cpp'>C++ only</option>
-              </select>
-            </label>
-          </li>
           <li className='profileCallTreeSettingsListItem'>
             <label className='profileCallTreeSettingsLabel'>
               <input type='checkbox'
@@ -70,8 +52,6 @@ class ProfileCallTreeSettings extends Component {
 }
 
 ProfileCallTreeSettings.propTypes = {
-  implementationFilter: PropTypes.string.isRequired,
-  changeImplementationFilter: PropTypes.func.isRequired,
   invertCallstack: PropTypes.bool.isRequired,
   changeInvertCallstack: PropTypes.func.isRequired,
   changeCallTreeSearchString: PropTypes.func.isRequired,
@@ -80,6 +60,5 @@ ProfileCallTreeSettings.propTypes = {
 
 export default connect(state => ({
   invertCallstack: getInvertCallstack(state),
-  implementationFilter: getImplementationFilter(state),
   searchString: getSearchString(state),
 }), actions)(ProfileCallTreeSettings);

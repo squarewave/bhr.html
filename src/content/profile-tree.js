@@ -145,6 +145,7 @@ export function getCallTree(
     let rootTotalTime = 0;
     let rootTotalCount = 0;
     let numRoots = 0;
+
     for (let stackIndex = allDates.totalStackHangMs.length - 1; stackIndex >= 0; stackIndex--) {
       if (allDates.totalStackHangMs[stackIndex] === 0) {
         continue;
@@ -158,6 +159,7 @@ export function getCallTree(
         numChildren[prefixStack]++;
       }
     }
+
     const stackTimes = { selfTime: allDates.stackHangMs, totalTime: allDates.totalStackHangMs };
     const stackCounts = { selfCount: allDates.stackHangCount, totalCount: allDates.totalStackHangCount };
     return new ProfileTree(

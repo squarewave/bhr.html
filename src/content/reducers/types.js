@@ -2,7 +2,6 @@
 
 import type {
   Action, ExpandedSet, CallTreeFiltersPerThread, ProfileSelection,
-  ImplementationFilter,
 } from '../actions/types';
 import type { Days, StartEndRange } from '../../common/types/units';
 import type { IndexIntoFuncTable, Profile, ThreadIndex } from '../../common/types/profile';
@@ -43,7 +42,6 @@ export type URLState = {
   selectedThread: ThreadIndex,
   callTreeSearchString: string,
   callTreeFilters: CallTreeFiltersPerThread,
-  implementation: ImplementationFilter,
   invertCallstack: boolean,
   hidePlatformDetails: boolean,
 };

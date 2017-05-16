@@ -33,7 +33,7 @@ function profile(state: Profile = ProfileData.getEmptyProfile(), action: Action)
 }
 
 function stackAfterCallTreeFilter(funcArray: IndexIntoFuncTable[], filter: CallTreeFilter) {
-  if (filter.type === 'prefix' && !filter.matchJSOnly) {
+  if (filter.type === 'prefix') {
     return removePrefixFromFuncArray(filter.prefixFuncs, funcArray);
   }
   return funcArray;
@@ -272,9 +272,9 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
         const result = callTreeFilters.reduce((t, filter) => {
           switch (filter.type) {
             case 'prefix':
-              return ProfileData.filterThreadToPrefixStack(t, filter.prefixFuncs, filter.matchJSOnly);
+              return ProfileData.filterThreadToPrefixStack(t, filter.prefixFuncs);
             case 'postfix':
-              return ProfileData.filterThreadToPostfixStack(t, filter.postfixFuncs, filter.matchJSOnly);
+              return ProfileData.filterThreadToPostfixStack(t, filter.postfixFuncs);
             default:
               throw new Error('unhandled call tree filter');
           }
@@ -282,7 +282,7 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
         return result;
       }
     );
-    const _getImplementationAndSearchFilteredThread = createSelector(
+    const _getSearchFilteredThread = createSelector(
       _getRangeAndCallTreeFilteredThread,
       URLState.getSearchString,
       (thread, searchString): Thread => {
@@ -290,7 +290,7 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
       }
     );
     const getFilteredThread = createSelector(
-      _getImplementationAndSearchFilteredThread,
+      _getSearchFilteredThread,
       URLState.getInvertCallstack,
       (thread, shouldInvertCallstack): Thread => {
         return shouldInvertCallstack ? ProfileData.invertCallstack(thread) : thread;

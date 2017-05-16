@@ -11,6 +11,8 @@ import type {
 } from '../common/types/profile';
 import { timeCode } from '../common/time-code';
 
+const INVERTED_CALLSTACK_ROOT_THRESHOLD = 0.001;
+
 function getTimeRangeForThread(thread: Thread) {
   if (thread.dates.length === 0) {
     return { start: 0, end: 1 };
@@ -219,7 +221,6 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
  * func is the last element of the prefix func array.
  * @param  {object} thread      The thread.
  * @param  {array} prefixFuncs  The prefix stack, as an array of funcs.
- * @param  {bool} matchJSOnly   Ignore non-JS frames during matching.
  * @return {object}             The filtered thread.
  */
 export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexIntoFuncTable[]) {
@@ -231,9 +232,9 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
     oldStackToNewStack.set(-1, -1);
     const newStackTable = {
       length: 0,
-      prefix: new Int32Array(),
-      func: new Int32Array(),
-      depth: new Int32Array(),
+      prefix: new Int32Array(stackTable.length),
+      func: new Int32Array(stackTable.length),
+      depth: new Int32Array(stackTable.length),
     };
     for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
       const prefix = stackTable.prefix[stackIndex];
@@ -312,7 +313,6 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
  * @param  {object} thread      The thread.
  * @param  {array} postfixFuncs The postfix stack, as an array of funcs,
  *                              starting from the leaf func.
- * @param  {bool} matchJSOnly   Ignore non-JS frames during matching.
  * @return {object}             The filtered thread.
  */
 export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIntoFuncTable[]) {
@@ -403,7 +403,6 @@ export function filterThreadToRange(thread: Thread, rangeStart: number, rangeEnd
 
   return Object.assign({}, thread, {
     allDates,
-    dates: newDates,
   });
 }
 
@@ -435,6 +434,9 @@ export function getFriendlyThreadName(threads: Thread[], thread: Thread): string
       break;
     case 'Gecko_Child':
       label = 'Content';
+      break;
+    case 'Gecko_Child_ForcePaint':
+      label = 'Content ForcePaint';
       break;
   }
 
@@ -468,9 +470,9 @@ export function invertCallstack(thread: Thread): Thread {
 
     const newStackTable = {
       length: 0,
-      prefix: new Int32Array(),
-      func: new Int32Array(),
-      depth: new Int32Array(),
+      prefix: [],
+      func: [],
+      depth: [],
     };
     // Create a Map that keys off of two values, both the prefix and frame combination
     // by using a bit of math: prefix * funcCount + func => stackIndex
@@ -482,8 +484,8 @@ export function invertCallstack(thread: Thread): Thread {
       let stackIndex = prefixAndFuncToStack.get(prefixAndFuncIndex);
       if (stackIndex === undefined) {
         stackIndex = newStackTable.length++;
-        newStackTable.prefix[stackIndex] = prefix;
-        newStackTable.func[stackIndex] = func;
+        newStackTable.prefix.push(prefix);
+        newStackTable.func.push(func);
         prefixAndFuncToStack.set(prefixAndFuncIndex, stackIndex);
       }
       return stackIndex;
@@ -492,8 +494,8 @@ export function invertCallstack(thread: Thread): Thread {
     const oldStackToNewStack = new Map();
 
     function convertStack(stackIndex) {
-      if (stackIndex === -1) {
-        return -1;
+      if (stackIndex === -1 || allDates.totalStackHangCount[stackIndex] < INVERTED_CALLSTACK_ROOT_THRESHOLD) {
+        return;
       }
       let newStack = oldStackToNewStack.get(stackIndex);
       if (newStack === undefined) {
@@ -503,7 +505,10 @@ export function invertCallstack(thread: Thread): Thread {
         }
         oldStackToNewStack.set(stackIndex, newStack);
       }
-      return newStack;
+    }
+
+    for (let i = 0; i < stackTable.length; i++) {
+      convertStack(i);
     }
 
     let newStackHangMs = new Float32Array(newStackTable.length);
@@ -520,27 +525,42 @@ export function invertCallstack(thread: Thread): Thread {
     }));
 
     for (let i = 0; i < stackTable.length; i++) {
-      let newIndex = convertStack(i);
-      if (newIndex != -1) {
-        newStackHangMs[newIndex] += allDates.stackHangMs[i];
-        newStackHangCount[newIndex] += allDates.stackHangCount[i];
-        newTotalStackHangMs[newIndex] += allDates.totalStackHangMs[i];
-        newTotalStackHangCount[newIndex] += allDates.totalStackHangCount[i];
+      const newIndex = oldStackToNewStack.get(i);
+      if (newIndex !== -1 && newIndex !== undefined) {
+        if (allDates.stackHangCount[i]) {
+          newStackHangMs[newIndex] += allDates.stackHangMs[i];
+          newStackHangCount[newIndex] += allDates.stackHangCount[i];
+          newTotalStackHangMs[newIndex] += allDates.stackHangMs[i];
+          newTotalStackHangCount[newIndex] += allDates.stackHangCount[i];
 
-        for (let j = 0; j < dates.length; j++) {
-          newDates[j].stackHangMs[newIndex] += dates[j].stackHangMs[i];
-          newDates[j].stackHangCount[newIndex] += dates[j].stackHangCount[i];
-          newDates[j].totalStackHangMs[newIndex] += dates[j].totalStackHangMs[i];
-          newDates[j].totalStackHangCount[newIndex] += dates[j].totalStackHangCount[i];
+          for (let j = 0; j < dates.length; j++) {
+            newDates[j].stackHangMs[newIndex] += dates[j].stackHangMs[i];
+            newDates[j].stackHangCount[newIndex] += dates[j].stackHangCount[i];
+            newDates[j].totalStackHangMs[newIndex] += dates[j].stackHangMs[i];
+            newDates[j].totalStackHangCount[newIndex] += dates[j].stackHangCount[i];
+          }
         }
       }
     }
 
     for (let i = 0; i < newStackTable.length; i++) {
-      if (newStackTable.prefix[i] == -1) {
-        newStackTable.depth[i] = 0;
+      const prefix = newStackTable.prefix[i];
+      if (prefix == -1) {
+        newStackTable.depth.push(0);
       } else {
-        newStackTable.depth[i] = 1 + newStackTable.depth[newStackTable.prefix[i]];
+        newStackTable.depth.push(1 + newStackTable.depth[newStackTable.prefix[i]]);
+      }
+    }
+
+    for (let i = newStackTable.length - 1; i >= 0; i--) {
+      const prefix = newStackTable.prefix[i];
+      if (prefix != -1) {
+        newTotalStackHangMs[prefix] += newTotalStackHangMs[i];
+        newTotalStackHangCount[prefix] += newTotalStackHangCount[i];
+        for (let j = 0; j < dates.length; j++) {
+          newDates[j].totalStackHangMs[prefix] += newDates[j].totalStackHangMs[i];
+          newDates[j].totalStackHangCount[prefix] += newDates[j].totalStackHangCount[i];
+        }
       }
     }
 

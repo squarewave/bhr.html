@@ -6,12 +6,10 @@ export type ExpandedSet = Set<ThreadIndex>;
 export type PrefixCallTreeFilter = {
   type: 'prefix',
   prefixFuncs: IndexIntoFuncTable[],
-  matchJSOnly: boolean,
 };
 export type PostfixCallTreeFilter = {
   type: 'postfix',
   postfixFuncs: IndexIntoFuncTable[],
-  matchJSOnly: boolean,
 };
 export type CallTreeFilter = PrefixCallTreeFilter | PostfixCallTreeFilter;
 export type CallTreeFiltersPerThread = { [id: ThreadIndex]: CallTreeFilter[] };
@@ -31,7 +29,6 @@ export type FunctionsUpdatePerThread = { [id: ThreadIndex]: {
 }}
 
 export type RequestedLib = { debugName: string, breakpadId: string };
-export type ImplementationFilter = 'combined' | 'js' | 'cpp';
 
 type ProfileAction =
   { type: 'CHANGE_THREAD_ORDER', threadOrder: ThreadIndex[] } |
@@ -81,7 +78,6 @@ type URLStateAction =
   { type: 'CHANGE_CALL_TREE_SEARCH_STRING', searchString: string } |
   { type: 'ADD_CALL_TREE_FILTER', threadIndex: ThreadIndex, filter: CallTreeFilter } |
   { type: 'POP_CALL_TREE_FILTERS', threadIndex: ThreadIndex, firstRemovedFilterIndex: number } |
-  { type: 'CHANGE_IMPLEMENTATION_FILTER', implementation: ImplementationFilter } |
   { type: 'CHANGE_INVERT_CALLSTACK', invertCallstack: boolean } |
   { type: 'CHANGE_HIDE_PLATFORM_DETAILS', hidePlatformDetails: boolean };
 

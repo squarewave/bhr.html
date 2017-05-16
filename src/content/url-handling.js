@@ -15,9 +15,6 @@ export function urlFromState(urlState: URLState) {
 
   query.search = urlState.callTreeSearchString || undefined;
   query.invertCallstack = urlState.invertCallstack ? null : undefined;
-  query.implementation = urlState.implementation === 'combined'
-    ? undefined
-    : urlState.implementation;
   query.callTreeFilters = stringifyCallTreeFilters(urlState.callTreeFilters[urlState.selectedThread]) || undefined;
   const qString = queryString.stringify(query);
   return pathname + (qString ? '?' + qString : '');
@@ -31,14 +28,6 @@ export function stateFromCurrentLocation(): URLState {
 
   const selectedThread = query.thread !== undefined ? +query.thread : 0;
 
-  let implementation = 'combined';
-  if (query.implementation === 'js' || query.implementation === 'cpp') {
-    implementation = query.implementation;
-  } else if (query.jsOnly !== undefined) {
-    // Support the old URL structure that had a jsOnly flag.
-    implementation = 'js';
-  }
-
   return {
     hash: '',
     selectedTab: 'calltree',
@@ -48,7 +37,6 @@ export function stateFromCurrentLocation(): URLState {
     callTreeFilters: {
       [selectedThread]: query.callTreeFilters ? parseCallTreeFilters(query.callTreeFilters) : [],
     },
-    implementation,
     invertCallstack: query.invertCallstack !== undefined,
     hidePlatformDetails: query.hidePlatformDetails !== undefined,
   };
