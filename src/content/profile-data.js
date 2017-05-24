@@ -198,20 +198,38 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
       return result;
     }
 
-    return Object.assign({}, thread, {
+    const result = Object.assign({}, thread, {
       allDates: Object.assign({}, allDates, {
-        totalStackHangMs: allDates.totalStackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
-        totalStackHangCount: allDates.totalStackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
         stackHangMs: allDates.stackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
         stackHangCount: allDates.stackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
+        totalStackHangMs: new Float32Array(stackTable.length),
+        totalStackHangCount: new Float32Array(stackTable.length),
       }),
       dates: dates.map(d => Object.assign({}, d, {
-        totalStackHangMs: d.totalStackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
-        totalStackHangCount: d.totalStackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
         stackHangMs: d.stackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
         stackHangCount: d.stackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
+        totalStackHangMs: new Float32Array(stackTable.length),
+        totalStackHangCount: new Float32Array(stackTable.length),
       }))
     });
+
+    for (let i = result.allDates.length - 1; i >= 0; i--) {
+      const prefix = stackTable.prefix[i];
+      if (prefix != -1) {
+        result.allDates.totalStackHangMs[i] += result.allDates.stackHangMs[i];
+        result.allDates.totalStackHangCount[i] += result.allDates.stackHangCount[i];
+        result.allDates.totalStackHangMs[prefix] += result.allDates.totalStackHangMs[i];
+        result.allDates.totalStackHangCount[prefix] += result.allDates.totalStackHangCount[i];
+        for (let j = 0; j < dates.length; j++) {
+          result.dates[j].totalStackHangMs[i] += result.dates[j].stackHangMs[i];
+          result.dates[j].totalStackHangCount[i] += result.dates[j].stackHangCount[i];
+          result.dates[j].totalStackHangMs[prefix] += result.dates[j].totalStackHangMs[i];
+          result.dates[j].totalStackHangCount[prefix] += result.dates[j].totalStackHangCount[i];
+        }
+      }
+    }
+
+    return result;
   });
 }
 

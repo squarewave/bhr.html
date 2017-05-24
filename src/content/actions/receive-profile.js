@@ -5,6 +5,7 @@ import type {
 } from './types';
 import type { Profile } from '../../common/types/profile';
 import { UniqueStringArray } from '../unique-string-array';
+import { OneToManyIndex } from '../one-to-many-index';
 
 export function waitingForProfileFromTelemetry(): Action {
   return {
@@ -61,24 +62,45 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
       }
 
       for (let thread of profile.threads) {
-        let prefix = new Int32Array(thread.stackTable.length);
-        let func = new Int32Array(thread.stackTable.length);
-        let depth = new Int32Array(thread.stackTable.length);
-        for (let i = 0; i < thread.stackTable.length; i++) {
-          if (thread.stackTable.prefix[i] === null) {
-            prefix[i] = -1;
-            depth[i] = 0;
-          } else {
-            prefix[i] = thread.stackTable.prefix[i];
-            depth[i] = 1 + depth[prefix[i]];
+        {
+          let prefix = new Int32Array(thread.stackTable.length);
+          let func = new Int32Array(thread.stackTable.length);
+          let depth = new Int32Array(thread.stackTable.length);
+          for (let i = 0; i < thread.stackTable.length; i++) {
+            if (thread.stackTable.prefix[i] === null) {
+              prefix[i] = -1;
+              depth[i] = 0;
+            } else {
+              prefix[i] = thread.stackTable.prefix[i];
+              depth[i] = 1 + depth[prefix[i]];
+            }
+            func[i] = thread.stackTable.func[i];
           }
-          func[i] = thread.stackTable.func[i];
+
+          Object.assign(thread.stackTable, {
+            prefix,
+            func,
+            depth,
+          });
         }
-        Object.assign(thread.stackTable, {
-          prefix,
-          func,
-          depth,
-        });
+
+        {
+          let prefix = new Int32Array(thread.pseudoStackTable.length);
+          let func = new Int32Array(thread.pseudoStackTable.length);
+          for (let i = 0; i < thread.pseudoStackTable.length; i++) {
+            if (thread.pseudoStackTable.prefix[i] === null) {
+              prefix[i] = -1;
+            } else {
+              prefix[i] = thread.pseudoStackTable.prefix[i];
+            }
+            func[i] = thread.pseudoStackTable.func[i];
+          }
+
+          Object.assign(thread.pseudoStackTable, {
+            prefix,
+            func,
+          });
+        }
 
         thread.dates = Array.from(allDates).map(date => {
           let threadDate = thread.dates.find(d => d.date === date);
@@ -112,7 +134,7 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
         });
 
         thread.dates.sort((lhs, rhs) => lhs.date - rhs.date);
-
+        thread.stackToPseudoStacksIndex = new OneToManyIndex(thread.stackToPseudoStacksTable.stack);
         thread.stringTable = new UniqueStringArray(thread.stringArray);
       }
 

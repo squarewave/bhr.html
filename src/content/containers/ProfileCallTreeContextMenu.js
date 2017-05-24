@@ -51,6 +51,54 @@ class ProfileCallTreeContextMenu extends PureComponent {
     copy(stack);
   }
 
+  _getPseudoStackString(stackIndex) {
+    const {
+      thread: {
+        stringTable,
+        funcTable,
+        pseudoStackTable,
+      },
+    } = this.props;
+
+    let stack = '';
+
+    do {
+      const funcIndex = pseudoStackTable.func[stackIndex];
+      const stringIndex = funcTable.name[funcIndex];
+      stack += stringTable.getString(stringIndex) + '\n';
+      if (stackIndex == pseudoStackTable.prefix[stackIndex]) {
+        break;
+      }
+      stackIndex = pseudoStackTable.prefix[stackIndex];
+    } while (stackIndex !== -1);
+
+    return stack;
+  }
+
+  viewPseudoStacks() {
+    const {
+      selectedStack,
+      tree,
+      thread: {
+        stringTable,
+        funcTable,
+        stackTable,
+        stackToPseudoStacksTable,
+        stackToPseudoStacksIndex,
+        pseudoStackTable,
+      },
+    } = this.props;
+
+    const descendants = tree.getDescendants(selectedStack);
+    const indices = stackToPseudoStacksIndex.getRowIndices(descendants);
+    indices.sort((lhs, rhs) => stackToPseudoStacksTable.stackHangMs[lhs] - stackToPseudoStacksTable.stackHangMs[rhs]);
+    const topStacks = Array.from(indices
+      .slice(0, 20)
+      .map(i => stackToPseudoStacksTable.pseudo_stack[i]))
+      .map(i => this._getPseudoStackString(i));
+    console.log(topStacks);
+  }
+
   handleClick(event: SyntheticEvent, data: { type: string }): void {
     switch (data.type) {
       case 'copyFunctionName':
@@ -58,6 +106,9 @@ class ProfileCallTreeContextMenu extends PureComponent {
         break;
       case 'copyStack':
         this.copyStack();
+        break;
+      case 'viewPseudoStacks':
+        this.viewPseudoStacks();
         break;
     }
   }
@@ -69,6 +120,7 @@ class ProfileCallTreeContextMenu extends PureComponent {
           <MenuItem onClick={this.handleClick} data={{type: 'copyFunctionName'}}>Function Name</MenuItem>
           <MenuItem onClick={this.handleClick} data={{type: 'copyStack'}}>Stack</MenuItem>
         </SubMenu>
+        <MenuItem onClick={this.handleClick} data={{type: 'viewPseudoStacks'}}>View Pseudo-Stacks</MenuItem>
       </ContextMenu>
     );
   }
@@ -77,4 +129,5 @@ class ProfileCallTreeContextMenu extends PureComponent {
 export default connect(state => ({
   thread: selectedThreadSelectors.getFilteredThread(state),
   selectedStack: selectedThreadSelectors.getSelectedStack(state),
+  tree: selectedThreadSelectors.getCallTree(state),
 }), actions)(ProfileCallTreeContextMenu);

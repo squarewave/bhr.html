@@ -83,6 +83,25 @@ class ProfileTree {
     return children;
   }
 
+  /**
+   * Return an array of stackIndex for the descendants of the node with index stackIndex.
+   * @param  {[type]} stackIndex [description]
+   * @return {[type]}            [description]
+   */
+  getDescendants(stackIndex: IndexIntoStackTable): StackChildren {
+    let descendants = new Set([stackIndex]);
+    for (let descendantIndex = stackIndex + 1;
+         descendantIndex < this._stackTable.length;
+         descendantIndex++) {
+      if (descendants.has(this._stackTable.prefix[descendantIndex]) &&
+          this._stackTimes.totalTime[descendantIndex] !== 0) {
+        descendants.add(descendantIndex);
+      }
+    }
+    descendants.delete(stackIndex);
+    return Array.from(descendants);
+  }
+
   hasChildren(stackIndex: IndexIntoStackTable): boolean {
     return this.getChildren(stackIndex).length !== 0;
   }

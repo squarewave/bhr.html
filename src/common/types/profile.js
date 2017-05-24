@@ -22,6 +22,18 @@ export type StackTable = {
   length: number,
 };
 
+export type PseudoStackTable = {
+  func: Int32Array,
+  prefix: Int32Array,
+  length: number,
+};
+
+export type StackToPseudoStacksTable = {
+  stack: Int32Array,
+  pseudoStack: Int32Array,
+  length: number,
+};
+
 export type AllDatesTable = {
   length: number,
   stackHangMs: Float32Array,
@@ -57,13 +69,9 @@ export type Lib = {
  * locations.
  */
 export type FuncTable = {
-  address: MemoryOffset[],
-  libs: IndexIntoLibs[],
   length: number,
   name: IndexIntoStringTable[],
   lib: Array<IndexIntoLibs|-1>,
-  fileName: Array<IndexIntoStringTable|null>,
-  lineNumber: Array<number|null>,
 };
 
 /**
@@ -76,6 +84,8 @@ export type Thread = {
   pid: number | void,
   tid: number | void,
   stackTable: StackTable,
+  pseudoStackTable: PseudoStackTable,
+  stackToPseudoStacksTable: StackToPseudoStacksTable,
   // Strings for profiles are collected into a single table, and are referred to by
   // their index by other tables.
   stringTable: UniqueStringArray,
