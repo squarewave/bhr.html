@@ -391,7 +391,7 @@ export function filterThreadToRange(thread: Thread, rangeStart: number, rangeEnd
     totalStackHangCount: new Float32Array(stackTable.length),
   };
 
-  let newDates = dates.slice(rangeStart, rangeEnd);
+  let newDates = dates.slice(rangeStart, rangeEnd + 1);
   for (let date of newDates) {
     for (let i = 0; i < stackTable.length; i++) {
       allDates.stackHangMs[i] += date.stackHangMs[i];

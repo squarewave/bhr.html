@@ -27,15 +27,14 @@ class TimeRuler extends Component {
     }
 
     const { zeroAt, rangeStart, rangeEnd, width } = this.props;
-    const pixelsPerDay = width / (rangeEnd - rangeStart);
+    const pixelsPerDay = width / (rangeEnd - rangeStart + 1);
     const minimumNotchWidth = 55; // pixels
-    const notchTime = 1;
-    const firstNotchIndex = Math.ceil((rangeStart - zeroAt) / notchTime);
-    const lastNotchIndex = Math.floor((rangeEnd - zeroAt) / notchTime);
+    const firstNotchIndex = rangeStart - zeroAt;
+    const lastNotchIndex = rangeEnd - zeroAt;
     const notches = [];
     for (let i = firstNotchIndex; i <= lastNotchIndex; i++) {
       let date = this.props.dates[i];
-      notches.push({ date, pos: (i * notchTime - (rangeStart - zeroAt)) * pixelsPerDay});
+      notches.push({ date, pos: (i - (rangeStart - zeroAt)) * pixelsPerDay});
     }
     return notches;
   }

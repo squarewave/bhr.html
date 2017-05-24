@@ -65,11 +65,11 @@ class ThreadStackGraph extends Component {
     c.width = Math.round(r.width * devicePixelRatio);
     c.height = Math.round(r.height * devicePixelRatio);
     const ctx = c.getContext('2d');
-    const rangeLength = rangeEnd - rangeStart;
+    const rangeLength = rangeEnd - rangeStart + 1;
 
     let maxHangMs = 0;
     let maxHangCount = 0;
-    for (let i = rangeStart; i < rangeEnd; i++) {
+    for (let i = rangeStart; i <= rangeEnd; i++) {
       if (dates[i].totalStackHangMs[selectedStack] > maxHangMs) {
         maxHangMs = dates[i].totalStackHangMs[selectedStack];
       }
@@ -82,7 +82,7 @@ class ThreadStackGraph extends Component {
     const yDevicePixelsPerHangMs = c.height / maxHangMs;
     const yDevicePixelsPerHangCount = c.height / maxHangCount;
 
-    for (let i = rangeStart; i < rangeEnd; i++) {
+    for (let i = rangeStart; i <= rangeEnd; i++) {
       const date = dates[i];
       const timeHeight = date.totalStackHangMs[selectedStack] * yDevicePixelsPerHangMs;
       const countHeight = date.totalStackHangCount[selectedStack] * yDevicePixelsPerHangCount;

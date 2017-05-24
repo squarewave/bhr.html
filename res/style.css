@@ -307,8 +307,7 @@ body, #root, .profileViewer {
 
 .timeRulerNotchText {
   position: absolute;
-  right: 0;
-  padding-right: 5px;
+  padding-left: 5px;
 }
 
 .profileViewerHeaderOverflowEdgeIndicatorScrollbox {

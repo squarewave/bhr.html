@@ -38,26 +38,26 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
       return res.json();
     }).then(profile => {
 
-      function intersection(setA, setB) {
-          let intersection = new Set();
-          for (let elem of setB) {
-              if (setA.has(elem)) {
-                  intersection.add(elem);
-              }
+      function union(setA, setB) {
+          let union = new Set();
+          for (let elem of setA) {
+            union.add(elem);
           }
-          return intersection;
+          for (let elem of setB) {
+            union.add(elem);
+          }
+          return union;
       }
 
-      let validDates;
+      let allDates;
       if (profile.threads.length !== 0) {
         let dateSets = profile.threads.map(t => new Set(t.dates.map(d => d.date)));
-        validDates = dateSets[0];
+        allDates = dateSets[0];
         dateSets.slice(1).forEach(ds => {
-          validDates = intersection(validDates, ds);
+          allDates = union(allDates, ds);
         });
-
       } else {
-        validDates = new Set();
+        allDates = new Set();
       }
 
       for (let thread of profile.threads) {
@@ -80,36 +80,38 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
           depth,
         });
 
-        thread.dates = thread.dates.filter(d => validDates.has(d.date));
-
-        thread.dates.sort((lhs, rhs) => lhs.date - rhs.date);
-        thread.dates = thread.dates.map(d => {
+        thread.dates = Array.from(allDates).map(date => {
+          let threadDate = thread.dates.find(d => d.date === date);
           let stackHangMs = new Float32Array(thread.stackTable.length);
           let stackHangCount = new Float32Array(thread.stackTable.length);
           let totalStackHangMs = new Float32Array(thread.stackTable.length);
           let totalStackHangCount = new Float32Array(thread.stackTable.length);
 
-          for (let i = thread.stackTable.length - 1; i >= 0; i--) {
-            stackHangMs[i] = d.stackHangMs[i] || 0;
-            stackHangCount[i] = d.stackHangCount[i] || 0;
-            totalStackHangMs[i] += stackHangMs[i];
-            totalStackHangCount[i] += stackHangCount[i];
-            const prefix = thread.stackTable.prefix[i];
-            if (prefix !== -1) {
-              totalStackHangMs[prefix] += totalStackHangMs[i];
-              totalStackHangCount[prefix] += totalStackHangCount[i];
+          if (threadDate) {
+            for (let i = thread.stackTable.length - 1; i >= 0; i--) {
+              stackHangMs[i] = threadDate.stackHangMs[i] || 0;
+              stackHangCount[i] = threadDate.stackHangCount[i] || 0;
+              totalStackHangMs[i] += stackHangMs[i];
+              totalStackHangCount[i] += stackHangCount[i];
+              const prefix = thread.stackTable.prefix[i];
+              if (prefix !== -1) {
+                totalStackHangMs[prefix] += totalStackHangMs[i];
+                totalStackHangCount[prefix] += totalStackHangCount[i];
+              }
             }
           }
 
           return  {
-            date: d.date,
             length: thread.stackTable.length,
+            date,
             stackHangMs,
             stackHangCount,
             totalStackHangCount,
             totalStackHangMs,
           };
         });
+
+        thread.dates.sort((lhs, rhs) => lhs.date - rhs.date);
 
         thread.stringTable = new UniqueStringArray(thread.stringArray);
       }
