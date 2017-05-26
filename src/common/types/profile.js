@@ -30,7 +30,9 @@ export type PseudoStackTable = {
 
 export type StackToPseudoStacksTable = {
   stack: Int32Array,
-  pseudoStack: Int32Array,
+  pseudo_stack: Int32Array,
+  stackHangMs: Float32Array,
+  stackHangCount: Float32Array,
   length: number,
 };
 

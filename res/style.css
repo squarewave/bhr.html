@@ -22,6 +22,7 @@ body, #root, .profileViewer {
   user-select: none;
   cursor: default;
   border-top: 1px solid #D6D6D6;
+  border-right: 1px solid #D6D6D6;
 }
 
 .treeViewHeader {
@@ -234,6 +235,44 @@ body, #root, .profileViewer {
 
 .treeViewRow:hover > .focusCallstackButton {
   visibility: visible;
+}
+
+.pseudoStacksView {
+  display: flex;
+  flex-flow: column nowrap;
+  flex: 1;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  cursor: default;
+  border-top: 1px solid #D6D6D6;
+  max-width: 480px;
+}
+
+.pseudoStacksViewHeader {
+  box-sizing: border-box;
+  padding: 1px 5px;
+  line-height: 16px;
+  white-space: nowrap;
+  border-bottom: 1px solid #D6D6D6;
+}
+
+.pseudoStackRow {
+  padding: 4px;
+  width: calc(100% - 8px);
+}
+
+.pseudoStackMsBar {
+  background-color: #a7b9e5;
+  height: 12px;
+}
+
+.pseudoStackRow.even {
+  background-color: #FFFFFF;
+}
+
+.pseudoStackRow.odd {
+  background-color: #F5F5F5;
 }
 
 .profileViewerTopBar {
@@ -620,6 +659,12 @@ body, #root, .profileViewer {
   left: 0;
   margin: 0;
   padding: 10px;
+}
+
+.treeViewAndPseudoStacksWrapper {
+  flex: 1;
+  display: flex;
+  flex-flow: row nowrap;
 }
 
 .profileSummaryP {

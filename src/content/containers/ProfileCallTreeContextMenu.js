@@ -91,12 +91,14 @@ class ProfileCallTreeContextMenu extends PureComponent {
 
     const descendants = tree.getDescendants(selectedStack);
     const indices = stackToPseudoStacksIndex.getRowIndices(descendants);
-    indices.sort((lhs, rhs) => stackToPseudoStacksTable.stackHangMs[lhs] - stackToPseudoStacksTable.stackHangMs[rhs]);
-    const topStacks = Array.from(indices
-      .slice(0, 20)
-      .map(i => stackToPseudoStacksTable.pseudo_stack[i]))
-      .map(i => this._getPseudoStackString(i));
-    console.log(topStacks);
+    const weights = new Float32Array(pseudoStackTable.length);
+    for (let index of indices) {
+      weights[stackToPseudoStacksTable.pseudo_stack[index]] += stackToPseudoStacksTable.stackHangMs[index];
+    }
+    const pseudoStacks = Object.keys(weights);
+    pseudoStacks.sort((lhs, rhs) => weights[rhs] - weights[lhs]);
+    const topStacks = pseudoStacks.slice(0, 60).map(i => this._getPseudoStackString(i));
+    const maxStackHangMs = weights[pseudoStacks[0]];
   }
 
   handleClick(event: SyntheticEvent, data: { type: string }): void {
