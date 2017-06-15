@@ -28,7 +28,10 @@ class PseudoStackRow extends Component {
     while (pseudoStackTable.prefix[stackIndex] !== -1) {
       const funcIndex = pseudoStackTable.func[stackIndex];
       const stringIndex = funcTable.name[funcIndex];
-      stack = stringTable.getString(stringIndex) + '\n' + stack;
+      const strForm = stringTable.getString(stringIndex).trim();
+      if (strForm.length) {
+        stack = strForm + '\n' + stack;
+      }
       stackIndex = pseudoStackTable.prefix[stackIndex];
     }
 
@@ -86,13 +89,14 @@ class ProfilePseudoStacksView extends Component {
     }
     const pseudoStacks = Array.from(weights.map((w,i) => i));
     pseudoStacks.sort((lhs, rhs) => weights[rhs] - weights[lhs]);
-    console.log(pseudoStacks.map(i => weights[i]).slice(0,5));
     const maxHangMs = weights[pseudoStacks[0]];
-
+    const pseudostackDisplayThreshold = 0.01;
     return (
       <div className="pseudoStacksView">
         <div className="pseudoStacksViewHeader">Pseudo Stacks</div>
-        {pseudoStacks.slice(0, 20).map((pseudoStack, index) =>
+        {pseudoStacks.slice(0, 20)
+          .filter(pseudoStack => weights[pseudoStack] / maxHangMs > pseudostackDisplayThreshold)
+          .map((pseudoStack, index) =>
             <PseudoStackRow key={pseudoStack}
               pseudoStack={pseudoStack}
               thread={thread}

@@ -33,7 +33,7 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
   return dispatch => {
     dispatch(waitingForProfileFromTelemetry());
 
-    const TELEMETRY_PROFILE_URL = 'https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/hang_profile.json';
+    const TELEMETRY_PROFILE_URL = 'https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/hang_profile_2.json';
 
     fetch(TELEMETRY_PROFILE_URL).then(res => {
       return res.json();
