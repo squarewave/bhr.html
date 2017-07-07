@@ -246,6 +246,21 @@ body, #root, .profileViewer {
   overflow: auto;
 }
 
+.pseudoStacksViewBody {
+  display: flex;
+  flex-flow: column nowrap;
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.pseudoStacksViewInnerWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
 .pseudoStacksViewHeader {
   box-sizing: border-box;
   padding: 1px 5px;

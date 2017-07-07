@@ -16,6 +16,7 @@ export function urlFromState(urlState: URLState) {
   query.search = urlState.callTreeSearchString || undefined;
   query.invertCallstack = urlState.invertCallstack ? null : undefined;
   query.callTreeFilters = stringifyCallTreeFilters(urlState.callTreeFilters[urlState.selectedThread]) || undefined;
+  query.category = urlState.categoryFilter || undefined;
   const qString = queryString.stringify(query);
   return pathname + (qString ? '?' + qString : '');
 }
@@ -34,6 +35,7 @@ export function stateFromCurrentLocation(): URLState {
     rangeFilters: query.range ? parseRangeFilters(query.range) : [],
     selectedThread: selectedThread,
     callTreeSearchString: query.search || '',
+    categoryFilter: query.category || '',
     callTreeFilters: {
       [selectedThread]: query.callTreeFilters ? parseCallTreeFilters(query.callTreeFilters) : [],
     },

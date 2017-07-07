@@ -1,7 +1,9 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import actions from '../actions';
-import { getInvertCallstack, getSearchString } from '../reducers/url-state';
+import { categoryNames } from '../summarize-profile';
+import * as summarizeProfile from '../summarize-profile';
+import { getInvertCallstack, getSearchString, getCategoryFilter } from '../reducers/url-state';
 import IdleSearchField from '../components/IdleSearchField';
 
 import './ProfileCallTreeSettings.css';
@@ -11,6 +13,7 @@ class ProfileCallTreeSettings extends Component {
     super(props);
     this._onInvertCallstackClick = this._onInvertCallstackClick.bind(this);
     this._onSearchFieldIdleAfterChange = this._onSearchFieldIdleAfterChange.bind(this);
+    this._onCategoryFilterChange = this._onCategoryFilterChange.bind(this);
   }
 
   _onInvertCallstackClick(e) {
@@ -21,11 +24,28 @@ class ProfileCallTreeSettings extends Component {
     this.props.changeCallTreeSearchString(value);
   }
 
+  _onCategoryFilterChange(e) {
+    this.props.changeCategoryFilter(e.target.value);
+  }
+
   render() {
-    const { invertCallstack, searchString } = this.props;
+    const { invertCallstack, searchString, categoryFilter } = this.props;
     return (
       <div className='profileCallTreeSettings'>
         <ul className='profileCallTreeSettingsList'>
+          <li className="profileCallTreeSettingsListItem">
+            <label className="profileCallTreeSettingsLabel">
+              Category:
+              <select
+                className="profileCallTreeSettingsSelect"
+                onChange={this._onCategoryFilterChange}
+                value={categoryFilter}
+              >
+                <option key='all' value=''>All categories</option>
+                {categoryNames.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
+          </li>
           <li className='profileCallTreeSettingsListItem'>
             <label className='profileCallTreeSettingsLabel'>
               <input type='checkbox'
@@ -56,9 +76,11 @@ ProfileCallTreeSettings.propTypes = {
   changeInvertCallstack: PropTypes.func.isRequired,
   changeCallTreeSearchString: PropTypes.func.isRequired,
   searchString: PropTypes.string.isRequired,
+  categoryFilter: PropTypes.string.isRequired,
 };
 
 export default connect(state => ({
   invertCallstack: getInvertCallstack(state),
   searchString: getSearchString(state),
+  categoryFilter: getCategoryFilter(state),
 }), actions)(ProfileCallTreeSettings);

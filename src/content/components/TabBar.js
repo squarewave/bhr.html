@@ -14,14 +14,10 @@ class TabBar extends PureComponent {
   }
 
   render() {
-    const { className, tabs, selectedTabName, tabOrder, onChangeTabOrder } = this.props;
+    const { className, tabs, selectedTabName } = this.props;
     return (
       <div className={classNames('tabBarContainer', className)}>
-        <Reorderable tagName='ol'
-                     className='tabBarTabWrapper'
-                     order={tabOrder}
-                     orient='horizontal'
-                     onChangeOrder={onChangeTabOrder}>
+        <ol className='tabBarTabWrapper' orient='horizontal'>
           {
             tabs.map(({ name, title }, i) => (
               <li className={classNames('tabBarTab', 'grippy', { selected: name === selectedTabName })}
@@ -32,7 +28,7 @@ class TabBar extends PureComponent {
               </li>
             ))
           }
-        </Reorderable>
+        </ol>
       </div>
     );
   }
@@ -46,9 +42,7 @@ TabBar.propTypes = {
     title: PropTypes.string.isRequired,
   })).isRequired,
   selectedTabName: PropTypes.string.isRequired,
-  tabOrder: PropTypes.arrayOf(PropTypes.number).isRequired,
   onSelectTab: PropTypes.func.isRequired,
-  onChangeTabOrder: PropTypes.func.isRequired,
 };
 
 export default TabBar;

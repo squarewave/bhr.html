@@ -94,15 +94,19 @@ class ProfilePseudoStacksView extends Component {
     return (
       <div className="pseudoStacksView">
         <div className="pseudoStacksViewHeader">Pseudo Stacks</div>
-        {pseudoStacks.slice(0, 20)
-          .filter(pseudoStack => weights[pseudoStack] / maxHangMs > pseudostackDisplayThreshold)
-          .map((pseudoStack, index) =>
-            <PseudoStackRow key={pseudoStack}
-              pseudoStack={pseudoStack}
-              thread={thread}
-              hangMs={weights[pseudoStack]}
-              maxHangMs={maxHangMs}
-              index={index} />)}
+        <div className="pseudoStacksViewBody">
+          <div className="pseudoStacksViewInnerWrapper">
+            {pseudoStacks.slice(0, 20)
+              .filter(pseudoStack => weights[pseudoStack] / maxHangMs > pseudostackDisplayThreshold)
+              .map((pseudoStack, index) =>
+                <PseudoStackRow key={pseudoStack}
+                  pseudoStack={pseudoStack}
+                  thread={thread}
+                  hangMs={weights[pseudoStack]}
+                  maxHangMs={maxHangMs}
+                  index={index} />)}
+          </div>
+        </div>
       </div>
     );
   }

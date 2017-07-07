@@ -289,8 +289,15 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
         return ProfileData.filterThreadToSearchString(thread, searchString);
       }
     );
-    const getFilteredThread = createSelector(
+    const _getCategoryFilteredThread = createSelector(
       _getSearchFilteredThread,
+      URLState.getCategoryFilter,
+      (thread, categoryFilter): Thread => {
+        return ProfileData.filterThreadToCategory(thread, categoryFilter);
+      }
+    );
+    const getFilteredThread = createSelector(
+      _getCategoryFilteredThread,
       URLState.getInvertCallstack,
       (thread, shouldInvertCallstack): Thread => {
         return shouldInvertCallstack ? ProfileData.invertCallstack(thread) : thread;

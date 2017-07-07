@@ -19,12 +19,11 @@ class SummarizeProfileHeader extends Component {
         <div className='summarize-profile-thread' colSpan='3'>{threadName} Thread, {processType} process</div>
         <div className='summarize-profile-header'>
           <div className='summarize-line-graph' title={LINE_GRAPH_TITLE}>
-            Rolling Average of Samples
+            % Hang time over all dates
           </div>
           <div className='summarize-profile-details'>
             <div className='summarize-profile-text' title={CATEGORY_TITLE}>Category</div>
-            <div className='summarize-profile-numeric' title={SAMPLE_TITLE}>Samples</div>
-            <div className='summarize-profile-numeric' title={PERCENT_TIME_TITLE}>% Time</div>
+            <div className='summarize-profile-numeric' title={PERCENT_TIME_TITLE}>Mean % hang time</div>
           </div>
         </div>
       </div>

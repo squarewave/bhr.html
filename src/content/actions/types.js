@@ -76,6 +76,7 @@ type URLStateAction =
   { type: 'POP_RANGE_FILTERS', firstRemovedFilterIndex: number } |
   { type: 'CHANGE_SELECTED_THREAD', selectedThread: ThreadIndex } |
   { type: 'CHANGE_CALL_TREE_SEARCH_STRING', searchString: string } |
+  { type: 'CHANGE_CATEGORY', searchString: string } |
   { type: 'ADD_CALL_TREE_FILTER', threadIndex: ThreadIndex, filter: CallTreeFilter } |
   { type: 'POP_CALL_TREE_FILTERS', threadIndex: ThreadIndex, firstRemovedFilterIndex: number } |
   { type: 'CHANGE_INVERT_CALLSTACK', invertCallstack: boolean } |

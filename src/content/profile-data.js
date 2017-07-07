@@ -10,6 +10,7 @@ import type {
   IndexIntoStackTable,
 } from '../common/types/profile';
 import { timeCode } from '../common/time-code';
+import { sampleCategorizer } from './summarize-profile';
 import { OneToManyIndex } from './one-to-many-index';
 
 const INVERTED_CALLSTACK_ROOT_THRESHOLD = 0.001;
@@ -197,6 +198,64 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
         stackMatchesFilterCache.set(stackIndex, result);
       }
       return result;
+    }
+
+    const result = Object.assign({}, thread, {
+      allDates: Object.assign({}, allDates, {
+        stackHangMs: allDates.stackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
+        stackHangCount: allDates.stackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
+        totalStackHangMs: new Float32Array(stackTable.length),
+        totalStackHangCount: new Float32Array(stackTable.length),
+      }),
+      dates: dates.map(d => Object.assign({}, d, {
+        stackHangMs: d.stackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
+        stackHangCount: d.stackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
+        totalStackHangMs: new Float32Array(stackTable.length),
+        totalStackHangCount: new Float32Array(stackTable.length),
+      }))
+    });
+
+    for (let i = result.allDates.length - 1; i >= 0; i--) {
+      const prefix = stackTable.prefix[i];
+      if (prefix != -1) {
+        result.allDates.totalStackHangMs[i] += result.allDates.stackHangMs[i];
+        result.allDates.totalStackHangCount[i] += result.allDates.stackHangCount[i];
+        result.allDates.totalStackHangMs[prefix] += result.allDates.totalStackHangMs[i];
+        result.allDates.totalStackHangCount[prefix] += result.allDates.totalStackHangCount[i];
+        for (let j = 0; j < dates.length; j++) {
+          result.dates[j].totalStackHangMs[i] += result.dates[j].stackHangMs[i];
+          result.dates[j].totalStackHangCount[i] += result.dates[j].stackHangCount[i];
+          result.dates[j].totalStackHangMs[prefix] += result.dates[j].totalStackHangMs[i];
+          result.dates[j].totalStackHangCount[prefix] += result.dates[j].totalStackHangCount[i];
+        }
+      }
+    }
+
+    return result;
+  });
+}
+
+export function filterThreadToCategory(thread: Thread, category: string) {
+  return timeCode('filterThreadToCategory', () => {
+    if (category === '') {
+      return thread;
+    }
+
+    let matchCategory = category;
+    if (matchCategory == 'uncategorized') {
+      matchCategory = null;
+    }
+    const {
+      allDates, dates, funcTable, stackTable, stringTable, libs
+    } = thread;
+
+    const categorizer = sampleCategorizer(thread);
+
+    function stackMatchesFilter(stackIndex) {
+      if (stackIndex === -1) {
+        return false;
+      }
+      return categorizer(stackIndex) === matchCategory;
     }
 
     const result = Object.assign({}, thread, {
