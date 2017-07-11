@@ -54,95 +54,6 @@ export function defaultThreadOrder(threads: Thread[]) {
   return threadOrder;
 }
 
-function _filterThreadByFunc(
-  thread: Thread,
-  filter: IndexIntoFuncTable => boolean
-): Thread {
-  return timeCode('filterThread', () => {
-    const { stackTable, funcTable, allDates, dates } = thread;
-
-    const newStackTable = {
-      length: 0,
-      func: new Int32Array(stackTable.length),
-      prefix: new Int32Array(stackTable.length),
-      depth: new Int32Array(stackTable.length),
-    };
-
-    const oldStackToNewStack = new Map();
-    const funcCount = funcTable.length;
-    const prefixStackAndFuncToStack = new Map(); // prefixNewStack * funcCount + func => newStackIndex
-
-    function convertStack(stackIndex) {
-      if (stackIndex == -1) {
-        return -1;
-      }
-      let newStack = oldStackToNewStack.get(stackIndex);
-      if (newStack === undefined) {
-        const prefixNewStack = convertStack(stackTable.prefix[stackIndex]);
-        const funcIndex = stackTable.func[stackIndex];
-        const depth = stackTable.depth[stackIndex];
-        if (filter(funcIndex)) {
-          const prefixStackAndFrameIndex = prefixNewStack * funcCount + funcIndex;
-          newStack = prefixStackAndFuncToStack.get(prefixStackAndFrameIndex);
-          if (newStack === undefined) {
-            newStack = newStackTable.length++;
-            newStackTable.prefix[newStack] = prefixNewStack;
-            newStackTable.func[newStack] = funcIndex;
-            newStackTable.depth[newStack] = depth;
-          }
-          oldStackToNewStack.set(stackIndex, newStack);
-          prefixStackAndFuncToStack.set(prefixStackAndFrameIndex, newStack);
-        } else {
-          newStack = prefixNewStack;
-        }
-      }
-      return newStack;
-    }
-
-    let newStackHangMs = new Float32Array(newStackTable.length);
-    let newStackHangCount = new Float32Array(newStackTable.length);
-    let newTotalStackHangMs = new Float32Array(newStackTable.length);
-    let newTotalStackHangCount = new Float32Array(newStackTable.length);
-    let newDates = dates.map(d => ({
-      length: newStackTable.length,
-      date: d.date,
-      stackHangMs: new Float32Array(newStackTable.length),
-      stackHangCount: new Float32Array(newStackTable.length),
-      totalStackHangMs: new Float32Array(newStackTable.length),
-      totalStackHangCount: new Float32Array(newStackTable.length),
-    }));
-
-    for (let i = 0; i < stackTable.length; i++) {
-      let newIndex = convertStack(i);
-      if (newIndex != -1) {
-        newStackHangMs[newIndex] += allDates.stackHangMs[i];
-        newStackHangCount[newIndex] += allDates.stackHangCount[i];
-        newTotalStackHangMs[newIndex] += allDates.totalStackHangMs[i];
-        newTotalStackHangCount[newIndex] += allDates.totalStackHangCount[i];
-
-        for (let j = 0; j < dates.length; j++) {
-          newDates[j].stackHangMs[newIndex] += dates[j].stackHangMs[i];
-          newDates[j].totalStackHangMs[newIndex] += dates[j].totalStackHangMs[i];
-          newDates[j].stackHangCount[newIndex] += dates[j].stackHangCount[i];
-          newDates[j].totalStackHangCount[newIndex] += dates[j].totalStackHangCount[i];
-        }
-      }
-    }
-
-    return Object.assign({}, thread, {
-      allDates: {
-        length: newStackTable.length,
-        stackHangMs: newStackHangMs,
-        stackHangCount: newStackHangCount,
-        totalStackHangMs: newTotalStackHangMs,
-        totalStackHangCount: newTotalStackHangCount,
-      },
-      dates: newDates,
-      stackTable: newStackTable,
-    });
-  });
-}
-
 export function filterThreadToSearchString(thread: Thread, searchString: string) {
   return timeCode('filterThreadToSearchString', () => {
     if (searchString === '') {
@@ -150,7 +61,11 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
     }
     const lowercaseSearchString = searchString.toLowerCase();
     const {
-      allDates, dates, funcTable, stackTable, stringTable, libs
+      sampleTable,
+      funcTable,
+      stackTable,
+      stringTable,
+      resourceTable,
     } = thread;
 
     function computeFuncMatchesFilter(func) {
@@ -158,14 +73,6 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
       const nameString = stringTable.getString(nameIndex);
       if (nameString.toLowerCase().includes(lowercaseSearchString)) {
         return true;
-      }
-
-      const libIndex = funcTable.lib[func];
-      const lib = libs[libIndex];
-      if (lib !== undefined) {
-        if (lib.name.toLowerCase().includes(lowercaseSearchString)) {
-          return true;
-        }
       }
 
       return false;
@@ -183,7 +90,7 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
 
     const stackMatchesFilterCache = new Map();
     function stackMatchesFilter(stackIndex) {
-      if (stackIndex === -1) {
+      if (stackIndex === null || stackIndex === -1) {
         return false;
       }
       let result = stackMatchesFilterCache.get(stackIndex);
@@ -200,38 +107,11 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
       return result;
     }
 
-    const result = Object.assign({}, thread, {
-      allDates: Object.assign({}, allDates, {
-        stackHangMs: allDates.stackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
-        stackHangCount: allDates.stackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
-        totalStackHangMs: new Float32Array(stackTable.length),
-        totalStackHangCount: new Float32Array(stackTable.length),
+    return Object.assign({}, thread, {
+      sampleTable: Object.assign({}, sampleTable, {
+        stack: sampleTable.stack.map(s => (stackMatchesFilter(s) ? s : null)),
       }),
-      dates: dates.map(d => Object.assign({}, d, {
-        stackHangMs: d.stackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
-        stackHangCount: d.stackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
-        totalStackHangMs: new Float32Array(stackTable.length),
-        totalStackHangCount: new Float32Array(stackTable.length),
-      }))
     });
-
-    for (let i = result.allDates.length - 1; i >= 0; i--) {
-      const prefix = stackTable.prefix[i];
-      if (prefix != -1) {
-        result.allDates.totalStackHangMs[i] += result.allDates.stackHangMs[i];
-        result.allDates.totalStackHangCount[i] += result.allDates.stackHangCount[i];
-        result.allDates.totalStackHangMs[prefix] += result.allDates.totalStackHangMs[i];
-        result.allDates.totalStackHangCount[prefix] += result.allDates.totalStackHangCount[i];
-        for (let j = 0; j < dates.length; j++) {
-          result.dates[j].totalStackHangMs[i] += result.dates[j].stackHangMs[i];
-          result.dates[j].totalStackHangCount[i] += result.dates[j].stackHangCount[i];
-          result.dates[j].totalStackHangMs[prefix] += result.dates[j].totalStackHangMs[i];
-          result.dates[j].totalStackHangCount[prefix] += result.dates[j].totalStackHangCount[i];
-        }
-      }
-    }
-
-    return result;
   });
 }
 
@@ -246,49 +126,16 @@ export function filterThreadToCategory(thread: Thread, category: string) {
       matchCategory = null;
     }
     const {
-      allDates, dates, funcTable, stackTable, stringTable, libs
+      sampleTable
     } = thread;
 
     const categorizer = sampleCategorizer(thread);
 
-    function stackMatchesFilter(stackIndex) {
-      if (stackIndex === -1) {
-        return false;
-      }
-      return categorizer(stackIndex) === matchCategory;
-    }
-
-    const result = Object.assign({}, thread, {
-      allDates: Object.assign({}, allDates, {
-        stackHangMs: allDates.stackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
-        stackHangCount: allDates.stackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
-        totalStackHangMs: new Float32Array(stackTable.length),
-        totalStackHangCount: new Float32Array(stackTable.length),
+    return Object.assign({}, thread, {
+      sampleTable: Object.assign({}, sampleTable, {
+        stack: sampleTable.stack.map(s => (s !== null && categorizer(s) === matchCategory) ? s : null),
       }),
-      dates: dates.map(d => Object.assign({}, d, {
-        stackHangMs: d.stackHangMs.map((s,i) => stackMatchesFilter(i) ? s : 0),
-        stackHangCount: d.stackHangCount.map((s,i) => stackMatchesFilter(i) ? s : 0),
-        totalStackHangMs: new Float32Array(stackTable.length),
-        totalStackHangCount: new Float32Array(stackTable.length),
-      }))
     });
-
-    for (let i = result.allDates.length - 1; i >= 0; i--) {
-      const prefix = stackTable.prefix[i];
-      if (prefix != -1) {
-        result.allDates.totalStackHangMs[i] += result.allDates.stackHangMs[i];
-        result.allDates.totalStackHangCount[i] += result.allDates.stackHangCount[i];
-        result.allDates.totalStackHangMs[prefix] += result.allDates.totalStackHangMs[i];
-        result.allDates.totalStackHangCount[prefix] += result.allDates.totalStackHangCount[i];
-        for (let j = 0; j < dates.length; j++) {
-          result.dates[j].totalStackHangMs[i] += result.dates[j].stackHangMs[i];
-          result.dates[j].totalStackHangCount[i] += result.dates[j].stackHangCount[i];
-          result.dates[j].totalStackHangMs[prefix] += result.dates[j].totalStackHangMs[i];
-          result.dates[j].totalStackHangCount[prefix] += result.dates[j].totalStackHangCount[i];
-        }
-      }
-    }
-
     return result;
   });
 }
@@ -303,24 +150,25 @@ export function filterThreadToCategory(thread: Thread, category: string) {
  */
 export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexIntoFuncTable[]) {
   return timeCode('filterThreadToPrefixStack', () => {
-    const { stackTable, funcTable, allDates, dates, stackToPseudoStacksTable } = thread;
+    const { stackTable, funcTable, sampleTable } = thread;
     const prefixDepth = prefixFuncs.length;
     const stackMatches = new Int32Array(stackTable.length);
-    const oldStackToNewStack = new Map();
-    oldStackToNewStack.set(-1, -1);
+    const oldStackToNewStack: Map<
+      IndexIntoStackTable | null,
+      IndexIntoStackTable | null
+    > = new Map();
+    oldStackToNewStack.set(null, null);
     const newStackTable = {
       length: 0,
-      prefix: new Int32Array(stackTable.length),
-      func: new Int32Array(stackTable.length),
-      depth: new Int32Array(stackTable.length),
+      prefix: [],
+      func: [],
     };
     for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
       const prefix = stackTable.prefix[stackIndex];
-      const prefixMatchesUpTo = prefix !== -1 ? stackMatches[prefix] : 0;
+      const prefixMatchesUpTo = (prefix !== null && prefix !== -1) ? stackMatches[prefix] : 0;
       let stackMatchesUpTo = -1;
       if (prefixMatchesUpTo !== -1) {
         const func = stackTable.func[stackIndex];
-        const depth = stackTable.depth[stackIndex];
         if (prefixMatchesUpTo === prefixDepth) {
           stackMatchesUpTo = prefixDepth;
         } else {
@@ -331,56 +179,32 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
         if (stackMatchesUpTo === prefixDepth) {
           const newStackIndex = newStackTable.length++;
           const newStackPrefix = oldStackToNewStack.get(prefix);
-          newStackTable.prefix[newStackIndex] = newStackPrefix !== undefined ? newStackPrefix : -1;
+          newStackTable.prefix[newStackIndex] =
+            newStackPrefix !== undefined ? newStackPrefix : -1;
           newStackTable.func[newStackIndex] = func;
-          newStackTable.depth[newStackIndex] = depth;
           oldStackToNewStack.set(stackIndex, newStackIndex);
         }
       }
       stackMatches[stackIndex] = stackMatchesUpTo;
     }
-
-    const newAllDates = {
-      length: newStackTable.length,
-      stackHangMs: new Float32Array(newStackTable.length),
-      stackHangCount: new Float32Array(newStackTable.length),
-      totalStackHangMs: new Float32Array(newStackTable.length),
-      totalStackHangCount: new Float32Array(newStackTable.length),
-    };
-    const newDates = dates.map(d => ({
-      length: newStackTable.length,
-      date: d.date,
-      stackHangMs: new Float32Array(newStackTable.length),
-      stackHangCount: new Float32Array(newStackTable.length),
-      totalStackHangMs: new Float32Array(newStackTable.length),
-      totalStackHangCount: new Float32Array(newStackTable.length),
-    }));
-
-    for (let i = 0; i < stackTable.length; i++) {
-      let newStack = -1;
-      if (stackMatches[i] === prefixDepth) {
-        newStack = oldStackToNewStack.get(i);
-      }
-
-      if (newStack !== -1 && newStack !== undefined) {
-        newAllDates.stackHangMs[newStack] += allDates.stackHangMs[i];
-        newAllDates.stackHangCount[newStack] += allDates.stackHangCount[i];
-        newAllDates.totalStackHangMs[newStack] += allDates.totalStackHangMs[i];
-        newAllDates.totalStackHangCount[newStack] += allDates.totalStackHangCount[i];
-        for (let j = 0; j < dates.length; j++) {
-          newDates[j].stackHangMs[newStack] += dates[j].stackHangMs[i];
-          newDates[j].stackHangCount[newStack] += dates[j].stackHangCount[i];
-          newDates[j].totalStackHangMs[newStack] += dates[j].totalStackHangMs[i];
-          newDates[j].totalStackHangCount[newStack] += dates[j].totalStackHangCount[i];
+    const newSamples = Object.assign({}, sampleTable, {
+      stack: sampleTable.stack.map(oldStack => {
+        if (oldStack === null || stackMatches[oldStack] !== prefixDepth) {
+          return null;
         }
-      }
-    }
-
+        const newStack = oldStackToNewStack.get(oldStack);
+        if (newStack === undefined) {
+          throw new Error(
+            'Converting from the old stack to a new stack cannot be undefined'
+          );
+        }
+        return newStack;
+      }),
+    });
     return Object.assign({}, thread, {
       stackTable: newStackTable,
-      allDates: newAllDates,
-      dates: newDates,
-    }, recomputeStacksToPseudoStacks(stackToPseudoStacksTable, oldStackToNewStack));
+      sampleTable: newSamples,
+    });
   });
 }
 
@@ -396,11 +220,11 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
 export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIntoFuncTable[]) {
   return timeCode('filterThreadToPostfixStack', () => {
     const postfixDepth = postfixFuncs.length;
-    const { stackTable, funcTable, allDates, dates, stackToPseudoStacksTable } = thread;
+    const { stackTable, funcTable, sampleTable } = thread;
 
     function convertStack(leaf) {
       let matchesUpToDepth = 0; // counted from the leaf
-      for (let stack = leaf; stack !== -1; stack = stackTable.prefix[stack]) {
+      for (let stack = leaf; (stack !== null && stack != -1); stack = stackTable.prefix[stack]) {
         const func = stackTable.func[stack];
         if (func === postfixFuncs[matchesUpToDepth]) {
           matchesUpToDepth++;
@@ -408,54 +232,27 @@ export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIn
             return stack;
           }
         }
+
+        return null;
       }
-      return -1;
+      return null;
     }
 
     const oldStackToNewStack = new Map();
-    oldStackToNewStack.set(-1, -1);
-
-    const newAllDates = {
-      length: stackTable.length,
-      stackHangMs: new Float32Array(stackTable.length),
-      stackHangCount: new Float32Array(stackTable.length),
-      totalStackHangMs: new Float32Array(stackTable.length),
-      totalStackHangCount: new Float32Array(stackTable.length),
-    };
-    const newDates = dates.map(d => ({
-      length: stackTable.length,
-      date: d.date,
-      stackHangMs: new Float32Array(stackTable.length),
-      stackHangCount: new Float32Array(stackTable.length),
-      totalStackHangMs: new Float32Array(stackTable.length),
-      totalStackHangCount: new Float32Array(stackTable.length),
-    }));
-
-    for (let i = 0; i < stackTable.length; i++) {
-      let newStack = oldStackToNewStack.get(i);
-      if (newStack === undefined) {
-        newStack = convertStack(i);
-        oldStackToNewStack.set(i, newStack);
-      }
-
-      if (newStack != -1) {
-        newAllDates.stackHangMs[newStack] += allDates.stackHangMs[i];
-        newAllDates.stackHangCount[newStack] += allDates.stackHangCount[i];
-        newAllDates.totalStackHangMs[newStack] += allDates.totalStackHangMs[i];
-        newAllDates.totalStackHangCount[newStack] += allDates.totalStackHangCount[i];
-        for (let j = 0; j < dates.length; j++) {
-          newDates[j].stackHangMs[newStack] += dates[j].stackHangMs[i];
-          newDates[j].stackHangCount[newStack] += newDates[j].stackHangCount[i];
-          newDates[j].totalStackHangMs[newStack] += dates[j].totalStackHangMs[i];
-          newDates[j].totalStackHangCount[newStack] += newDates[j].totalStackHangCount[i];
+    oldStackToNewStack.set(null, null);
+    const newSamples = Object.assign({}, sampleTable, {
+      stack: sampleTable.stack.map(stackIndex => {
+        let newStackIndex = oldStackToNewStack.get(stackIndex);
+        if (newStackIndex === undefined) {
+          newStackIndex = convertStack(stackIndex);
+          oldStackToNewStack.set(stackIndex, newStackIndex);
         }
-      }
-    }
-
+        return newStackIndex;
+      }),
+    });
     return Object.assign({}, thread, {
-      allDates: newAllDates,
-      dates: newDates,
-    }, recomputeStacksToPseudoStacks(stackToPseudoStacksTable, oldStackToNewStack));
+      sampleTable: newSamples,
+    });
   });
 }
 
@@ -539,26 +336,26 @@ export function getStackAsFuncArray(stackIndex: IndexIntoStackTable, stackTable:
 
 export function invertCallstack(thread: Thread): Thread {
   return timeCode('invertCallstack', () => {
-    const { stackTable, funcTable, dates, allDates, stackToPseudoStacksTable } = thread;
+    const { stackTable, funcTable, sampleTable } = thread;
 
     const newStackTable = {
       length: 0,
-      prefix: [],
       func: [],
-      depth: [],
+      prefix: [],
     };
     // Create a Map that keys off of two values, both the prefix and frame combination
-    // by using a bit of math: prefix * funcCount + func => stackIndex
+    // by using a bit of math: prefix * funcCount + frame => stackIndex
     const prefixAndFuncToStack = new Map();
     const funcCount = funcTable.length;
 
     function stackFor(prefix, func) {
-      const prefixAndFuncIndex = prefix * funcCount + func;
+      const prefixAndFuncIndex =
+        (prefix === null ? -1 : prefix) * funcCount + func;
       let stackIndex = prefixAndFuncToStack.get(prefixAndFuncIndex);
       if (stackIndex === undefined) {
         stackIndex = newStackTable.length++;
-        newStackTable.prefix.push(prefix);
-        newStackTable.func.push(func);
+        newStackTable.prefix[stackIndex] = prefix;
+        newStackTable.func[stackIndex] = func;
         prefixAndFuncToStack.set(prefixAndFuncIndex, stackIndex);
       }
       return stackIndex;
@@ -567,87 +364,32 @@ export function invertCallstack(thread: Thread): Thread {
     const oldStackToNewStack = new Map();
 
     function convertStack(stackIndex) {
-      if (stackIndex === -1 || allDates.totalStackHangCount[stackIndex] < INVERTED_CALLSTACK_ROOT_THRESHOLD) {
-        return;
+      if (stackIndex === null) {
+        return -1;
       }
       let newStack = oldStackToNewStack.get(stackIndex);
       if (newStack === undefined) {
         newStack = -1;
-        for (let currentStack = stackIndex; currentStack !== -1; currentStack = stackTable.prefix[currentStack]) {
+        for (
+          let currentStack = stackIndex;
+          currentStack !== null && currentStack !== -1;
+          currentStack = stackTable.prefix[currentStack]
+        ) {
           newStack = stackFor(newStack, stackTable.func[currentStack]);
         }
         oldStackToNewStack.set(stackIndex, newStack);
       }
+      return newStack;
     }
 
-    for (let i = 0; i < stackTable.length; i++) {
-      convertStack(i);
-    }
-
-    let newStackHangMs = new Float32Array(newStackTable.length);
-    let newStackHangCount = new Float32Array(newStackTable.length);
-    let newTotalStackHangMs = new Float32Array(newStackTable.length);
-    let newTotalStackHangCount = new Float32Array(newStackTable.length);
-    let newDates = dates.map(d => ({
-      length: newStackTable.length,
-      date: d.date,
-      stackHangMs: new Float32Array(newStackTable.length),
-      stackHangCount: new Float32Array(newStackTable.length),
-      totalStackHangMs: new Float32Array(newStackTable.length),
-      totalStackHangCount: new Float32Array(newStackTable.length),
-    }));
-
-    for (let i = 0; i < stackTable.length; i++) {
-      const newIndex = oldStackToNewStack.get(i);
-      if (newIndex !== -1 && newIndex !== undefined) {
-        if (allDates.stackHangCount[i]) {
-          newStackHangMs[newIndex] += allDates.stackHangMs[i];
-          newStackHangCount[newIndex] += allDates.stackHangCount[i];
-          newTotalStackHangMs[newIndex] += allDates.stackHangMs[i];
-          newTotalStackHangCount[newIndex] += allDates.stackHangCount[i];
-
-          for (let j = 0; j < dates.length; j++) {
-            newDates[j].stackHangMs[newIndex] += dates[j].stackHangMs[i];
-            newDates[j].stackHangCount[newIndex] += dates[j].stackHangCount[i];
-            newDates[j].totalStackHangMs[newIndex] += dates[j].stackHangMs[i];
-            newDates[j].totalStackHangCount[newIndex] += dates[j].stackHangCount[i];
-          }
-        }
-      }
-    }
-
-    for (let i = 0; i < newStackTable.length; i++) {
-      const prefix = newStackTable.prefix[i];
-      if (prefix == -1) {
-        newStackTable.depth.push(0);
-      } else {
-        newStackTable.depth.push(1 + newStackTable.depth[newStackTable.prefix[i]]);
-      }
-    }
-
-    for (let i = newStackTable.length - 1; i >= 0; i--) {
-      const prefix = newStackTable.prefix[i];
-      if (prefix != -1) {
-        newTotalStackHangMs[prefix] += newTotalStackHangMs[i];
-        newTotalStackHangCount[prefix] += newTotalStackHangCount[i];
-        for (let j = 0; j < dates.length; j++) {
-          newDates[j].totalStackHangMs[prefix] += newDates[j].totalStackHangMs[i];
-          newDates[j].totalStackHangCount[prefix] += newDates[j].totalStackHangCount[i];
-        }
-      }
-    }
+    const newSamples = Object.assign({}, sampleTable, {
+      stack: sampleTable.stack.map(oldStack => convertStack(oldStack)),
+    });
 
     return Object.assign({}, thread, {
-      allDates: {
-        length: newStackTable.length,
-        stackHangMs: newStackHangMs,
-        stackHangCount: newStackHangCount,
-        totalStackHangMs: newTotalStackHangMs,
-        totalStackHangCount: newTotalStackHangCount,
-      },
-      dates: newDates,
+      sampleTable: newSamples,
       stackTable: newStackTable,
-    }, recomputeStacksToPseudoStacks(stackToPseudoStacksTable, oldStackToNewStack));
+    });
   });
 }
 

@@ -26,6 +26,7 @@ class ProfileTree {
   _rootTotalTime: number;
   _rootTotalCount: number;
   _rootCount: number;
+  _depth: [];
   _nodes: Map<IndexIntoStackTable, Node>;
   _children: Map<IndexIntoStackTable, StackChildren>;
 
@@ -39,7 +40,8 @@ class ProfileTree {
     stringTable: UniqueStringArray,
     rootTotalTime: number,
     rootTotalCount: number,
-    rootCount: number
+    rootCount: number,
+    depth: number[],
   ) {
     this._stackTable = stackTable;
     this._stackTimes = stackTimes;
@@ -51,6 +53,7 @@ class ProfileTree {
     this._rootTotalTime = rootTotalTime;
     this._rootTotalCount = rootTotalCount;
     this._rootCount = rootCount;
+    this._depth = depth;
     this._nodes = new Map();
     this._children = new Map();
   }
@@ -115,7 +118,7 @@ class ProfileTree {
   }
 
   getDepth(stackIndex: IndexIntoStackTable): number {
-    return this._stackTable.depth[stackIndex];
+    return this._depth[stackIndex];
   }
 
   /**
@@ -167,14 +170,17 @@ export function getCallTree(
     const totalCount = new Float32Array(stackTable.length);
 
     const numChildren = new Uint32Array(stackTable.length);
+    const depth = new Uint32Array(stackTable.length);
     let rootTotalTime = 0;
     let rootTotalCount = 0;
     let numRoots = 0;
 
     for (let i = 0; i < sampleTable.length; i++) {
       let stackIndex = sampleTable.stack[i];
-      selfTime[stackIndex] += sampleTable.sampleHangMs[i];
-      selfCount[stackIndex] += sampleTable.sampleHangCount[i];
+      if (stackIndex !== null) {
+        selfTime[stackIndex] += sampleTable.sampleHangMs[i];
+        selfCount[stackIndex] += sampleTable.sampleHangCount[i];
+      }
     }
 
     for (let i = stackTable.length - 1; i >= 0; i--) {
@@ -192,11 +198,21 @@ export function getCallTree(
       }
     }
 
+    for (let i = 0; i < stackTable.length; i++) {
+      const prefix = stackTable.prefix[i];
+      if (prefix !== -1) {
+        depth[i] = depth[prefix] + 1;
+      } else {
+        depth[i] = 0;
+      }
+    }
+
     const stackTimes = { selfTime, totalTime };
     const stackCounts = { selfCount, totalCount };
     return new ProfileTree(
       stackTable, stackTimes, stackCounts, numChildren, thread.funcTable,
-      thread.libs, thread.stringTable, rootTotalTime, rootTotalCount, numRoots
+      thread.libs, thread.stringTable, rootTotalTime, rootTotalCount, numRoots,
+      depth
     );
   });
 }
