@@ -159,28 +159,41 @@ export function getCallTree(
   thread: Thread
 ): ProfileTree {
   return timeCode('getCallTree', () => {
-    const { allDates, stackTable } = thread;
-    const numChildren = new Uint32Array(allDates.length);
+    const { stackTable, sampleTable } = thread;
+
+    const selfTime = new Float32Array(stackTable.length);
+    const totalTime = new Float32Array(stackTable.length);
+    const selfCount = new Float32Array(stackTable.length);
+    const totalCount = new Float32Array(stackTable.length);
+
+    const numChildren = new Uint32Array(stackTable.length);
     let rootTotalTime = 0;
     let rootTotalCount = 0;
     let numRoots = 0;
 
-    for (let stackIndex = allDates.totalStackHangMs.length - 1; stackIndex >= 0; stackIndex--) {
-      if (allDates.totalStackHangMs[stackIndex] === 0) {
-        continue;
-      }
-      const prefixStack = stackTable.prefix[stackIndex];
-      if (prefixStack === -1) {
-        rootTotalTime += allDates.totalStackHangMs[stackIndex];
-        rootTotalCount += allDates.totalStackHangCount[stackIndex];
+    for (let i = 0; i < sampleTable.length; i++) {
+      let stackIndex = sampleTable.stack[i];
+      selfTime[stackIndex] += sampleTable.sampleHangMs[i];
+      selfCount[stackIndex] += sampleTable.sampleHangCount[i];
+    }
+
+    for (let i = stackTable.length - 1; i >= 0; i--) {
+      totalTime[i] += selfTime[i];
+      totalCount[i] += selfCount[i];
+      const prefix = stackTable.prefix[i];
+      if (prefix === -1) {
+        rootTotalTime += totalTime[i];
+        rootTotalCount += totalCount[i];
         numRoots++;
       } else {
-        numChildren[prefixStack]++;
+        numChildren[prefix]++;
+        totalTime[prefix] += totalTime[i];
+        totalCount[prefix] += totalCount[i];
       }
     }
 
-    const stackTimes = { selfTime: allDates.stackHangMs, totalTime: allDates.totalStackHangMs };
-    const stackCounts = { selfCount: allDates.stackHangCount, totalCount: allDates.totalStackHangCount };
+    const stackTimes = { selfTime, totalTime };
+    const stackCounts = { selfCount, totalCount };
     return new ProfileTree(
       stackTable, stackTimes, stackCounts, numChildren, thread.funcTable,
       thread.libs, thread.stringTable, rootTotalTime, rootTotalCount, numRoots

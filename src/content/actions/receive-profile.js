@@ -44,7 +44,7 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
   return dispatch => {
     dispatch(waitingForProfileFromTelemetry());
 
-    const TELEMETRY_PROFILE_URL = 'https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/hang_profile_2.json';
+    const TELEMETRY_PROFILE_URL = 'https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/hang_profile_128_512.json';
 
     fetch(TELEMETRY_PROFILE_URL).then(res => {
       return res.json();
@@ -113,35 +113,32 @@ export function retrieveProfileFromTelemetry(): ThunkAction {
           });
         }
 
+        thread.sampleTable.sampleHangMs = new Float32Array(thread.sampleTable.length);
+        thread.sampleTable.sampleHangCount = new Float32Array(thread.sampleTable.length);
+
         thread.dates = Array.from(allDates).map(date => {
           let threadDate = thread.dates.find(d => d.date === date);
-          let stackHangMs = new Float32Array(thread.stackTable.length);
-          let stackHangCount = new Float32Array(thread.stackTable.length);
-          let totalStackHangMs = new Float32Array(thread.stackTable.length);
-          let totalStackHangCount = new Float32Array(thread.stackTable.length);
 
           if (threadDate) {
-            for (let i = thread.stackTable.length - 1; i >= 0; i--) {
-              stackHangMs[i] = threadDate.stackHangMs[i] || 0;
-              stackHangCount[i] = threadDate.stackHangCount[i] || 0;
-              totalStackHangMs[i] += stackHangMs[i];
-              totalStackHangCount[i] += stackHangCount[i];
-              const prefix = thread.stackTable.prefix[i];
-              if (prefix !== -1) {
-                totalStackHangMs[prefix] += totalStackHangMs[i];
-                totalStackHangCount[prefix] += totalStackHangCount[i];
-              }
-            }
-          }
+            let sampleHangMs = new Float32Array(thread.sampleTable.length);
+            let sampleHangCount = new Float32Array(thread.sampleTable.length);
+            sampleHangMs.set(threadDate.sampleHangMs);
+            sampleHangCount.set(threadDate.sampleHangCount);
 
-          return  {
-            length: thread.stackTable.length,
-            date,
-            stackHangMs,
-            stackHangCount,
-            totalStackHangCount,
-            totalStackHangMs,
-          };
+            for (let i = 0; i < thread.sampleTable.length; i++) {
+              thread.sampleTable.sampleHangMs[i] += sampleHangMs[i];
+              thread.sampleTable.sampleHangCount[i] += sampleHangCount[i];
+            }
+
+            return Object.assign({}, threadDate, {date, sampleHangMs, sampleHangCount});
+          } else {
+            return  {
+              length: thread.sampleTable.length,
+              sampleHangMs: new Float32Array(thread.sampleTable.length),
+              sampleHangCount: new Float32Array(thread.sampleTable.length),
+              date,
+            };
+          }
         });
 
         thread.dates.sort((lhs, rhs) => lhs.date - rhs.date);

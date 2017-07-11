@@ -339,8 +339,8 @@ function mapProfileToThreadCategories(profile: Profile): ThreadCategories {
   return profile.threads.map(thread => {
     const categorizer = sampleCategorizer(thread);
     return thread.dates.reduce((memo, next) => memo.concat(
-      Array.from(next.stackHangMs).map((hangMs, i) => ({
-        category: categorizer(i),
+      Array.from(next.sampleHangMs).map((hangMs, i) => ({
+        category: categorizer(thread.sampleTable.stack[i]),
         hangMs,
       }))), []);
   });
@@ -374,11 +374,11 @@ export function calculateRollingSummaries(
       let totalTime = 0;
       const samples: { [string]: number } = {};
 
-      for (let j = 0; j < thread.dates[i].stackHangMs.length; j++) {
+      for (let j = 0; j < thread.dates[i].sampleHangMs.length; j++) {
         const category = categories[j].category || 'uncategorized';
         samples[category] = samples[category] || 0;
-        samples[category] += thread.dates[i].stackHangMs[j];
-        totalTime += thread.dates[i].stackHangMs[j];
+        samples[category] += thread.dates[i].sampleHangMs[j];
+        totalTime += thread.dates[i].sampleHangMs[j];
       }
 
       rollingSummary.push({

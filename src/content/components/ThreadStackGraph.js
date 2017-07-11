@@ -53,6 +53,7 @@ class ThreadStackGraph extends Component {
   }
 
   drawCanvas(c) {
+    return;
     let { thread, rangeStart, rangeEnd, selectedStack } = this.props;
     const { dates } = thread;
 

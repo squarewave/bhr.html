@@ -19,9 +19,9 @@ export default function initializeStore() {
     applyMiddleware(...[
       thunk,
       threadDispatcher(summaryWorker, 'toSummaryWorker'),
-      // process.env.NODE_ENV === 'development'
-      //   ? createLogger({titleFormatter: action => `content action ${action.type}`})
-      //   : null,
+      process.env.NODE_ENV === 'development'
+        ? createLogger({titleFormatter: action => `content action ${action.type}`})
+        : null,
     ].filter(fn => fn)));
 
   handleMessages(summaryWorker, store, messages);

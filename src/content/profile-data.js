@@ -461,26 +461,21 @@ export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIn
 
 export function filterThreadToRange(thread: Thread, rangeStart: number, rangeEnd: number) {
   const { dates, stackTable } = thread;
-  let allDates = {
-    length: stackTable.length,
-    stackHangMs: new Float32Array(stackTable.length),
-    stackHangCount: new Float32Array(stackTable.length),
-    totalStackHangMs: new Float32Array(stackTable.length),
-    totalStackHangCount: new Float32Array(stackTable.length),
-  };
+  let sampleTable = Object.assign({}, thread.sampleTable, {
+    sampleHangMs: new Float32Array(thread.sampleTable.length),
+    sampleHangCount: new Float32Array(thread.sampleTable.length),
+  });
 
   let newDates = dates.slice(rangeStart, rangeEnd + 1);
   for (let date of newDates) {
-    for (let i = 0; i < stackTable.length; i++) {
-      allDates.stackHangMs[i] += date.stackHangMs[i];
-      allDates.stackHangCount[i] += date.stackHangCount[i];
-      allDates.totalStackHangMs[i] += date.totalStackHangMs[i];
-      allDates.totalStackHangCount[i] += date.totalStackHangCount[i];
+    for (let i = 0; i < sampleTable.length; i++) {
+      sampleTable.sampleHangMs[i] += date.sampleHangMs[i];
+      sampleTable.sampleHangCount[i] += date.sampleHangCount[i];
     }
   }
 
   return Object.assign({}, thread, {
-    allDates,
+    sampleTable,
   });
 }
 
