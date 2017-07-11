@@ -109,4 +109,14 @@ if (process.env.NODE_ENV === 'production') {
     }));
 }
 
-module.exports = [ contentConfig ];
+const workerConfig = Object.assign({}, baseConfig, {
+  plugins: basePlugins.slice(0),
+  entry: ['./src/workers/summary/index'],
+  output: {
+    path: path.join(__dirname, 'dist'),
+    filename: 'summary-worker.js',
+    publicPath: '/',
+  },
+});
+
+module.exports = [ contentConfig, workerConfig ];

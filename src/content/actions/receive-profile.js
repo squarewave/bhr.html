@@ -19,6 +19,17 @@ export function receiveProfileFromTelemetry(profile: Profile): ThunkAction {
       type: 'RECEIVE_PROFILE_FROM_TELEMETRY',
       profile,
     });
+
+    dispatch({
+      toSummaryWorker: true,
+      type: 'PROFILE_PROCESSED',
+      profile: profile,
+    });
+
+    dispatch({
+      toSummaryWorker: true,
+      type: 'SUMMARIZE_PROFILE',
+    });
   };
 }
 

@@ -9,3 +9,10 @@ export function changeCategoryFilter(category: string): Action {
     category,
   };
 }
+
+export function profileSummaryProcessed(summary: object): Action {
+  return {
+    type: 'PROFILE_SUMMARY_PROCESSED',
+    summary,
+  };
+}

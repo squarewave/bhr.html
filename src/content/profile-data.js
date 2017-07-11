@@ -10,7 +10,7 @@ import type {
   IndexIntoStackTable,
 } from '../common/types/profile';
 import { timeCode } from '../common/time-code';
-import { sampleCategorizer } from './summarize-profile';
+import { sampleCategorizer } from '../common/summarize-profile';
 import { OneToManyIndex } from './one-to-many-index';
 
 const INVERTED_CALLSTACK_ROOT_THRESHOLD = 0.001;

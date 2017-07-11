@@ -1,8 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import actions from '../actions';
-import { categoryNames } from '../summarize-profile';
-import * as summarizeProfile from '../summarize-profile';
+import { categoryNames } from '../../common/summarize-profile';
 import { getInvertCallstack, getSearchString, getCategoryFilter } from '../reducers/url-state';
 import IdleSearchField from '../components/IdleSearchField';
 

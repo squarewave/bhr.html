@@ -6,7 +6,6 @@
 import type { Action } from '../types/actions';
 import type { State, SummaryViewState } from '../types/reducers';
 import { getProfile } from './profile-view';
-import { summarizeProfile } from '../summarize-profile'
 import { createSelector } from 'reselect';
 
 export default function summaryViewReducer(
@@ -35,12 +34,13 @@ export default function summaryViewReducer(
   }
 }
 
-export const getSummaryView = createSelector(getProfile, summarizeProfile);
+export const getSummaryView = (state: State): SummaryViewState =>
+  state.summaryView;
 
 export const getProfileSummaries = createSelector(getSummaryView, summaryView => {
-  return summaryView;
+  return summaryView.summary;
 });
 
 export const getProfileExpandedSummaries = createSelector(getSummaryView, summaryView => {
-  return new Set();
+  return summaryView.expanded;
 });
