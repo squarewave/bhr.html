@@ -6,11 +6,10 @@ import React, { PureComponent, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import { getProfile } from '../reducers/profile-view';
 import {
-  getProfileSummaries,
-  getProfileExpandedSummaries,
+  getProfileCategories,
 } from '../reducers/summary-view';
 import SummarizeLineGraph from './SummarizeLineGraph';
-import SummarizeProfileHeader from './SummarizeProfileHeader';
+import SummarizeProfileHeader from './SummarizeProfileCategoriesHeader';
 import SummarizeProfileExpand from './SummarizeProfileExpand';
 import SummarizeProfileThread from './SummarizeProfileThread';
 import actions from '../actions';
@@ -19,7 +18,7 @@ require('./ProfileSummaryView.css');
 
 const EXPAND_LENGTH = 20;
 
-class ProfileSummaryView extends PureComponent {
+class ProfileCategoriesView extends PureComponent {
   constructor() {
     super();
     this._onCategorySelected = this._onCategorySelected.bind(this);
@@ -36,20 +35,16 @@ class ProfileSummaryView extends PureComponent {
 
   render() {
     const {
-      summaries,
-      expanded,
+      categories,
       threads,
-      collapseProfileSummaryThread: collapse,
-      expandProfileSummaryThread: expand,
     } = this.props;
 
-    if (summaries) {
+    if (categories) {
       return (
         <div className="summarize-profile">
           <div className="summarize-profile-inner">
-            {summaries.map(({ threadIndex, summary, rollingSummary }) => {
+            {categories.map(({ threadIndex, summary, rollingSummary }) => {
               const { processType, name: threadName } = threads[threadIndex];
-              const isExpanded = expanded.has(threadIndex);
 
               return (
                 <div key={threadIndex}>
@@ -60,9 +55,8 @@ class ProfileSummaryView extends PureComponent {
                     />
                     {summary.map((summaryTable, index) =>
                       <SummarizeProfileThread
-                        summaryTable={summaryTable}
+                        row={{ name: summaryTable.category, percentage: summaryTable.percentage }}
                         rollingSummary={rollingSummary}
-                        isExpanded={isExpanded}
                         index={index}
                         onSelected={this._onCategorySelected(threadIndex)}
                         key={summaryTable.category}
@@ -112,12 +106,9 @@ class ProfileSummaryView extends PureComponent {
   }
 }
 
-ProfileSummaryView.propTypes = {
-  summaries: PropTypes.array,
-  expanded: PropTypes.object,
+ProfileCategoriesView.propTypes = {
+  categories: PropTypes.array,
   threads: PropTypes.array,
-  collapseProfileSummaryThread: PropTypes.func,
-  expandProfileSummaryThread: PropTypes.func,
 };
 
 function fill(size, fn) {
@@ -130,8 +121,7 @@ function fill(size, fn) {
 
 export default connect(state => {
   return {
-    expanded: getProfileExpandedSummaries(state),
-    summaries: getProfileSummaries(state),
+    categories: getProfileCategories(state),
     threads: getProfile(state).threads,
   };
-}, actions)(ProfileSummaryView);
+}, actions)(ProfileCategoriesView);

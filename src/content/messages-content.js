@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { profileSummaryProcessed } from './actions/summary-view';
+import { profileCategoriesProcessed } from './actions/summary-view';
 import { dateGraphRebuilt } from './actions/date-graph';
 /**
  * Messages are the translation layer from actions dispatched by the worker
@@ -11,8 +11,8 @@ import { dateGraphRebuilt } from './actions/date-graph';
 const messages = {};
 export default messages;
 
-messages.PROFILE_SUMMARY_PROCESSED = function(message, call) {
-  call(profileSummaryProcessed, message.summary);
+messages.PROFILE_CATEGORIES_PROCESSED = function(message, call) {
+  call(profileCategoriesProcessed, message.categories);
 };
 
 messages.DATE_GRAPH_REBUILT = function(message, call) {

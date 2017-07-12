@@ -1,8 +1,8 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import actions from '../actions';
-import { categoryNames } from '../../common/summarize-profile';
-import { getInvertCallstack, getSearchString, getCategoryFilter } from '../reducers/url-state';
+import { categoryNames } from '../../common/profile-categories';
+import { getInvertCallstack, getSearchString, getCategoryFilter, getRunnableFilter } from '../reducers/url-state';
 import IdleSearchField from '../components/IdleSearchField';
 
 import './ProfileCallTreeSettings.css';
@@ -13,10 +13,15 @@ class ProfileCallTreeSettings extends Component {
     this._onInvertCallstackClick = this._onInvertCallstackClick.bind(this);
     this._onSearchFieldIdleAfterChange = this._onSearchFieldIdleAfterChange.bind(this);
     this._onCategoryFilterChange = this._onCategoryFilterChange.bind(this);
+    this._onRunnableFilterClick = this._onRunnableFilterClick.bind(this);
   }
 
   _onInvertCallstackClick(e) {
     this.props.changeInvertCallstack(e.target.checked);
+  }
+
+  _onRunnableFilterClick(e) {
+    this.props.changeRunnableFilter(null);
   }
 
   _onSearchFieldIdleAfterChange(value) {
@@ -28,7 +33,7 @@ class ProfileCallTreeSettings extends Component {
   }
 
   render() {
-    const { invertCallstack, searchString, categoryFilter } = this.props;
+    const { invertCallstack, searchString, categoryFilter, runnableFilter } = this.props;
     return (
       <div className='profileCallTreeSettings'>
         <ul className='profileCallTreeSettingsList'>
@@ -54,6 +59,17 @@ class ProfileCallTreeSettings extends Component {
               { ' Invert call stack' }
             </label>
           </li>
+          {runnableFilter !== null &&
+            <li className='profileCallTreeSettingsListItem'>
+              <label className='profileCallTreeSettingsLabel'>
+                <input type='checkbox'
+                       className='profileCallTreeSettingsCheckbox'
+                       onChange={this._onRunnableFilterClick}
+                       checked={true}/>
+                { ` Runnable: ${runnableFilter}` }
+              </label>
+            </li>
+          }
         </ul>
         <div className='profileCallTreeSettingsSearchbar'>
           <label className='profileCallTreeSettingsSearchbarLabel'>
@@ -76,10 +92,12 @@ ProfileCallTreeSettings.propTypes = {
   changeCallTreeSearchString: PropTypes.func.isRequired,
   searchString: PropTypes.string.isRequired,
   categoryFilter: PropTypes.string.isRequired,
+  runnableFilter: PropTypes.string,
 };
 
 export default connect(state => ({
   invertCallstack: getInvertCallstack(state),
   searchString: getSearchString(state),
   categoryFilter: getCategoryFilter(state),
+  runnableFilter: getRunnableFilter(state),
 }), actions)(ProfileCallTreeSettings);

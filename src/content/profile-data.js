@@ -10,7 +10,7 @@ import type {
   IndexIntoStackTable,
 } from '../common/types/profile';
 import { timeCode } from '../common/time-code';
-import { sampleCategorizer } from '../common/summarize-profile';
+import { sampleCategorizer } from '../common/profile-categories';
 import { OneToManyIndex } from './one-to-many-index';
 
 const INVERTED_CALLSTACK_ROOT_THRESHOLD = 0.001;
@@ -134,6 +134,37 @@ export function filterThreadToCategory(thread: Thread, category: string) {
     return Object.assign({}, thread, {
       sampleTable: Object.assign({}, sampleTable, {
         stack: sampleTable.stack.map(s => (s !== null && categorizer(s) === matchCategory) ? s : null),
+      }),
+    });
+    return result;
+  });
+}
+
+export function filterThreadToRunnable(thread: Thread, runnable: string) {
+  return timeCode('filterThreadToRunnable', () => {
+    if (runnable === null) {
+      return thread;
+    }
+
+    const {
+      sampleTable,
+      stringTable,
+    } = thread;
+
+    function filterSample(stackIndex, sampleIndex) {
+      if (stackIndex === null) {
+        return null;
+      }
+
+      const sampleRunnable = sampleTable.runnable[sampleIndex];
+      // const sampleRunnable = stringTable.getString(sampleTable.runnable[sampleIndex]);
+
+      return sampleRunnable === runnable ? stackIndex : null;
+    }
+
+    return Object.assign({}, thread, {
+      sampleTable: Object.assign({}, sampleTable, {
+        stack: sampleTable.stack.map(filterSample),
       }),
     });
     return result;

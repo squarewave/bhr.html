@@ -113,8 +113,8 @@ export const categoryNames = categories.map(c => c[2]).filter(c => {
   return result;
 });
 
-export function summarizeProfile(profile: Profile) {
-  return timeCode('summarizeProfile', () => {
+export function summarizeProfileCategories(profile: Profile) {
+  return timeCode('summarizeProfileCategories', () => {
     const threadCategories: ThreadCategories = categorizeThreadData(profile);
     const rollingSummaries: RollingSummary[] = calculateRollingSummaries(
       profile,
@@ -145,10 +145,6 @@ function functionNameCategorizer() {
     }
 
     for (const [matches, pattern, category] of categories) {
-      if (name.includes('DisaptchSyncMessage')) {
-        let test = 5;
-      }
-
       if (matches(name, pattern)) {
         cache.set(name, category);
         return category;
@@ -369,6 +365,7 @@ export function calculateRollingSummaries(
   return profile.threads.map((thread, threadIndex) => {
     const categories = threadCategories[threadIndex];
     const rollingSummary: RollingSummary = [];
+    let maxTime = 0;
 
     for (let i = 0; i < thread.dates.length; i++) {
       let totalTime = 0;
@@ -381,11 +378,20 @@ export function calculateRollingSummaries(
         totalTime += thread.dates[i].sampleHangMs[j];
       }
 
+      for (let time of Object.values(samples)) {
+        if (time > maxTime) {
+          maxTime = time;
+        }
+      }
+
       rollingSummary.push({
         samples,
-        percentage: mapObj(samples, count => count / totalTime),
       });
     }
+
+    rollingSummary.forEach(s => {
+      s.percentage = mapObj(s.samples, count => count / maxTime);
+    });
 
     return rollingSummary;
   });

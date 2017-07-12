@@ -108,6 +108,38 @@ export function changeInvertCallstack(invertCallstack: boolean): ThunkAction {
   };
 }
 
+export function changeRunnableFilter(runnable: string) : ThunkAction {
+  return (dispatch, getState) => {
+    dispatch({
+      type: 'CHANGE_RUNNABLE',
+      runnable,
+    });
+
+    dispatch({
+      type: 'REBUILD_DATE_GRAPH',
+      toDateGraphWorker: true,
+      thread: selectedThreadSelectors.getFilteredThread(getState()),
+      selectedStack: selectedThreadSelectors.getSelectedStack(getState()),
+    });
+  }
+}
+
+export function changeCategoryFilter(category: string): ThunkAction {
+  return (dispatch, getState) => {
+    dispatch({
+      type: 'CHANGE_CATEGORY',
+      category,
+    });
+
+    dispatch({
+      type: 'REBUILD_DATE_GRAPH',
+      toDateGraphWorker: true,
+      thread: selectedThreadSelectors.getFilteredThread(getState()),
+      selectedStack: selectedThreadSelectors.getSelectedStack(getState()),
+    });
+  }
+}
+
 export function changeHidePlatformDetails(hidePlatformDetails: boolean): Action {
   return {
     type: 'CHANGE_HIDE_PLATFORM_DETAILS',

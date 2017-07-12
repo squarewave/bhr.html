@@ -24,7 +24,7 @@ class SummarizeLineGraph extends Component {
     if (!props.rollingSummary) {
       return;
     }
-    const {rollingSummary, category} = props;
+    const {rollingSummary, name} = props;
     const width = this.el.offsetWidth;
     const height = HEIGHT - STROKE;
 
@@ -32,7 +32,7 @@ class SummarizeLineGraph extends Component {
     // stroke does not fall out of the box at the top and bottom.
     const pointsInSvg = rollingSummary.map(({percentage}, i) => ([
       width * (i / (rollingSummary.length - 1)),
-      HALF_STROKE + height * (1 - (percentage[category] || 0)),
+      HALF_STROKE + height * (1 - (percentage[name] || 0)),
     ]));
 
     // Filter out any summaries that have 0 samples.
@@ -63,7 +63,7 @@ class SummarizeLineGraph extends Component {
   }
 
   renderGradient() {
-    return this.props.category === 'idle'
+    return this.props.name === 'idle'
       ? (
         <linearGradient id={'summarize-line-graph-gradient-idle'} x1='0%' y1='0%' x2='0%' y2='100%'>
           <stop offset='0%' stopColor='rgba(200, 249, 131, 0)'/>
@@ -97,7 +97,7 @@ class SummarizeLineGraph extends Component {
                 <path
                   d={this.state.dAttribute}
                   stroke={
-                    this.props.category === 'idle'
+                    this.props.name === 'idle'
                       ? 'url(#summarize-line-graph-gradient-idle)'
                       : 'url(#summarize-line-graph-gradient)'
                   }
@@ -115,7 +115,7 @@ class SummarizeLineGraph extends Component {
 
 SummarizeLineGraph.propTypes = {
   rollingSummary: PropTypes.array,
-  category: PropTypes.string,
+  name: PropTypes.string,
   isBlank: PropTypes.bool,
 };
 

@@ -296,8 +296,15 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
         return ProfileData.filterThreadToCategory(thread, categoryFilter);
       }
     );
-    const getFilteredThread = createSelector(
+    const _getRunnableFilteredThread = createSelector(
       _getCategoryFilteredThread,
+      URLState.getRunnableFilter,
+      (thread, runnableFilter): Thread => {
+        return ProfileData.filterThreadToRunnable(thread, runnableFilter);
+      }
+    );
+    const getFilteredThread = createSelector(
+      _getRunnableFilteredThread,
       URLState.getInvertCallstack,
       (thread, shouldInvertCallstack): Thread => {
         return shouldInvertCallstack ? ProfileData.invertCallstack(thread) : thread;

@@ -3,16 +3,9 @@ import type {
   Action
 } from './types';
 
-export function changeCategoryFilter(category: string): Action {
+export function profileCategoriesProcessed(categories: object): Action {
   return {
-    type: 'CHANGE_CATEGORY',
-    category,
-  };
-}
-
-export function profileSummaryProcessed(summary: object): Action {
-  return {
-    type: 'PROFILE_SUMMARY_PROCESSED',
-    summary,
+    type: 'PROFILE_CATEGORIES_PROCESSED',
+    categories,
   };
 }

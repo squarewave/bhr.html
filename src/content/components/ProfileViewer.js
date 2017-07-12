@@ -6,7 +6,8 @@
 import React, { PureComponent, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import ProfileCallTreeView from '../containers/ProfileCallTreeView';
-import ProfileSummaryView from './ProfileSummaryView';
+import ProfileCategoriesView from './ProfileCategoriesView';
+import ProfileRunnablesView from './ProfileRunnablesView';
 import actions from '../actions';
 import { getSelectedTab } from '../reducers/url-state';
 import TabBar from './TabBar';
@@ -29,8 +30,12 @@ class ProfileViewer extends PureComponent {
     // If updating this list, make sure and update the tabOrder reducer with another index.
     this._tabs = [
       {
-        name: 'summary',
+        name: 'categories',
         title: 'Categories',
+      },
+      {
+        name: 'runnables',
+        title: 'Runnables',
       },
       {
         name: 'calltree',
@@ -62,7 +67,8 @@ class ProfileViewer extends PureComponent {
         />
         {
           {
-            summary: <ProfileSummaryView />,
+            categories: <ProfileCategoriesView />,
+            runnables: <ProfileRunnablesView />,
             calltree: <ProfileCallTreeView />,
           }[selectedTab]
         }

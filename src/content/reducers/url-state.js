@@ -121,6 +121,15 @@ function categoryFilter(state: string = '', action: Action) {
   }
 }
 
+function runnableFilter(state: string | null = null, action: Action) {
+  switch (action.type) {
+    case 'CHANGE_RUNNABLE':
+      return action.runnable;
+    default:
+      return state;
+  }
+}
+
 const urlStateReducer: Reducer<URLState> = (regularUrlStateReducer => (state: URLState, action: Action): URLState => {
   switch (action.type) {
     case '@@urlenhancer/updateURLState':
@@ -131,7 +140,7 @@ const urlStateReducer: Reducer<URLState> = (regularUrlStateReducer => (state: UR
 })(combineReducers({
   hash, selectedTab, rangeFilters, selectedThread,
   callTreeSearchString, callTreeFilters, invertCallstack,
-  hidePlatformDetails, categoryFilter
+  hidePlatformDetails, categoryFilter, runnableFilter
 }));
 export default urlStateReducer;
 
@@ -142,6 +151,7 @@ export const getRangeFilters = (state: State) => getURLState(state).rangeFilters
 export const getHidePlatformDetails = (state: State) => getURLState(state).hidePlatformDetails;
 export const getInvertCallstack = (state: State) => getURLState(state).invertCallstack;
 export const getCategoryFilter = (state: State) => getURLState(state).categoryFilter;
+export const getRunnableFilter = (state: State) => getURLState(state).runnableFilter;
 export const getSearchString = (state: State) => getURLState(state).callTreeSearchString;
 export const getSelectedTab = (state: State) => getURLState(state).selectedTab;
 export const getSelectedThreadIndex = (state: State) => getURLState(state).selectedThread;

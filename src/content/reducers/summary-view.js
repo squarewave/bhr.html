@@ -8,39 +8,29 @@ import type { State, SummaryViewState } from '../types/reducers';
 import { getProfile } from './profile-view';
 import { createSelector } from 'reselect';
 
-export default function summaryViewReducer(
-  state: SummaryViewState = { summary: null, expanded: null },
+export default function categoriesViewReducer(
+  state: SummaryViewState = { categories: null, expanded: null },
   action: Action
 ): SummaryViewState {
   switch (action.type) {
-    case 'PROFILE_SUMMARY_PROCESSED': {
+    case 'PROFILE_CATEGORIES_PROCESSED': {
       return Object.assign({}, state, {
-        summary: action.summary,
+        categories: action.categories,
         expanded: new Set(),
       });
-    }
-    case 'PROFILE_SUMMARY_EXPAND': {
-      const expanded = new Set(state.expanded);
-      expanded.add(action.threadIndex);
-      return Object.assign({}, state, { expanded });
-    }
-    case 'PROFILE_SUMMARY_COLLAPSE': {
-      const expanded = new Set(state.expanded);
-      expanded.delete(action.threadIndex);
-      return Object.assign({}, state, { expanded });
     }
     default:
       return state;
   }
 }
 
-export const getSummaryView = (state: State): SummaryViewState =>
-  state.summaryView;
+export const getCategoriesView = (state: State): SummaryViewState =>
+  state.categoriesView;
 
-export const getProfileSummaries = createSelector(getSummaryView, summaryView => {
-  return summaryView.summary;
+export const getProfileCategories = createSelector(getCategoriesView, categoriesView => {
+  return categoriesView.categories;
 });
 
-export const getProfileExpandedSummaries = createSelector(getSummaryView, summaryView => {
-  return summaryView.expanded;
+export const getProfileExpandedSummaries = createSelector(getCategoriesView, categoriesView => {
+  return categoriesView.expanded;
 });

@@ -4,21 +4,21 @@ import SummarizeLineGraph from './SummarizeLineGraph';
 class SummarizeProfileThread extends Component {
   constructor() {
     super();
-    this._onCategoryClicked = this._onCategoryClicked.bind(this);
+    this._onRowClicked = this._onRowClicked.bind(this);
   }
 
-  _onCategoryClicked() {
-    this.props.onSelected(this.props.summaryTable.category);
+  _onRowClicked() {
+    this.props.onSelected(this.props.row.name);
   }
 
   render() {
-    const {summaryTable, rollingSummary, index} = this.props;
-    const {category, samples, percentage} = summaryTable;
+    const {row, rollingSummary, index} = this.props;
+    const {name, percentage} = row;
     return (
-      <div className='summarize-profile-row'>
-        <SummarizeLineGraph rollingSummary={rollingSummary} category={category} />
+      <div className='summarize-profile-row' onClick={this._onRowClicked}>
+        <SummarizeLineGraph rollingSummary={rollingSummary} name={name} />
         <div className='summarize-profile-details'>
-          <div className='summarize-profile-text' onClick={this._onCategoryClicked}>{category}</div>
+          <div className='summarize-profile-text'>{name}</div>
           <div className='summarize-profile-numeric'>{displayPercentage(percentage)}</div>
         </div>
       </div>
@@ -27,9 +27,8 @@ class SummarizeProfileThread extends Component {
 }
 
 SummarizeProfileThread.propTypes = {
-  summaryTable: PropTypes.object,
+  row: PropTypes.object,
   rollingSummary: PropTypes.array,
-  isExpanded: PropTypes.bool,
   index: PropTypes.number,
   onSelected: PropTypes.func,
 };

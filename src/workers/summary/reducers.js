@@ -13,10 +13,10 @@ function profile(state = null, action) {
   }
 }
 
-function summary(state = null, action) {
+function categories(state = null, action) {
   switch (action.type) {
-    case 'PROFILE_SUMMARY_PROCESSED':
-      return action.summary;
+    case 'PROFILE_CATEGORIES_PROCESSED':
+      return action.categories;
     default:
       return state;
   }
@@ -24,5 +24,5 @@ function summary(state = null, action) {
 
 export default combineReducers({
   profile,
-  summary,
+  categories,
 });
