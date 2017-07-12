@@ -204,7 +204,7 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
     return Object.assign({}, thread, {
       stackTable: newStackTable,
       sampleTable: newSamples,
-    });
+    }, recomputeStacksToPseudoStacks(thread.stackToPseudoStacksTable, oldStackToNewStack));
   });
 }
 
@@ -389,7 +389,7 @@ export function invertCallstack(thread: Thread): Thread {
     return Object.assign({}, thread, {
       sampleTable: newSamples,
       stackTable: newStackTable,
-    });
+    }, recomputeStacksToPseudoStacks(thread.stackToPseudoStacksTable, oldStackToNewStack));
   });
 }
 
