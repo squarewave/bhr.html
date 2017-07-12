@@ -186,6 +186,10 @@ export function getCallTree(
     for (let i = stackTable.length - 1; i >= 0; i--) {
       totalTime[i] += selfTime[i];
       totalCount[i] += selfCount[i];
+      if (totalTime[i] === 0) {
+        continue;
+      }
+
       const prefix = stackTable.prefix[i];
       if (prefix === -1) {
         rootTotalTime += totalTime[i];

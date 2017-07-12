@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { profileSummaryProcessed } from './actions/summary-view';
+import { dateGraphRebuilt } from './actions/date-graph';
 /**
  * Messages are the translation layer from actions dispatched by the worker
  * thread to the content thread. This de-couples the state of the two threads.
@@ -12,4 +13,8 @@ export default messages;
 
 messages.PROFILE_SUMMARY_PROCESSED = function(message, call) {
   call(profileSummaryProcessed, message.summary);
+};
+
+messages.DATE_GRAPH_REBUILT = function(message, call) {
+  call(dateGraphRebuilt, message.dateGraph);
 };

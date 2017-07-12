@@ -13,18 +13,21 @@ import messages from './messages-content';
  */
 export default function initializeStore() {
   const summaryWorker = new Worker('summary-worker.js');
+  const dateGraphWorker = new Worker('date-graph-worker.js');
 
   const store = createStore(
     combineReducers(Object.assign({}, reducers)),
     applyMiddleware(...[
       thunk,
       threadDispatcher(summaryWorker, 'toSummaryWorker'),
+      threadDispatcher(dateGraphWorker, 'toDateGraphWorker'),
       process.env.NODE_ENV === 'development'
         ? createLogger({titleFormatter: action => `content action ${action.type}`})
         : null,
     ].filter(fn => fn)));
 
   handleMessages(summaryWorker, store, messages);
+  handleMessages(dateGraphWorker, store, messages);
 
   return store;
 }

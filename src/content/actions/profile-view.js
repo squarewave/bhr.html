@@ -3,6 +3,7 @@ import type {
   Action, ThunkAction, ProfileSelection, CallTreeFilter
 } from './types';
 import type { Thread, ThreadIndex, IndexIntoFuncTable, } from '../../common/types/profile';
+import { selectedThreadSelectors } from '../reducers/profile-view';
 
 /**
  * The actions that pertain to changing the view on the profile, including searching
@@ -12,17 +13,18 @@ import type { Thread, ThreadIndex, IndexIntoFuncTable, } from '../../common/type
 export function changeSelectedStack(
   threadIndex: ThreadIndex,
   selectedStack: IndexIntoFuncTable[]
-): Action {
-  return {
-    type: 'CHANGE_SELECTED_STACK',
-    selectedStack, threadIndex,
-  };
-}
+): ThunkAction {
+  return (dispatch, getState) => {
+    dispatch({
+      type: 'CHANGE_SELECTED_STACK',
+      selectedStack, threadIndex,
+    });
 
-export function changeSelectedThread(selectedThread: ThreadIndex): Action {
-  return {
-    type: 'CHANGE_SELECTED_THREAD',
-    selectedThread,
+    dispatch({
+      type: 'REBUILD_DATE_GRAPH',
+      toDateGraphWorker: true,
+      selectedStack: selectedThreadSelectors.getSelectedStack(getState()),
+    });
   };
 }
 
@@ -48,10 +50,35 @@ export function showThread(threads: Thread[], threadIndex: ThreadIndex): Action 
   };
 }
 
-export function changeCallTreeSearchString(searchString: string): Action {
-  return {
-    type: 'CHANGE_CALL_TREE_SEARCH_STRING',
-    searchString,
+export function changeSelectedThread(selectedThread: ThreadIndex): ThunkAction {
+  return (dispatch, getState) => {
+    dispatch({
+      type: 'CHANGE_SELECTED_THREAD',
+      selectedThread,
+    });
+
+    dispatch({
+      type: 'REBUILD_DATE_GRAPH',
+      toDateGraphWorker: true,
+      thread: selectedThreadSelectors.getFilteredThread(getState()),
+      selectedStack: selectedThreadSelectors.getSelectedStack(getState()),
+    });
+  };
+}
+
+export function changeCallTreeSearchString(searchString: string): ThunkAction {
+  return (dispatch, getState) => {
+    dispatch({
+      type: 'CHANGE_CALL_TREE_SEARCH_STRING',
+      searchString,
+    });
+
+    dispatch({
+      type: 'REBUILD_DATE_GRAPH',
+      toDateGraphWorker: true,
+      thread: selectedThreadSelectors.getFilteredThread(getState()),
+      selectedStack: selectedThreadSelectors.getSelectedStack(getState()),
+    });
   };
 }
 
@@ -65,10 +92,19 @@ export function changeExpandedStacks(
   };
 }
 
-export function changeInvertCallstack(invertCallstack: boolean): Action {
-  return {
-    type: 'CHANGE_INVERT_CALLSTACK',
-    invertCallstack,
+export function changeInvertCallstack(invertCallstack: boolean): ThunkAction {
+  return (dispatch, getState) => {
+    dispatch({
+      type: 'CHANGE_INVERT_CALLSTACK',
+      invertCallstack,
+    });
+
+    dispatch({
+      type: 'REBUILD_DATE_GRAPH',
+      toDateGraphWorker: true,
+      thread: selectedThreadSelectors.getFilteredThread(getState()),
+      selectedStack: selectedThreadSelectors.getSelectedStack(getState()),
+    });
   };
 }
 
@@ -116,18 +152,36 @@ export function popRangeFiltersAndUnsetSelection(firstRemovedFilterIndex: number
   };
 }
 
-export function addCallTreeFilter(threadIndex: ThreadIndex, filter: CallTreeFilter): Action {
-  return {
-    type: 'ADD_CALL_TREE_FILTER',
-    threadIndex,
-    filter,
+export function addCallTreeFilter(threadIndex: ThreadIndex, filter: CallTreeFilter): ThunkAction {
+  return (dispatch, getState) => {
+    dispatch({
+      type: 'ADD_CALL_TREE_FILTER',
+      threadIndex,
+      filter,
+    });
+
+    dispatch({
+      type: 'REBUILD_DATE_GRAPH',
+      toDateGraphWorker: true,
+      thread: selectedThreadSelectors.getFilteredThread(getState()),
+      selectedStack: selectedThreadSelectors.getSelectedStack(getState()),
+    });
   };
 }
 
-export function popCallTreeFilters(threadIndex: ThreadIndex, firstRemovedFilterIndex: number): Action {
-  return {
-    type: 'POP_CALL_TREE_FILTERS',
-    threadIndex,
-    firstRemovedFilterIndex,
+export function popCallTreeFilters(threadIndex: ThreadIndex, firstRemovedFilterIndex: number): ThunkAction {
+  return (dispatch, getState) => {
+    dispatch({
+      type: 'POP_CALL_TREE_FILTERS',
+      threadIndex,
+      firstRemovedFilterIndex,
+    });
+
+    dispatch({
+      type: 'REBUILD_DATE_GRAPH',
+      toDateGraphWorker: true,
+      thread: selectedThreadSelectors.getFilteredThread(getState()),
+      selectedStack: selectedThreadSelectors.getSelectedStack(getState()),
+    });
   };
 }

@@ -1,7 +1,10 @@
 import React, { Component, PropTypes } from 'react';
+import { connect } from 'react-redux';
+import actions from '../actions';
 import shallowCompare from 'react-addons-shallow-compare';
 import classNames from 'classnames';
 import { timeCode } from '../../common/time-code';
+import { getDateGraph } from '../reducers/date-graph';
 
 const BAR_WIDTH_RATIO = 0.8;
 const TOOLTIP_MARGIN = 3;
@@ -53,13 +56,7 @@ class ThreadStackGraph extends Component {
   }
 
   drawCanvas(c) {
-    return;
-    let { thread, rangeStart, rangeEnd, selectedStack } = this.props;
-    const { dates } = thread;
-
-    if (selectedStack === -1) {
-      selectedStack = 0;
-    }
+    let { rangeStart, rangeEnd, dateGraph } = this.props;
 
     const devicePixelRatio = c.ownerDocument ? c.ownerDocument.defaultView.devicePixelRatio : 1;
     const r = c.getBoundingClientRect();
@@ -71,11 +68,11 @@ class ThreadStackGraph extends Component {
     let maxHangMs = 0;
     let maxHangCount = 0;
     for (let i = rangeStart; i <= rangeEnd; i++) {
-      if (dates[i].totalStackHangMs[selectedStack] > maxHangMs) {
-        maxHangMs = dates[i].totalStackHangMs[selectedStack];
+      if (dateGraph.totalTime[i] > maxHangMs) {
+        maxHangMs = dateGraph.totalTime[i];
       }
-      if (dates[i].totalStackHangCount[selectedStack] > maxHangCount) {
-        maxHangCount = dates[i].totalStackHangCount[selectedStack];
+      if (dateGraph.totalCount[i] > maxHangCount) {
+        maxHangCount = dateGraph.totalCount[i];
       }
     }
 
@@ -84,9 +81,8 @@ class ThreadStackGraph extends Component {
     const yDevicePixelsPerHangCount = c.height / maxHangCount;
 
     for (let i = rangeStart; i <= rangeEnd; i++) {
-      const date = dates[i];
-      const timeHeight = date.totalStackHangMs[selectedStack] * yDevicePixelsPerHangMs;
-      const countHeight = date.totalStackHangCount[selectedStack] * yDevicePixelsPerHangCount;
+      const timeHeight = dateGraph.totalTime[i] * yDevicePixelsPerHangMs;
+      const countHeight = dateGraph.totalCount[i] * yDevicePixelsPerHangCount;
       const timeStartY = c.height - timeHeight;
       const countStartY = c.height - countHeight;
       ctx.fillStyle = '#7990c8';
@@ -110,20 +106,19 @@ class ThreadStackGraph extends Component {
       const dateIndex = floor + rangeStart;
       const isCount = fract > BAR_WIDTH_RATIO;
 
-      const date = dates[dateIndex];
       let tooltip = null;
       if (isCount) {
-        if (invertedY < date.totalStackHangCount[selectedStack] * yPxPerHangCount) {
+        if (invertedY < dateGraph.totalCount[dateIndex] * yPxPerHangCount) {
           tooltip = {
             width: 116 * devicePixelRatio,
-            text: `${(1000 * date.totalStackHangCount[selectedStack]).toFixed(1)} hangs / kuh`
+            text: `${(1000 * dateGraph.totalCount[dateIndex]).toFixed(1)} hangs / kuh`
           };
         }
       } else {
-        if (invertedY < date.totalStackHangMs[selectedStack] * yPxPerHangMs) {
+        if (invertedY < dateGraph.totalTime[dateIndex] * yPxPerHangMs) {
           tooltip = {
             width: 140 * devicePixelRatio,
-            text: `${(date.totalStackHangMs[selectedStack]).toFixed(1)} ms hanging / hr`
+            text: `${(dateGraph.totalTime[dateIndex]).toFixed(1)} ms hanging / hr`
           };
         }
       }
@@ -144,7 +139,7 @@ class ThreadStackGraph extends Component {
         ctx.font = '14px sans-serif';
         const totalBorder = margin + padding;
         let startX = x + totalBorder;
-        ctx.fillText(tooltip.text, x + totalBorder - tooltipOffset, y - totalBorder, tooltip.width - margin - 2 * padding); 
+        ctx.fillText(tooltip.text, x + totalBorder - tooltipOffset, y - totalBorder, tooltip.width - margin - 2 * padding);
       }
     }
   }
@@ -188,13 +183,12 @@ class ThreadStackGraph extends Component {
 }
 
 ThreadStackGraph.propTypes = {
-  thread: PropTypes.shape({
-    allDates: PropTypes.object.isRequired,
-  }).isRequired,
   rangeStart: PropTypes.number.isRequired,
   rangeEnd: PropTypes.number.isRequired,
-  selectedStack: PropTypes.number,
+  dateGraph: PropTypes.object.isRequired,
   className: PropTypes.string,
 };
 
-export default ThreadStackGraph;
+export default connect(state => ({
+  dateGraph: getDateGraph(state),
+}), actions)(ThreadStackGraph);

@@ -109,7 +109,7 @@ if (process.env.NODE_ENV === 'production') {
     }));
 }
 
-const workerConfig = Object.assign({}, baseConfig, {
+const summaryWorkerConfig = Object.assign({}, baseConfig, {
   plugins: basePlugins.slice(0),
   entry: ['./src/workers/summary/index'],
   output: {
@@ -119,4 +119,14 @@ const workerConfig = Object.assign({}, baseConfig, {
   },
 });
 
-module.exports = [ contentConfig, workerConfig ];
+const dateGraphWorkerConfig = Object.assign({}, baseConfig, {
+  plugins: basePlugins.slice(0),
+  entry: ['./src/workers/date-graph/index'],
+  output: {
+    path: path.join(__dirname, 'dist'),
+    filename: 'date-graph-worker.js',
+    publicPath: '/',
+  },
+});
+
+module.exports = [ contentConfig, summaryWorkerConfig, dateGraphWorkerConfig ];

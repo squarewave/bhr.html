@@ -6,6 +6,7 @@ import type {
 import type { Profile } from '../../common/types/profile';
 import { UniqueStringArray } from '../unique-string-array';
 import { OneToManyIndex } from '../one-to-many-index';
+import { selectedThreadSelectors } from '../reducers/profile-view';
 
 export function waitingForProfileFromTelemetry(): Action {
   return {
@@ -14,7 +15,7 @@ export function waitingForProfileFromTelemetry(): Action {
 }
 
 export function receiveProfileFromTelemetry(profile: Profile): ThunkAction {
-  return dispatch => {
+  return (dispatch, getState) => {
     dispatch({
       type: 'RECEIVE_PROFILE_FROM_TELEMETRY',
       profile,
@@ -29,6 +30,13 @@ export function receiveProfileFromTelemetry(profile: Profile): ThunkAction {
     dispatch({
       toSummaryWorker: true,
       type: 'SUMMARIZE_PROFILE',
+    });
+
+    dispatch({
+      type: 'REBUILD_DATE_GRAPH',
+      toDateGraphWorker: true,
+      thread: selectedThreadSelectors.getFilteredThread(getState()),
+      selectedStack: selectedThreadSelectors.getSelectedStack(getState()),
     });
   };
 }
