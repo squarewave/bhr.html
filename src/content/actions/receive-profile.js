@@ -8,9 +8,10 @@ import { UniqueStringArray } from '../unique-string-array';
 import { OneToManyIndex } from '../one-to-many-index';
 import { selectedThreadSelectors } from '../reducers/profile-view';
 
-export function waitingForProfileFromTelemetry(): Action {
+export function waitingForProfileFromTelemetry(durationSpec): Action {
   return {
     type: 'WAITING_FOR_PROFILE_FROM_TELEMETRY',
+    durationSpec
   };
 }
 
@@ -48,13 +49,13 @@ export function errorReceivingProfileFromTelemetry(error: any): Action {
   };
 }
 
-export function retrieveProfileFromTelemetry(): ThunkAction {
-  return dispatch => {
-    dispatch(waitingForProfileFromTelemetry());
+export function retrieveProfileFromTelemetry(durationSpec: string): ThunkAction {
+  return async dispatch => {
+    dispatch(waitingForProfileFromTelemetry(durationSpec));
 
-    const TELEMETRY_PROFILE_URL = 'https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/hang_profile_128_512.json';
+    const profileURL = `https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/hang_profile_${durationSpec}.json`;
 
-    fetch(TELEMETRY_PROFILE_URL).then(res => {
+    fetch(profileURL).then(res => {
       return res.json();
     }).then(profile => {
 

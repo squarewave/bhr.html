@@ -6,6 +6,7 @@
 import React, { PureComponent, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import ProfileCallTreeView from '../containers/ProfileCallTreeView';
+import ProfileSelectDurationSpec from './ProfileSelectDurationSpec';
 import ProfileCategoriesView from './ProfileCategoriesView';
 import ProfileRunnablesView from './ProfileRunnablesView';
 import actions from '../actions';
@@ -58,6 +59,7 @@ class ProfileViewer extends PureComponent {
       <div className={className}>
         <div className={`${className}TopBar`}>
           <ProfileFilterNavigator />
+          <ProfileSelectDurationSpec />
         </div>
         <ProfileViewerHeader />
         <TabBar

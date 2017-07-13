@@ -21,6 +21,16 @@ function hash(state: string = '', action: Action) {
   }
 }
 
+function durationSpec(state: string = '2048_65536', action: Action) {
+  console.log(state);
+  switch (action.type) {
+    case 'WAITING_FOR_PROFILE_FROM_TELEMETRY':
+      return action.durationSpec;
+    default:
+      return state;
+  }
+}
+
 function selectedTab(state: string = 'calltree', action: Action) {
   switch (action.type) {
     case 'CHANGE_SELECTED_TAB':
@@ -140,13 +150,15 @@ const urlStateReducer: Reducer<URLState> = (regularUrlStateReducer => (state: UR
 })(combineReducers({
   hash, selectedTab, rangeFilters, selectedThread,
   callTreeSearchString, callTreeFilters, invertCallstack,
-  hidePlatformDetails, categoryFilter, runnableFilter
+  hidePlatformDetails, categoryFilter, runnableFilter,
+  durationSpec
 }));
 export default urlStateReducer;
 
 const getURLState = (state: State): URLState => state.urlState;
 
 export const getHash = (state: State) => getURLState(state).hash;
+export const getDurationSpec = (state: State) => getURLState(state).durationSpec;
 export const getRangeFilters = (state: State) => getURLState(state).rangeFilters;
 export const getHidePlatformDetails = (state: State) => getURLState(state).hidePlatformDetails;
 export const getInvertCallstack = (state: State) => getURLState(state).invertCallstack;

@@ -1,26 +1,21 @@
 import React, { Component, PropTypes } from 'react';
 import { connect, Provider } from 'react-redux';
 import actions from '../actions';
+import Home from '../components/Home';
 import ProfileViewer from '../components/ProfileViewer';
 import { urlFromState, stateFromCurrentLocation } from '../url-handling';
 import { getView } from '../reducers/app';
-import { getHash } from '../reducers/url-state';
+import { getHash, getDurationSpec } from '../reducers/url-state';
 import URLManager from './URLManager';
 
 class ProfileViewWhenReadyImpl extends Component {
-  componentDidMount() {
-    const {
-      retrieveProfileFromTelemetry
-    } = this.props;
-    retrieveProfileFromTelemetry();
-  }
-
   render() {
-
-    const { view } = this.props;
+    const { view, durationSpec, retrieveProfileFromTelemetry } = this.props;
     switch (view) {
       case 'INITIALIZING':
-        return <div>Retrieving data from telemetry...</div>;
+        console.log(durationSpec);
+        retrieveProfileFromTelemetry(durationSpec);
+        return <div>Waiting for profile from telemetry...</div>
       case 'PROFILE':
         return <ProfileViewer/>;
       default:
@@ -32,12 +27,14 @@ class ProfileViewWhenReadyImpl extends Component {
 ProfileViewWhenReadyImpl.propTypes = {
   view: PropTypes.string.isRequired,
   hash: PropTypes.string,
+  durationSpec: PropTypes.string.isRequired,
   retrieveProfileFromTelemetry: PropTypes.func.isRequired,
 };
 
 const ProfileViewWhenReady = connect(state => ({
   view: getView(state),
   hash: getHash(state),
+  durationSpec: getDurationSpec(state),
 }), actions)(ProfileViewWhenReadyImpl);
 
 export default class Root extends Component {

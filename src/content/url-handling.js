@@ -18,6 +18,7 @@ export function urlFromState(urlState: URLState) {
   query.callTreeFilters = stringifyCallTreeFilters(urlState.callTreeFilters[urlState.selectedThread]) || undefined;
   query.category = urlState.categoryFilter || undefined;
   query.runnable = urlState.runnableFilter || undefined;
+  query.durationSpec = urlState.durationSpec || undefined;
   const qString = queryString.stringify(query);
   return pathname + (qString ? '?' + qString : '');
 }
@@ -33,6 +34,7 @@ export function stateFromCurrentLocation(): URLState {
   return {
     hash: '',
     selectedTab: 'calltree',
+    durationSpec: query.durationSpec || '2048_65536',
     rangeFilters: query.range ? parseRangeFilters(query.range) : [],
     selectedThread: selectedThread,
     callTreeSearchString: query.search || '',

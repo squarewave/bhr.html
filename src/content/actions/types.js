@@ -69,7 +69,7 @@ type URLEnhancerAction =
 
 type URLStateAction =
   { type: 'WAITING_FOR_PROFILE_FROM_FILE' } |
-  { type: 'WAITING_FOR_PROFILE_FROM_TELEMETRY' } |
+  { type: 'WAITING_FOR_PROFILE_FROM_TELEMETRY', durationSpec: string } |
   { type: 'PROFILE_PUBLISHED', hash: string } |
   { type: 'CHANGE_SELECTED_TAB', selectedTab: string } |
   { type: 'ADD_RANGE_FILTER', start: number, end: number } |

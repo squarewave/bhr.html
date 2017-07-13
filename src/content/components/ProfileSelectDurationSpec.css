@@ -1,0 +1,25 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+.profileDurationSpec {
+  --internal-duration-button-background-color: var(--duration-button-background-color, #888);
+  height: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+}
+
+.profileDurationSpecButtonButton {
+  background-color: var(--internal-duration-button-background-color);
+  color: white;
+  cursor: pointer;
+}
+
+.profileDurationSpecPanel {
+  --offset-from-right: 25px;
+  --width: 30em;
+}
+
+.profileDurationSpecLink {
+  white-space: nowrap;
+}
