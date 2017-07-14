@@ -3,7 +3,7 @@ import React, { Component, PropTypes } from 'react';
 const HEIGHT = 30;
 const FILL = '#7990c8';
 
-class SummarizeLineGraph extends Component {
+class SummarizeBarGraph extends Component {
   componentDidMount() {
     const resize = () => this.updateWidth();
     window.addEventListener('resize', resize);
@@ -38,7 +38,7 @@ class SummarizeLineGraph extends Component {
 
   render() {
     return (
-      <div className='summarize-line-graph' ref={el => { this.el = el; }}>
+      <div className='summarize-bar-graph' ref={el => { this.el = el; }}>
         {
           this.state && this.props && this.props.rollingSummary
             ? <svg
@@ -51,29 +51,21 @@ class SummarizeLineGraph extends Component {
               </svg>
             : <div
                 style={{height: HEIGHT + 'px'}}
-                className={`${this.props.isBlank ? '' : 'filler'} summarize-line-graph-filler`}></div>
+                className={`${this.props.isBlank ? '' : 'filler'} summarize-bar-graph-filler`}>{!this.props.isBlank && 'Loading...'}</div>
         }
       </div>
     );
   }
 }
 
-SummarizeLineGraph.propTypes = {
+SummarizeBarGraph.propTypes = {
   rollingSummary: PropTypes.array,
   name: PropTypes.string,
   isBlank: PropTypes.bool,
 };
 
-export default SummarizeLineGraph;
+export default SummarizeBarGraph;
 
 function round(n) {
   return Math.round(n * 1000) / 1000;
-}
-
-function moveTo(x, y) {
-  return `M${x},${y}`;
-}
-
-function lineTo(x, y) {
-  return `L${x},${y}`;
 }

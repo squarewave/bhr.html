@@ -31,7 +31,7 @@
   font-size: 1.2em;
 }
 
-.summarize-line-graph {
+.summarize-bar-graph {
   min-width: 50%;
   flex: 1;
   margin-inline-end: 1em;
@@ -45,7 +45,7 @@
 
 .summarize-profile-numeric,
 .summarize-profile-text,
-.summarize-profile-line-graph {
+.summarize-profile-bar-graph {
   text-overflow: ellipsis;
   overflow: hidden;
 }
@@ -101,7 +101,7 @@
   color: #000;
 }
 
-.summarize-line-graph svg {
+.summarize-bar-graph svg {
   background-color:#f6f6f6;
 }
 
@@ -115,8 +115,9 @@
   background-color: #eee;
 }
 
-.summarize-line-graph-filler.filler {
+.summarize-bar-graph-filler.filler {
   background-color: #eee;
+  padding: 8px;
 }
 
 .summarize-profile-collapse {

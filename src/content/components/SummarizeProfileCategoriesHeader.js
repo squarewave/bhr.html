@@ -7,7 +7,7 @@ class SummarizeProfileCategoriesHeader extends Component {
       <div>
         <div className='summarize-profile-thread' colSpan='3'>{threadName} Thread, {processType} process</div>
         <div className='summarize-profile-header'>
-          <div className='summarize-line-graph'>
+          <div className='summarize-bar-graph'>
             % Hang time over all dates
           </div>
           <div className='summarize-profile-details'>
