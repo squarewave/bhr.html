@@ -3,13 +3,20 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { summarizeProfileCategories } from '../../common/profile-categories';
+import { summarizeProfileRunnables } from '../../common/profile-runnables';
 
-export function processProfileCategories() {
+export function summarizeProfile() {
   return function(dispatch, getState) {
     dispatch({
       toContent: true,
       type: 'PROFILE_CATEGORIES_PROCESSED',
       categories: summarizeProfileCategories(getState().profile),
+    });
+
+    dispatch({
+      toContent: true,
+      type: 'PROFILE_RUNNABLES_PROCESSED',
+      runnables: summarizeProfileRunnables(getState().profile),
     });
   };
 }

@@ -52,7 +52,9 @@ function summarizeSampleRunnables(
   datum: RunnableDatum
 ): Summary {
   const runnable = datum.runnable || '???';
-  summary[runnable] = (summary[runnable] || 0) + datum.hangMs;
+  if (runnable !== '---') {
+    summary[runnable] = (summary[runnable] || 0) + datum.hangMs;
+  }
   return summary;
 }
 
@@ -176,19 +178,23 @@ export function calculateRollingSummaries(
   return profile.threads.map((thread, threadIndex) => {
     const runnables = threadRunnables[threadIndex];
     const rollingSummary: RollingSummary = [];
+    let maxKey = null;
     let maxTime = 0;
 
     for (let i = 0; i < thread.dates.length; i++) {
       const samples: { [string]: number } = {};
 
       for (let j = 0; j < thread.dates[i].sampleHangMs.length; j++) {
-        const runnable = runnables[j].runnable || 'uncategorized';
-        samples[runnable] = samples[runnable] || 0;
-        samples[runnable] += thread.dates[i].sampleHangMs[j];
+        const runnable = runnables[j].runnable || '???';
+        if (runnable !== '---') {
+          samples[runnable] = samples[runnable] || 0;
+          samples[runnable] += thread.dates[i].sampleHangMs[j];
+        }
       }
 
-      for (let time of Object.values(samples)) {
+      for (let [key, time] of Object.entries(samples)) {
         if (time > maxTime) {
+          maxKey = key;
           maxTime = time;
         }
       }
@@ -199,7 +205,7 @@ export function calculateRollingSummaries(
     }
 
     rollingSummary.forEach(s => {
-      s.percentage = mapObj(s.samples, count => count / maxTime);
+      s.percentage = mapObj(s.samples, time => time / maxTime);
     });
 
     return rollingSummary;

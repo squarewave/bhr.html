@@ -4,14 +4,14 @@
 
 // @flow
 import type { Action } from '../types/actions';
-import type { State, SummaryViewState } from '../types/reducers';
+import type { State, CategoriesViewState } from '../types/reducers';
 import { getProfile } from './profile-view';
 import { createSelector } from 'reselect';
 
 export default function categoriesViewReducer(
-  state: SummaryViewState = { categories: null, expanded: null },
+  state: CategoriesViewState = { categories: null, expanded: null },
   action: Action
-): SummaryViewState {
+): CategoriesViewState {
   switch (action.type) {
     case 'PROFILE_CATEGORIES_PROCESSED': {
       return Object.assign({}, state, {
@@ -24,7 +24,7 @@ export default function categoriesViewReducer(
   }
 }
 
-export const getCategoriesView = (state: State): SummaryViewState =>
+export const getCategoriesView = (state: State): CategoriesViewState =>
   state.categoriesView;
 
 export const getProfileCategories = createSelector(getCategoriesView, categoriesView => {

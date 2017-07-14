@@ -7,7 +7,7 @@ import { connect } from 'react-redux';
 import { getProfile } from '../reducers/profile-view';
 import {
   getProfileCategories,
-} from '../reducers/summary-view';
+} from '../reducers/categories-view';
 import SummarizeLineGraph from './SummarizeLineGraph';
 import SummarizeProfileHeader from './SummarizeProfileCategoriesHeader';
 import SummarizeProfileExpand from './SummarizeProfileExpand';

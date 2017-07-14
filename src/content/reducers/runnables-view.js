@@ -4,16 +4,21 @@
 
 // @flow
 import type { Action } from '../types/actions';
-import type { State, SummaryViewState } from '../types/reducers';
+import type { State, CategoriesViewState } from '../types/reducers';
 import { getProfile } from './profile-view';
 import { createSelector } from 'reselect';
-import { summarizeProfileRunnables } from '../../common/profile-runnables';
 
 export default function runnablesViewReducer(
-  state: SummaryViewState = { expanded: new Set() },
+  state: CategoriesViewState = { expanded: new Set() },
   action: Action
-): SummaryViewState {
+): CategoriesViewState {
   switch (action.type) {
+    case 'PROFILE_RUNNABLES_PROCESSED': {
+      return Object.assign({}, state, {
+        runnables: action.runnables,
+        expanded: new Set(),
+      });
+    }
     case 'PROFILE_SUMMARY_EXPAND': {
       const expanded = new Set(state.expanded);
       expanded.add(action.threadIndex);
@@ -29,12 +34,13 @@ export default function runnablesViewReducer(
   }
 }
 
-export const getRunnablesView = createSelector(getProfile, summarizeProfileRunnables);
+export const getRunnablesView = (state: State): RunnablesViewState =>
+  state.runnablesView;
 
 export const getProfileRunnables = createSelector(getRunnablesView, runnablesView => {
-  return runnablesView;
+  return runnablesView.runnables;
 });
 
-export const getProfileExpandedRunnables = state =>{
-  return state.runnablesView.expanded;
-};
+export const getProfileExpandedRunnables = createSelector(getRunnablesView, runnablesView => {
+  return runnablesView.expanded;
+});
