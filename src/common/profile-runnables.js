@@ -148,8 +148,7 @@ function mapProfileToThreadRunnables(profile: Profile): ThreadRunnables {
   return profile.threads.map(thread => {
     return thread.dates.reduce((memo, next) => memo.concat(
       Array.from(next.sampleHangMs).map((hangMs, i) => ({
-        // runnable: thread.stringTable.getString(thread.sampleTable.runnable[i]),
-        runnable: thread.sampleTable.runnable[i],
+        runnable: thread.stringTable._array[thread.sampleTable.runnable[i]],
         hangMs,
       }))), []);
   });
