@@ -13,7 +13,6 @@ class ProfileViewWhenReadyImpl extends Component {
     const { view, durationSpec, retrieveProfileFromTelemetry } = this.props;
     switch (view) {
       case 'INITIALIZING':
-        console.log(durationSpec);
         retrieveProfileFromTelemetry(durationSpec);
         return <div>Waiting for profile from telemetry...</div>
       case 'PROFILE':
