@@ -111,7 +111,7 @@ class ThreadStackGraph extends Component {
         if (invertedY < dateGraph.totalCount[dateIndex] * yPxPerHangCount) {
           tooltip = {
             width: 116 * devicePixelRatio,
-            text: `${(1000 * dateGraph.totalCount[dateIndex]).toFixed(1)} hangs / kuh`
+            text: `${dateGraph.totalCount[dateIndex].toFixed(1)} hangs / hr`
           };
         }
       } else {
