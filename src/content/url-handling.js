@@ -19,6 +19,7 @@ export function urlFromState(urlState: URLState) {
   query.category = urlState.categoryFilter || undefined;
   query.runnable = urlState.runnableFilter || undefined;
   query.durationSpec = urlState.durationSpec || undefined;
+  query.onlyUserInteracting = urlState.onlyUserInteracting || undefined;
   const qString = queryString.stringify(query);
   return pathname + (qString ? '?' + qString : '');
 }
@@ -44,6 +45,7 @@ export function stateFromCurrentLocation(): URLState {
       [selectedThread]: query.callTreeFilters ? parseCallTreeFilters(query.callTreeFilters) : [],
     },
     invertCallstack: query.invertCallstack !== undefined,
+    onlyUserInteracting: query.onlyUserInteracting !== undefined,
     hidePlatformDetails: query.hidePlatformDetails !== undefined,
   };
 }

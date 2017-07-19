@@ -19,8 +19,8 @@ export function buildDateGraph(thread, stack) {
       for (let j = 0; j < sampleTable.length; j++) {
         const stackindex = sampleTable.stack[j];
         if (stackindex !== null) {
-          selfTime[stackindex] = dates[i].sampleHangMs[j];
-          selfCount[stackindex] = dates[i].sampleHangCount[j];
+          selfTime[stackindex] += dates[i].sampleHangMs[j];
+          selfCount[stackindex] += dates[i].sampleHangCount[j];
         }
       }
 

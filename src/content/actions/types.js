@@ -81,6 +81,7 @@ type URLStateAction =
   { type: 'ADD_CALL_TREE_FILTER', threadIndex: ThreadIndex, filter: CallTreeFilter } |
   { type: 'POP_CALL_TREE_FILTERS', threadIndex: ThreadIndex, firstRemovedFilterIndex: number } |
   { type: 'CHANGE_INVERT_CALLSTACK', invertCallstack: boolean } |
+  { type: 'CHANGE_ONLY_USER_INTERACTING', onlyUserInteracting: boolean } |
   { type: 'CHANGE_HIDE_PLATFORM_DETAILS', hidePlatformDetails: boolean };
 
 type IconsAction =

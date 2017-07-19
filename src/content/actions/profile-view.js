@@ -108,6 +108,22 @@ export function changeInvertCallstack(invertCallstack: boolean): ThunkAction {
   };
 }
 
+export function changeOnlyUserInteracting(onlyUserInteracting: boolean): ThunkAction {
+  return (dispatch, getState) => {
+    dispatch({
+      type: 'CHANGE_ONLY_USER_INTERACTING',
+      onlyUserInteracting,
+    });
+
+    dispatch({
+      type: 'REBUILD_DATE_GRAPH',
+      toDateGraphWorker: true,
+      thread: selectedThreadSelectors.getFilteredThread(getState()),
+      selectedStack: selectedThreadSelectors.getSelectedStack(getState()),
+    });
+  };
+}
+
 export function changeRunnableFilter(runnable: string) : ThunkAction {
   return (dispatch, getState) => {
     dispatch({

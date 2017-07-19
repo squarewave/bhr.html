@@ -2,7 +2,13 @@ import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import actions from '../actions';
 import { categoryNames } from '../../common/profile-categories';
-import { getInvertCallstack, getSearchString, getCategoryFilter, getRunnableFilter } from '../reducers/url-state';
+import {
+  getInvertCallstack,
+  getSearchString,
+  getCategoryFilter,
+  getRunnableFilter,
+  getOnlyUserInteracting
+} from '../reducers/url-state';
 import IdleSearchField from '../components/IdleSearchField';
 
 import './ProfileCallTreeSettings.css';
@@ -11,6 +17,7 @@ class ProfileCallTreeSettings extends Component {
   constructor(props) {
     super(props);
     this._onInvertCallstackClick = this._onInvertCallstackClick.bind(this);
+    this._onOnlyUserInteractingClick = this._onOnlyUserInteractingClick.bind(this);
     this._onSearchFieldIdleAfterChange = this._onSearchFieldIdleAfterChange.bind(this);
     this._onCategoryFilterChange = this._onCategoryFilterChange.bind(this);
     this._onRunnableFilterClick = this._onRunnableFilterClick.bind(this);
@@ -18,6 +25,10 @@ class ProfileCallTreeSettings extends Component {
 
   _onInvertCallstackClick(e) {
     this.props.changeInvertCallstack(e.target.checked);
+  }
+
+  _onOnlyUserInteractingClick(e) {
+    this.props.changeOnlyUserInteracting(e.target.checked);
   }
 
   _onRunnableFilterClick(e) {
@@ -33,7 +44,7 @@ class ProfileCallTreeSettings extends Component {
   }
 
   render() {
-    const { invertCallstack, searchString, categoryFilter, runnableFilter } = this.props;
+    const { invertCallstack, searchString, categoryFilter, runnableFilter, onlyUserInteracting } = this.props;
     return (
       <div className='profileCallTreeSettings'>
         <ul className='profileCallTreeSettingsList'>
@@ -57,6 +68,15 @@ class ProfileCallTreeSettings extends Component {
                      onChange={this._onInvertCallstackClick}
                      checked={invertCallstack}/>
               { ' Invert call stack' }
+            </label>
+          </li>
+          <li className='profileCallTreeSettingsListItem'>
+            <label className='profileCallTreeSettingsLabel'>
+              <input type='checkbox'
+                     className='profileCallTreeSettingsCheckbox'
+                     onChange={this._onOnlyUserInteractingClick}
+                     checked={onlyUserInteracting}/>
+              { ' Only hangs where user was interacting' }
             </label>
           </li>
           {runnableFilter !== null &&
@@ -88,7 +108,9 @@ class ProfileCallTreeSettings extends Component {
 
 ProfileCallTreeSettings.propTypes = {
   invertCallstack: PropTypes.bool.isRequired,
+  onlyUserInteracting: PropTypes.bool.isRequired,
   changeInvertCallstack: PropTypes.func.isRequired,
+  changeOnlyUserInteracting: PropTypes.func.isRequired,
   changeCallTreeSearchString: PropTypes.func.isRequired,
   searchString: PropTypes.string.isRequired,
   categoryFilter: PropTypes.string.isRequired,
@@ -97,6 +119,7 @@ ProfileCallTreeSettings.propTypes = {
 
 export default connect(state => ({
   invertCallstack: getInvertCallstack(state),
+  onlyUserInteracting: getOnlyUserInteracting(state),
   searchString: getSearchString(state),
   categoryFilter: getCategoryFilter(state),
   runnableFilter: getRunnableFilter(state),

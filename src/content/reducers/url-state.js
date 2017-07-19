@@ -22,7 +22,6 @@ function hash(state: string = '', action: Action) {
 }
 
 function durationSpec(state: string = '2048_65536', action: Action) {
-  console.log(state);
   switch (action.type) {
     case 'WAITING_FOR_PROFILE_FROM_TELEMETRY':
       return action.durationSpec;
@@ -113,6 +112,15 @@ function invertCallstack(state: boolean = false, action: Action) {
   }
 }
 
+function onlyUserInteracting(state: boolean = true, action: Action) {
+  switch (action.type) {
+    case 'CHANGE_ONLY_USER_INTERACTING':
+      return action.onlyUserInteracting;
+    default:
+      return state;
+  }
+}
+
 function hidePlatformDetails(state: boolean = false, action: Action) {
   switch (action.type) {
     case 'CHANGE_HIDE_PLATFORM_DETAILS':
@@ -151,7 +159,7 @@ const urlStateReducer: Reducer<URLState> = (regularUrlStateReducer => (state: UR
   hash, selectedTab, rangeFilters, selectedThread,
   callTreeSearchString, callTreeFilters, invertCallstack,
   hidePlatformDetails, categoryFilter, runnableFilter,
-  durationSpec
+  durationSpec, onlyUserInteracting,
 }));
 export default urlStateReducer;
 
@@ -162,6 +170,7 @@ export const getDurationSpec = (state: State) => getURLState(state).durationSpec
 export const getRangeFilters = (state: State) => getURLState(state).rangeFilters;
 export const getHidePlatformDetails = (state: State) => getURLState(state).hidePlatformDetails;
 export const getInvertCallstack = (state: State) => getURLState(state).invertCallstack;
+export const getOnlyUserInteracting = (state: State) => getURLState(state).onlyUserInteracting;
 export const getCategoryFilter = (state: State) => getURLState(state).categoryFilter;
 export const getRunnableFilter = (state: State) => getURLState(state).runnableFilter;
 export const getSearchString = (state: State) => getURLState(state).callTreeSearchString;

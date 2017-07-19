@@ -170,6 +170,18 @@ export function filterThreadToRunnable(thread: Thread, runnable: string) {
   });
 }
 
+export function filterThreadToUserInteracting(thread: Thread, userInteracting: boolean) {
+  return timeCode('filterThreadToUserInteracting', () => {
+    const { sampleTable } = thread;
+    return Object.assign({}, thread, {
+      sampleTable: Object.assign({}, sampleTable, {
+        stack: sampleTable.stack.map((s, i) => (sampleTable.userInteracting[i] === userInteracting) ? s : null),
+      }),
+    });
+    return result;
+  });
+}
+
 /**
  * Filter thread to only contain stacks which start with |prefixFuncs|, and
  * only samples witth those stacks. The new stacks' roots will be frames whose

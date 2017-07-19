@@ -303,8 +303,15 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
         return ProfileData.filterThreadToRunnable(thread, runnableFilter);
       }
     );
-    const getFilteredThread = createSelector(
+    const _getUserInteractingFilteredThread = createSelector(
       _getRunnableFilteredThread,
+      URLState.getOnlyUserInteracting,
+      (thread, onlyUserInteracting): Thread => {
+        return onlyUserInteracting ? ProfileData.filterThreadToUserInteracting(thread, true) : thread;
+      }
+    );
+    const getFilteredThread = createSelector(
+      _getUserInteractingFilteredThread,
       URLState.getInvertCallstack,
       (thread, shouldInvertCallstack): Thread => {
         return shouldInvertCallstack ? ProfileData.invertCallstack(thread) : thread;
