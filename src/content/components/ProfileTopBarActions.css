@@ -2,7 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-.profileDurationSpec {
+.profileTopBarActions {
+  --internal-filebug-button-background-color: var(--filebug-button-background-color, hsl(137,81%,44%));
   --internal-duration-button-background-color: var(--duration-button-background-color, #888);
   height: 100%;
   display: flex;
@@ -15,9 +16,24 @@
   cursor: pointer;
 }
 
-.profileDurationSpecPanel {
+.fileABugButtonButton {
+  background-color: var(--internal-filebug-button-background-color);
+  color: white;
+}
+
+.profileDurationSpecPanel, .fileABugPanel {
   --offset-from-right: 25px;
   --width: 30em;
+}
+
+.fileABugPanel {
+  max-width: 30em;
+}
+
+.fileABugPanel > .arrowPanelContent > p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .profileDurationSpecLink {
