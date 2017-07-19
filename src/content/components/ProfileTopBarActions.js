@@ -51,7 +51,10 @@ class ProfileTopBarActions extends PureComponent {
 
     const node = tree.getNode(selectedStack);
 
-    const splitStack = stack.split('\n').filter(s => s != '(root)');
+    let splitStack = stack.split('\n');
+    if (splitStack.length > 1) {
+      splitStack = splitStack.filter(s => s != '(root)');
+    }
     const topFrame = splitStack[0].replace(/(?:\([^(]*\))?\s*$/, '');
     const shortDesc = `${avgHangCount.toPrecision(2)} ${this.durationSpecClass(durationSpec)} hangs / hr in ${topFrame}`;
     const longDesc =
