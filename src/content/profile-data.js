@@ -246,7 +246,7 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
     return Object.assign({}, thread, {
       stackTable: newStackTable,
       sampleTable: newSamples,
-    }, recomputeStacksToPseudoStacks(thread.stackToPseudoStacksTable, oldStackToNewStack));
+    });
   });
 }
 
@@ -431,58 +431,7 @@ export function invertCallstack(thread: Thread): Thread {
     return Object.assign({}, thread, {
       sampleTable: newSamples,
       stackTable: newStackTable,
-    }, recomputeStacksToPseudoStacks(thread.stackToPseudoStacksTable, oldStackToNewStack));
-  });
-}
-
-function recomputeStacksToPseudoStacks(stackToPseudoStacksTable, oldStackToNewStack) {
-  return timeCode('recomputeStacksToPseudoStacks', () => {
-    let newStackToPseudoStacksTable = {
-      length: stackToPseudoStacksTable.length,
-      stack: new Int32Array(stackToPseudoStacksTable.length),
-      pseudo_stack: new Int32Array(stackToPseudoStacksTable.length),
-      stackHangMs: new Float32Array(stackToPseudoStacksTable.length),
-      stackHangCount: new Float32Array(stackToPseudoStacksTable.length),
-    };
-
-    let newStackToPseudoStacksStacksTemp = new Int32Array(stackToPseudoStacksTable.length);
-    let newStackToPseudoStacksIndices = new Int32Array(stackToPseudoStacksTable.length);
-
-    for (let i = 0; i < stackToPseudoStacksTable.length; i++) {
-      newStackToPseudoStacksIndices[i] = i;
-
-      const oldStackIndex = stackToPseudoStacksTable.stack[i];
-      let newIndex = oldStackToNewStack.get(oldStackIndex);
-
-      if (newIndex === undefined) {
-        newIndex = -1;
-      }
-      newStackToPseudoStacksStacksTemp[i] = newIndex;
-    }
-
-    newStackToPseudoStacksIndices.sort((lhs, rhs) =>
-      newStackToPseudoStacksStacksTemp[lhs] - newStackToPseudoStacksStacksTemp[rhs]);
-    let sortLocations = new Int32Array(stackToPseudoStacksTable.length);
-
-    for (let i = 0; i < stackToPseudoStacksTable.length; i++) {
-      sortLocations[newStackToPseudoStacksIndices[i]] = i;
-    }
-
-    for (let unsortedIndex = 0; unsortedIndex < stackToPseudoStacksTable.length; unsortedIndex++) {
-      const sortedIndex = sortLocations[unsortedIndex];
-
-      newStackToPseudoStacksTable.stack[sortedIndex] = newStackToPseudoStacksStacksTemp[unsortedIndex];
-      newStackToPseudoStacksTable.pseudo_stack[sortedIndex] = stackToPseudoStacksTable.pseudo_stack[unsortedIndex];
-      newStackToPseudoStacksTable.stackHangMs[sortedIndex] = stackToPseudoStacksTable.stackHangMs[unsortedIndex];
-      newStackToPseudoStacksTable.stackHangCount[sortedIndex] = stackToPseudoStacksTable.stackHangCount[unsortedIndex];
-    }
-
-    const stackToPseudoStacksIndex = new OneToManyIndex(newStackToPseudoStacksTable.stack);
-
-    return {
-      stackToPseudoStacksTable: newStackToPseudoStacksTable,
-      stackToPseudoStacksIndex
-    };
+    });
   });
 }
 

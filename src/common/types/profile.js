@@ -22,20 +22,6 @@ export type StackTable = {
   length: number,
 };
 
-export type PseudoStackTable = {
-  func: Int32Array,
-  prefix: Int32Array,
-  length: number,
-};
-
-export type StackToPseudoStacksTable = {
-  stack: Int32Array,
-  pseudo_stack: Int32Array,
-  stackHangMs: Float32Array,
-  stackHangCount: Float32Array,
-  length: number,
-};
-
 export type AllDatesTable = {
   length: number,
   stackHangMs: Float32Array,
@@ -86,8 +72,6 @@ export type Thread = {
   pid: number | void,
   tid: number | void,
   stackTable: StackTable,
-  pseudoStackTable: PseudoStackTable,
-  stackToPseudoStacksTable: StackToPseudoStacksTable,
   // Strings for profiles are collected into a single table, and are referred to by
   // their index by other tables.
   stringTable: UniqueStringArray,

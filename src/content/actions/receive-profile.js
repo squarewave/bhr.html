@@ -104,24 +104,6 @@ export function retrieveProfileFromTelemetry(durationSpec: string): ThunkAction 
           });
         }
 
-        {
-          let prefix = new Int32Array(thread.pseudoStackTable.length);
-          let func = new Int32Array(thread.pseudoStackTable.length);
-          for (let i = 0; i < thread.pseudoStackTable.length; i++) {
-            if (thread.pseudoStackTable.prefix[i] === null) {
-              prefix[i] = -1;
-            } else {
-              prefix[i] = thread.pseudoStackTable.prefix[i];
-            }
-            func[i] = thread.pseudoStackTable.func[i];
-          }
-
-          Object.assign(thread.pseudoStackTable, {
-            prefix,
-            func,
-          });
-        }
-
         thread.sampleTable.sampleHangMs = new Float32Array(thread.sampleTable.length);
         thread.sampleTable.sampleHangCount = new Float32Array(thread.sampleTable.length);
 
@@ -151,7 +133,6 @@ export function retrieveProfileFromTelemetry(durationSpec: string): ThunkAction 
         });
 
         thread.dates.sort((lhs, rhs) => lhs.date - rhs.date);
-        thread.stackToPseudoStacksIndex = new OneToManyIndex(thread.stackToPseudoStacksTable.stack);
         thread.stringTable = new UniqueStringArray(thread.stringArray);
       }
 
