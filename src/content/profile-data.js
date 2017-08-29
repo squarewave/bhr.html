@@ -156,7 +156,7 @@ export function filterThreadToRunnable(thread: Thread, runnable: string) {
         return null;
       }
 
-      const sampleRunnable = stringTable.getString(sampleTable.runnable[sampleIndex]);
+      const sampleRunnable = stringTable.getString(sampleTable.runnable[sampleIndex]) || '???';
 
       return sampleRunnable === runnable ? stackIndex : null;
     }
