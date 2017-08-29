@@ -6,6 +6,7 @@
 import React, { PureComponent, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import actions from '../actions';
+import { getHash, getDurationSpec, getPayloadID } from '../reducers/url-state';
 
 class Home extends PureComponent {
   props: Props;
@@ -18,9 +19,10 @@ class Home extends PureComponent {
   _profileRetriever(durationSpec) {
     return () => {
       const {
-        retrieveProfileFromTelemetry
+        retrieveProfileFromTelemetry,
+        payloadID,
       } = this.props;
-      retrieveProfileFromTelemetry(durationSpec);
+      retrieveProfileFromTelemetry(durationSpec, payloadID);
     };
   }
 
@@ -37,7 +39,9 @@ class Home extends PureComponent {
 
 Home.propTypes = {
   retrieveProfileFromTelemetry: PropTypes.func.isRequired,
+  payloadID: PropTypes.string.isRequired,
 };
 
 export default connect(state => ({
+  payloadID: getPayloadID(state),
 }), actions)(Home);

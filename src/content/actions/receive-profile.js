@@ -49,11 +49,17 @@ export function errorReceivingProfileFromTelemetry(error: any): Action {
   };
 }
 
-export function retrieveProfileFromTelemetry(durationSpec: string): ThunkAction {
+export function retrieveProfileFromTelemetry(durationSpec: string,
+                                             payloadID: string): ThunkAction {
   return async dispatch => {
     dispatch(waitingForProfileFromTelemetry(durationSpec));
 
-    const profileURL = `https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/hang_profile_${durationSpec}.json`;
+    let profileURL;
+    if (payloadID) {
+      profileURL = `https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/hang_profile_${durationSpec}_${payloadID}.json`;
+    } else {
+      profileURL = `https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/hang_profile_${durationSpec}.json`;
+    }
 
     fetch(profileURL).then(res => {
       return res.json();

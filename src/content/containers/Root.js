@@ -5,15 +5,15 @@ import Home from '../components/Home';
 import ProfileViewer from '../components/ProfileViewer';
 import { urlFromState, stateFromCurrentLocation } from '../url-handling';
 import { getView } from '../reducers/app';
-import { getHash, getDurationSpec } from '../reducers/url-state';
+import { getDurationSpec, getPayloadID } from '../reducers/url-state';
 import URLManager from './URLManager';
 
 class ProfileViewWhenReadyImpl extends Component {
   render() {
-    const { view, durationSpec, retrieveProfileFromTelemetry } = this.props;
+    const { view, durationSpec, payloadID, retrieveProfileFromTelemetry } = this.props;
     switch (view) {
       case 'INITIALIZING':
-        retrieveProfileFromTelemetry(durationSpec);
+        retrieveProfileFromTelemetry(durationSpec, payloadID);
         return <div>Waiting for profile from telemetry...</div>
       case 'PROFILE':
         return <ProfileViewer/>;
@@ -25,15 +25,15 @@ class ProfileViewWhenReadyImpl extends Component {
 
 ProfileViewWhenReadyImpl.propTypes = {
   view: PropTypes.string.isRequired,
-  hash: PropTypes.string,
   durationSpec: PropTypes.string.isRequired,
+  payloadID: PropTypes.string.isRequired,
   retrieveProfileFromTelemetry: PropTypes.func.isRequired,
 };
 
 const ProfileViewWhenReady = connect(state => ({
   view: getView(state),
-  hash: getHash(state),
   durationSpec: getDurationSpec(state),
+  payloadID: getPayloadID(state),
 }), actions)(ProfileViewWhenReadyImpl);
 
 export default class Root extends Component {

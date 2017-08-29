@@ -12,10 +12,10 @@ import type {
 } from '../actions/types';
 import type { State, URLState, Reducer } from './types';
 
-function hash(state: string = '', action: Action) {
+function payloadID(state: string = null, action: Action) {
   switch (action.type) {
-    case 'PROFILE_PUBLISHED':
-      return action.hash;
+    case 'RECEIVE_PROFILE_FROM_TELEMETRY':
+      return action.profile.uuid;
     default:
       return state;
   }
@@ -56,8 +56,6 @@ function selectedThread(state: ThreadIndex = 0, action: Action) {
   switch (action.type) {
     case 'CHANGE_SELECTED_THREAD':
       return action.selectedThread;
-    case 'RECEIVE_PROFILE_FROM_ADDON':
-    case 'RECEIVE_PROFILE_FROM_FILE':
     case 'RECEIVE_PROFILE_FROM_TELEMETRY': {
       // When loading in a brand new profile, select either the GeckoMain [tab] thread,
       // or the first thread in the thread order. For profiles from the Web, the
@@ -156,16 +154,16 @@ const urlStateReducer: Reducer<URLState> = (regularUrlStateReducer => (state: UR
       return regularUrlStateReducer(state, action);
   }
 })(combineReducers({
-  hash, selectedTab, rangeFilters, selectedThread,
+  selectedTab, rangeFilters, selectedThread,
   callTreeSearchString, callTreeFilters, invertCallstack,
   hidePlatformDetails, categoryFilter, runnableFilter,
-  durationSpec, onlyUserInteracting,
+  durationSpec, onlyUserInteracting, payloadID,
 }));
 export default urlStateReducer;
 
 const getURLState = (state: State): URLState => state.urlState;
 
-export const getHash = (state: State) => getURLState(state).hash;
+export const getPayloadID = (state: State) => getURLState(state).payloadID;
 export const getDurationSpec = (state: State) => getURLState(state).durationSpec;
 export const getRangeFilters = (state: State) => getURLState(state).rangeFilters;
 export const getHidePlatformDetails = (state: State) => getURLState(state).hidePlatformDetails;
