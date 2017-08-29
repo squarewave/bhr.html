@@ -107,11 +107,11 @@ const categories = [
 ];
 
 const seenCategories = {};
-export const categoryNames = categories.map(c => c[2]).filter(c => {
+export const categoryNames = ['uncategorized'].concat(categories.map(c => c[2]).filter(c => {
   const result = !seenCategories[c];
   seenCategories[c] = true;
   return result;
-});
+}));
 
 export function summarizeProfileCategories(profile: Profile) {
   return timeCode('summarizeProfileCategories', () => {
