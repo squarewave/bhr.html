@@ -17,6 +17,7 @@ export function urlFromState(urlState: URLState) {
   query.invertCallstack = urlState.invertCallstack ? null : undefined;
   query.callTreeFilters = stringifyCallTreeFilters(urlState.callTreeFilters[urlState.selectedThread]) || undefined;
   query.category = urlState.categoryFilter || undefined;
+  query.platform = urlState.platformFilter || undefined;
   query.runnable = urlState.runnableFilter || undefined;
   query.durationSpec = urlState.durationSpec || undefined;
   query.onlyUserInteracting = urlState.onlyUserInteracting || undefined;
@@ -42,6 +43,7 @@ export function stateFromCurrentLocation(): URLState {
     selectedThread: selectedThread,
     callTreeSearchString: query.search || '',
     categoryFilter: query.category || '',
+    platformFilter: query.platform || '',
     runnableFilter: query.runnable || null,
     callTreeFilters: {
       [selectedThread]: query.callTreeFilters ? parseCallTreeFilters(query.callTreeFilters) : [],

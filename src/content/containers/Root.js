@@ -26,7 +26,7 @@ class ProfileViewWhenReadyImpl extends Component {
 ProfileViewWhenReadyImpl.propTypes = {
   view: PropTypes.string.isRequired,
   durationSpec: PropTypes.string.isRequired,
-  payloadID: PropTypes.string.isRequired,
+  payloadID: PropTypes.string,
   retrieveProfileFromTelemetry: PropTypes.func.isRequired,
 };
 

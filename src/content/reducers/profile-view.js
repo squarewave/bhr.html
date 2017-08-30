@@ -237,6 +237,7 @@ export type SelectorsForThread = {
   getRangeSelectionFilteredThread: State => Thread,
   getSelectedStack: State => IndexIntoStackTable,
   getExpandedStacks: State => IndexIntoStackTable[],
+  getPlatforms: State => string[],
   getCallTree: State => ProfileTree.ProfileTreeClass,
 };
 
@@ -296,8 +297,15 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
         return ProfileData.filterThreadToCategory(thread, categoryFilter);
       }
     );
-    const _getRunnableFilteredThread = createSelector(
+    const _getPlatformFilteredThread = createSelector(
       _getCategoryFilteredThread,
+      URLState.getPlatformFilter,
+      (thread, platformFilter): Thread => {
+        return ProfileData.filterThreadToPlatform(thread, platformFilter);
+      }
+    );
+    const _getRunnableFilteredThread = createSelector(
+      _getPlatformFilteredThread,
       URLState.getRunnableFilter,
       (thread, runnableFilter): Thread => {
         return ProfileData.filterThreadToRunnable(thread, runnableFilter);
@@ -350,6 +358,13 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
         return funcArrays.map(funcArray => ProfileData.getStackFromFuncArray(funcArray, stackTable));
       }
     );
+    const getPlatforms = createSelector(
+      getFilteredThread,
+      ({sampleTable, stringTable}): string[] => {
+        const mapped = sampleTable.platform.map(p => stringTable.getString(p));
+        return sampleTable.platform ? Array.from(new Set(mapped)): [];
+      }
+    );
     const getCallTree = createSelector(
       getRangeSelectionFilteredThread,
       ProfileTree.getCallTree
@@ -366,6 +381,7 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
       getRangeSelectionFilteredThread,
       getSelectedStack,
       getExpandedStacks,
+      getPlatforms,
       getCallTree,
     };
   }

@@ -2,10 +2,12 @@ import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import actions from '../actions';
 import { categoryNames } from '../../common/profile-categories';
+import { selectedThreadSelectors } from '../reducers/profile-view';
 import {
   getInvertCallstack,
   getSearchString,
   getCategoryFilter,
+  getPlatformFilter,
   getRunnableFilter,
   getOnlyUserInteracting
 } from '../reducers/url-state';
@@ -20,6 +22,7 @@ class ProfileCallTreeSettings extends Component {
     this._onOnlyUserInteractingClick = this._onOnlyUserInteractingClick.bind(this);
     this._onSearchFieldIdleAfterChange = this._onSearchFieldIdleAfterChange.bind(this);
     this._onCategoryFilterChange = this._onCategoryFilterChange.bind(this);
+    this._onPlatformFilterChange = this._onPlatformFilterChange.bind(this);
     this._onRunnableFilterClick = this._onRunnableFilterClick.bind(this);
   }
 
@@ -43,8 +46,20 @@ class ProfileCallTreeSettings extends Component {
     this.props.changeCategoryFilter(e.target.value);
   }
 
+  _onPlatformFilterChange(e) {
+    this.props.changePlatformFilter(e.target.value);
+  }
+
   render() {
-    const { invertCallstack, searchString, categoryFilter, runnableFilter, onlyUserInteracting } = this.props;
+    const {
+      invertCallstack,
+      searchString,
+      categoryFilter,
+      platformFilter,
+      runnableFilter,
+      onlyUserInteracting,
+      platforms,
+    } = this.props;
     return (
       <div className='profileCallTreeSettings'>
         <ul className='profileCallTreeSettingsList'>
@@ -58,6 +73,19 @@ class ProfileCallTreeSettings extends Component {
               >
                 <option key='all' value=''>All categories</option>
                 {categoryNames.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
+          </li>
+          <li className="profileCallTreeSettingsListItem">
+            <label className="profileCallTreeSettingsLabel">
+              Platform:
+              <select
+                className="profileCallTreeSettingsSelect"
+                onChange={this._onPlatformFilterChange}
+                value={platformFilter}
+              >
+                <option key='all' value=''>All platforms</option>
+                {platforms.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </label>
           </li>
@@ -112,8 +140,10 @@ ProfileCallTreeSettings.propTypes = {
   changeInvertCallstack: PropTypes.func.isRequired,
   changeOnlyUserInteracting: PropTypes.func.isRequired,
   changeCallTreeSearchString: PropTypes.func.isRequired,
+  changePlatformFilter: PropTypes.func.isRequired,
   searchString: PropTypes.string.isRequired,
   categoryFilter: PropTypes.string.isRequired,
+  platformFilter: PropTypes.string.isRequired,
   runnableFilter: PropTypes.string,
 };
 
@@ -122,5 +152,7 @@ export default connect(state => ({
   onlyUserInteracting: getOnlyUserInteracting(state),
   searchString: getSearchString(state),
   categoryFilter: getCategoryFilter(state),
+  platformFilter: getPlatformFilter(state),
   runnableFilter: getRunnableFilter(state),
+  platforms: selectedThreadSelectors.getPlatforms(state),
 }), actions)(ProfileCallTreeSettings);

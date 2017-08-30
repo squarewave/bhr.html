@@ -140,6 +140,36 @@ export function filterThreadToCategory(thread: Thread, category: string) {
   });
 }
 
+export function filterThreadToPlatform(thread: Thread, platform: string) {
+  return timeCode('filterThreadToPlatform', () => {
+    if (!platform) {
+      return thread;
+    }
+
+    const {
+      sampleTable,
+      stringTable,
+    } = thread;
+
+    function filterSample(stackIndex, sampleIndex) {
+      if (stackIndex === null) {
+        return null;
+      }
+
+      const samplePlatform = stringTable.getString(sampleTable.platform[sampleIndex]);
+
+      return samplePlatform === platform ? stackIndex : null;
+    }
+
+    return Object.assign({}, thread, {
+      sampleTable: Object.assign({}, sampleTable, {
+        stack: sampleTable.stack.map(filterSample),
+      }),
+    });
+    return result;
+  });
+}
+
 export function filterThreadToRunnable(thread: Thread, runnable: string) {
   return timeCode('filterThreadToRunnable', () => {
     if (runnable === null) {

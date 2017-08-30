@@ -128,6 +128,15 @@ function hidePlatformDetails(state: boolean = false, action: Action) {
   }
 }
 
+function platformFilter(state: string = '', action: Action) {
+  switch (action.type) {
+    case 'CHANGE_PLATFORM':
+      return action.platform;
+    default:
+      return state;
+  }
+}
+
 function categoryFilter(state: string = '', action: Action) {
   switch (action.type) {
     case 'CHANGE_CATEGORY':
@@ -156,8 +165,9 @@ const urlStateReducer: Reducer<URLState> = (regularUrlStateReducer => (state: UR
 })(combineReducers({
   selectedTab, rangeFilters, selectedThread,
   callTreeSearchString, callTreeFilters, invertCallstack,
-  hidePlatformDetails, categoryFilter, runnableFilter,
-  durationSpec, onlyUserInteracting, payloadID,
+  hidePlatformDetails, categoryFilter, platformFilter, 
+  runnableFilter, durationSpec, onlyUserInteracting,
+  payloadID,
 }));
 export default urlStateReducer;
 
@@ -170,6 +180,7 @@ export const getHidePlatformDetails = (state: State) => getURLState(state).hideP
 export const getInvertCallstack = (state: State) => getURLState(state).invertCallstack;
 export const getOnlyUserInteracting = (state: State) => getURLState(state).onlyUserInteracting;
 export const getCategoryFilter = (state: State) => getURLState(state).categoryFilter;
+export const getPlatformFilter = (state: State) => getURLState(state).platformFilter;
 export const getRunnableFilter = (state: State) => getURLState(state).runnableFilter;
 export const getSearchString = (state: State) => getURLState(state).callTreeSearchString;
 export const getSelectedTab = (state: State) => getURLState(state).selectedTab;

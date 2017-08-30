@@ -156,6 +156,13 @@ export function changeCategoryFilter(category: string): ThunkAction {
   }
 }
 
+export function changePlatformFilter(platform: string): Action {
+  return {
+    type: 'CHANGE_PLATFORM',
+    platform,
+  };
+}
+
 export function changeHidePlatformDetails(hidePlatformDetails: boolean): Action {
   return {
     type: 'CHANGE_HIDE_PLATFORM_DETAILS',
