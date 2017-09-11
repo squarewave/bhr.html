@@ -904,12 +904,12 @@ body, #root, .profileViewer {
 }
 
 
-.react-contextmenu-item.checkable {
+.checkable {
   padding-left: 21px;
   position: relative;
 }
 
-.react-contextmenu-item.checked::before {
+.checked::before {
   content: '';
   display: block;
   position: absolute;
@@ -922,7 +922,6 @@ body, #root, .profileViewer {
   transform: rotate(45deg);
 }
 
-.react-contextmenu-item.react-contextmenu-item--active.checked,
-.react-contextmenu-item.checked:hover {
+.checked:hover {
   border-color: #fff;
 }

@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
+import ReactModal from 'react-modal';
 import actions from '../actions';
 import { categoryNames } from '../../common/profile-categories';
 import { selectedThreadSelectors } from '../reducers/profile-view';
@@ -21,9 +22,27 @@ class ProfileCallTreeSettings extends Component {
     this._onInvertCallstackClick = this._onInvertCallstackClick.bind(this);
     this._onOnlyUserInteractingClick = this._onOnlyUserInteractingClick.bind(this);
     this._onSearchFieldIdleAfterChange = this._onSearchFieldIdleAfterChange.bind(this);
-    this._onCategoryFilterChange = this._onCategoryFilterChange.bind(this);
+    this._onCategoryFilterCheckboxChanged = this._onCategoryFilterCheckboxChanged.bind(this);
+    this._onCategoryFilterSelectAllClicked = this._onCategoryFilterSelectAllClicked.bind(this);
+    this._onCategoryFilterClearAllClicked = this._onCategoryFilterClearAllClicked.bind(this);
+    this._onCategoryFilterCloseModal = this._onCategoryFilterCloseModal.bind(this);
     this._onPlatformFilterChange = this._onPlatformFilterChange.bind(this);
     this._onRunnableFilterClick = this._onRunnableFilterClick.bind(this);
+
+    let categoryFilters;
+    const categoryFilterStr = this.props.categoryFilter;
+    if (categoryFilterStr == 'all') {
+      categoryFilters = new Set(categoryNames);
+    } else if (categoryFilterStr[0] == '-') {
+      categoryFilters = new Set(categoryNames);
+      categoryFilterStr.substr(1).split(',').forEach(c => categoryFilters.delete(c));
+    } else {
+      categoryFilters = new Set(categoryFilterStr.split(','));
+    }
+    this.state = {
+      categoryModal: false,
+      categoryFilters,
+    };
   }
 
   _onInvertCallstackClick(e) {
@@ -42,8 +61,35 @@ class ProfileCallTreeSettings extends Component {
     this.props.changeCallTreeSearchString(value);
   }
 
-  _onCategoryFilterChange(e) {
-    this.props.changeCategoryFilter(e.target.value);
+  _onCategoryFilterCheckboxChanged(e) {
+    const categoryFilters = new Set(this.state.categoryFilters);
+    if (e.target.checked) {
+      categoryFilters.add(e.target.name);
+    } else {
+      categoryFilters.delete(e.target.name);
+    }
+    this.setState({categoryFilters});
+  }
+
+  _onCategoryFilterSelectAllClicked(e) {
+    this.setState({categoryFilters: new Set(categoryNames)});
+  }
+
+  _onCategoryFilterClearAllClicked(e) {
+    this.setState({categoryFilters: new Set()});
+  }
+
+  _onCategoryFilterCloseModal() {
+    this.setState({categoryModal: false});
+
+    const excluded = categoryNames.filter(c => !this.state.categoryFilters.has(c));
+    if (excluded.length == 0) {
+      this.props.changeCategoryFilter('all');
+    } else if (excluded.length < categoryNames.length / 2) {
+      this.props.changeCategoryFilter('-' + excluded.join(','));
+    } else {
+      this.props.changeCategoryFilter(Array.from(this.state.categoryFilters).join(','));
+    }
   }
 
   _onPlatformFilterChange(e) {
@@ -54,27 +100,51 @@ class ProfileCallTreeSettings extends Component {
     const {
       invertCallstack,
       searchString,
-      categoryFilter,
       platformFilter,
       runnableFilter,
       onlyUserInteracting,
       platforms,
     } = this.props;
+
+    const {
+      categoryFilters,
+      categoryModal,
+    } = this.state;
+
     return (
       <div className='profileCallTreeSettings'>
+        <ReactModal
+           className='profileCallTreeSettingsModal'
+           isOpen={categoryModal}
+           onRequestClose={() => this.setState({categoryModal: false})}
+           contentLabel='Select Categories'>
+          <div className='profileCallTreeSettingsModalHeader'>
+            <h2>Select Categories</h2>
+            <button onClick={this._onCategoryFilterSelectAllClicked}>Select All</button>
+            <button onClick={this._onCategoryFilterClearAllClicked}>Clear All</button>
+          </div>
+          <div className='profileCallTreeSettingsModalContent'>
+            <ul className='profileCallTreeSettingsModalList'>
+              {categoryNames.map(c => (
+                <li key={c}>
+                  <label>
+                    <input name={c}
+                      type='checkbox'
+                      checked={categoryFilters.has(c)}
+                      onChange={this._onCategoryFilterCheckboxChanged}/>
+                    {c}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className='profileCallTreeSettingsModalFooter'>
+            <button className='profileCallTreeSettingsModalSaveButton' onClick={this._onCategoryFilterCloseModal}>Save</button>
+          </div>
+        </ReactModal>
         <ul className='profileCallTreeSettingsList'>
           <li className="profileCallTreeSettingsListItem">
-            <label className="profileCallTreeSettingsLabel">
-              Category:
-              <select
-                className="profileCallTreeSettingsSelect"
-                onChange={this._onCategoryFilterChange}
-                value={categoryFilter}
-              >
-                <option key='all' value=''>All categories</option>
-                {categoryNames.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </label>
+            <button onClick={() => this.setState({categoryModal: true})}>Edit Categories</button>
           </li>
           <li className="profileCallTreeSettingsListItem">
             <label className="profileCallTreeSettingsLabel">

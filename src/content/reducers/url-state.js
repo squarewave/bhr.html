@@ -137,7 +137,7 @@ function platformFilter(state: string = '', action: Action) {
   }
 }
 
-function categoryFilter(state: string = '', action: Action) {
+function categoryFilter(state: string = 'all', action: Action) {
   switch (action.type) {
     case 'CHANGE_CATEGORY':
       return action.category;

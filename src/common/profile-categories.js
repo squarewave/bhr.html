@@ -334,11 +334,10 @@ export function categorizeThreadData(profile: Profile): ThreadCategories {
 function mapProfileToThreadCategories(profile: Profile): ThreadCategories {
   return profile.threads.map(thread => {
     const categorizer = sampleCategorizer(thread);
-    return thread.dates.reduce((memo, next) => memo.concat(
-      Array.from(next.sampleHangMs).map((hangMs, i) => ({
-        category: categorizer(thread.sampleTable.stack[i]),
-        hangMs,
-      }))), []);
+    return thread.sampleTable.stack.map((s, i) => ({
+      category: categorizer(s),
+      hangMs: thread.sampleTable.sampleHangMs[i],
+    }));
   });
 }
 

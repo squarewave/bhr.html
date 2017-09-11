@@ -42,7 +42,7 @@ export function stateFromCurrentLocation(): URLState {
     rangeFilters: query.range ? parseRangeFilters(query.range) : [],
     selectedThread: selectedThread,
     callTreeSearchString: query.search || '',
-    categoryFilter: query.category || '',
+    categoryFilter: query.category || 'all',
     platformFilter: query.platform || '',
     runnableFilter: query.runnable || null,
     callTreeFilters: {

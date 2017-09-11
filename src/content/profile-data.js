@@ -10,7 +10,7 @@ import type {
   IndexIntoStackTable,
 } from '../common/types/profile';
 import { timeCode } from '../common/time-code';
-import { sampleCategorizer } from '../common/profile-categories';
+import { sampleCategorizer, categoryNames } from '../common/profile-categories';
 import { OneToManyIndex } from './one-to-many-index';
 
 const INVERTED_CALLSTACK_ROOT_THRESHOLD = 0.001;
@@ -115,28 +115,41 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
   });
 }
 
+const categorizerMemo = new Map();
+
 export function filterThreadToCategory(thread: Thread, category: string) {
   return timeCode('filterThreadToCategory', () => {
-    if (category === '') {
+    if (category == 'all') {
       return thread;
     }
 
-    let matchCategory = category;
-    if (matchCategory == 'uncategorized') {
-      matchCategory = null;
+    let categorySet;
+    if (category[0] == '-') {
+      categorySet = new Set(categoryNames);
+      category.substr(1).split(',').forEach(c => categorySet.delete(c));
+    } else {
+      categorySet = new Set(category.split(','));
     }
+
     const {
       sampleTable
     } = thread;
 
     const categorizer = sampleCategorizer(thread);
+    function categorize(stack) {
+      let memo = categorizerMemo.get(stack);
+      if (memo === undefined) {
+        memo = categorizer(stack) || 'uncategorized';
+        categorizerMemo.set(stack, memo);
+      }
+      return memo;
+    }
 
     return Object.assign({}, thread, {
       sampleTable: Object.assign({}, sampleTable, {
-        stack: sampleTable.stack.map(s => (s !== null && categorizer(s) === matchCategory) ? s : null),
+        stack: sampleTable.stack.map(s => s !== null && categorySet.has(categorize(s)) ? s : null),
       }),
     });
-    return result;
   });
 }
 
@@ -166,7 +179,6 @@ export function filterThreadToPlatform(thread: Thread, platform: string) {
         stack: sampleTable.stack.map(filterSample),
       }),
     });
-    return result;
   });
 }
 
@@ -196,7 +208,6 @@ export function filterThreadToRunnable(thread: Thread, runnable: string) {
         stack: sampleTable.stack.map(filterSample),
       }),
     });
-    return result;
   });
 }
 
@@ -208,7 +219,6 @@ export function filterThreadToUserInteracting(thread: Thread, userInteracting: b
         stack: sampleTable.stack.map((s, i) => (sampleTable.userInteracting[i] === userInteracting) ? s : null),
       }),
     });
-    return result;
   });
 }
 

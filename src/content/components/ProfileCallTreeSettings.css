@@ -49,3 +49,32 @@
 .profileCallTreeSettingsSearchField {
   width: 250px;
 }
+
+.profileCallTreeSettingsModal {
+  max-width: 640px;
+  max-height: 480px;
+  margin: 240px auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  outline: medium none;
+}
+
+.profileCallTreeSettingsModalHeader > h2 {
+  display: inline-block;
+  margin-right: 12px;
+}
+
+.profileCallTreeSettingsModalFooter {
+  margin-top: 8px;
+}
+
+.profileCallTreeSettingsModalContent {
+  column-count: 3;
+}
+
+.profileCallTreeSettingsModalList {
+  list-style: none;
+  margin: 0;
+}

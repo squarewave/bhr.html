@@ -122,5 +122,8 @@
         }
       ]
     ]
+  },
+  "dependencies": {
+    "react-modal": "^2.3.2"
   }
 }
