@@ -2,6 +2,7 @@
 
 import type { UniqueStringArray } from '../../content/unique-string-array';
 export type IndexIntoStackTable = number;
+export type IndexIntoSsampleTable = number;
 export type IndexIntoStringTable = number;
 export type IndexIntoFuncTable = number;
 export type IndexIntoLibs = number;

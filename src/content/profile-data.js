@@ -132,22 +132,22 @@ export function filterThreadToCategory(thread: Thread, category: string) {
     }
 
     const {
-      sampleTable
+      sampleTable,
     } = thread;
 
     const categorizer = sampleCategorizer(thread);
-    function categorize(stack) {
-      let memo = categorizerMemo.get(stack);
+    function categorize(sampleIndex) {
+      let memo = categorizerMemo.get(sampleIndex);
       if (memo === undefined) {
-        memo = categorizer(stack) || 'uncategorized';
-        categorizerMemo.set(stack, memo);
+        memo = categorizer(sampleIndex) || 'uncategorized';
+        categorizerMemo.set(sampleIndex, memo);
       }
       return memo;
     }
 
     return Object.assign({}, thread, {
       sampleTable: Object.assign({}, sampleTable, {
-        stack: sampleTable.stack.map(s => s !== null && categorySet.has(categorize(s)) ? s : null),
+        stack: sampleTable.stack.map((s, i) => s !== null && categorySet.has(categorize(i)) ? s : null),
       }),
     });
   });

@@ -31,6 +31,7 @@ const match: { [id: string]: MatchingFunction } = {
   stem: (symbol, pattern) => {
     return symbol === pattern || symbol.startsWith(pattern + '(');
   },
+  ignore: (symbol, pattern) => false,
 };
 
 /**
@@ -46,6 +47,7 @@ const match: { [id: string]: MatchingFunction } = {
  */
 
 const categories = [
+  [match.ignore, null, 'content_script'],
   [match.stem, 'mozilla::ipc::MessageChannel::WaitForSyncNotify', 'sync_ipc'],
   [match.stem, 'mozilla::ipc::MessageChannel::WaitForInterruptNotify', 'sync_ipc'],
   [match.prefix, 'mozilla::places::', 'places'],
@@ -159,7 +161,7 @@ function functionNameCategorizer() {
 /**
  * A function that categorizes a sample.
  */
-type SampleCategorizer = (stackIndex: IndexIntoStackTable) =>
+type SampleCategorizer = (sampleIndex: IndexIntoSampleTable) =>
   | string
   | null;
 
@@ -169,6 +171,16 @@ type SampleCategorizer = (stackIndex: IndexIntoStackTable) =>
  * @return {function} Sample stack categorizer.
  */
 export function sampleCategorizer(thread: Thread): SampleCategorizer {
+  if (thread.sampleTable.category) {
+    return function(sampleIndex: IndexIntoSampleTable):
+      | string
+      | null {
+      const category = thread.sampleTable.category[sampleIndex];
+
+      return category === null ? null : thread.stringTable._array[category];
+    }
+  }
+
   const categorizeFuncName = functionNameCategorizer();
 
   function computeCategory(stackIndex: IndexIntoStackTable):
@@ -219,7 +231,11 @@ export function sampleCategorizer(thread: Thread): SampleCategorizer {
     return category;
   }
 
-  return categorizeSampleStack;
+  return function(sampleIndex: IndexIntoSampleTable):
+    | string
+    | null {
+    return categorizeSampleStack(thread.sampleTable.stack[sampleIndex]);
+  }
 }
 
 /**
@@ -335,7 +351,7 @@ function mapProfileToThreadCategories(profile: Profile): ThreadCategories {
   return profile.threads.map(thread => {
     const categorizer = sampleCategorizer(thread);
     return thread.sampleTable.stack.map((s, i) => ({
-      category: categorizer(s),
+      category: categorizer(i),
       hangMs: thread.sampleTable.sampleHangMs[i],
     }));
   });
