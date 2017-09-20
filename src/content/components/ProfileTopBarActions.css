@@ -3,8 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 .profileTopBarActions {
-  --internal-filebug-button-background-color: var(--filebug-button-background-color, hsl(137,81%,44%));
-  --internal-duration-button-background-color: var(--duration-button-background-color, #888);
+  --internal-filebug-button-background-color: var(--filebug-button-background-color, #b4bfc1);
+  --internal-historical-button-background-color: var(--historical-button-background-color, #a6afb2);
+  --internal-duration-button-background-color: var(--duration-button-background-color, #8d9396);
   height: 100%;
   display: flex;
   flex-flow: row nowrap;
@@ -14,6 +15,22 @@
   background-color: var(--internal-duration-button-background-color);
   color: white;
   cursor: pointer;
+}
+
+.profileHistoricalButton {
+  background-color: var(--internal-duration-button-background-color);
+  background-color: var(--internal-historical-button-background-color);
+  color: white;
+  cursor: pointer;
+  border: 0;
+  margin: 0;
+  padding: 0 10px;
+  height: 100%;
+  font-size: 100%;
+}
+
+.profileHistoricalButton:hover {
+  background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1));
 }
 
 .fileABugButtonButton {

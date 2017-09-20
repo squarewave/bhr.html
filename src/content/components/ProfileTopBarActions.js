@@ -5,7 +5,7 @@
 import React, { PureComponent, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import { selectedThreadSelectors } from '../reducers/profile-view';
-import { getDurationSpec } from '../reducers/url-state';
+import { getDurationSpec, getHistorical } from '../reducers/url-state';
 import { getDateGraph } from '../reducers/date-graph';
 import sigData from '../../common/data/signatures';
 import actions from '../actions';
@@ -20,7 +20,12 @@ class ProfileTopBarActions extends PureComponent {
   constructor(props) {
     super(props);
     this._fileABugPanelOpen = this._fileABugPanelOpen.bind(this);
+    this._toggleHistorical = this._toggleHistorical.bind(this);
     this.state = {bugMap: {}, bugs: {exact: [], partial: []}};
+  }
+
+  _toggleHistorical() {
+    window.location = `/?durationSpec=${this.props.durationSpec}&historical=${!this.props.historical}`;
   }
 
   _fileABugPanelOpen() {
@@ -149,7 +154,7 @@ ${splitStack.map(f => '    ' + f).join('\n')}
   }
 
   render() {
-    const { durationSpec } = this.props;
+    const { durationSpec, historical } = this.props;
     const { bugs, bugMap, shortDesc } = this.state;
 
     function bugzillaBug(number) {
@@ -210,6 +215,10 @@ ${splitStack.map(f => '    ' + f).join('\n')}
               {fileABugContents()}
             </ArrowPanel>
           } />
+        <input type='button'
+               className="profileHistoricalButton"
+               value={historical ? "Show recent data" : "Show historical data"}
+               onClick={this._toggleHistorical}/>
         <ButtonWithPanel
           className="profileDurationSpecButton"
           label={'Viewing ' + this.friendlyDurationSpec(durationSpec)}
@@ -244,6 +253,7 @@ ProfileTopBarActions.propTypes = {
 export default connect(
   state => ({
     durationSpec: getDurationSpec(state),
+    historical: getHistorical(state),
     thread: selectedThreadSelectors.getFilteredThread(state),
     selectedStack: selectedThreadSelectors.getSelectedStack(state),
     tree: selectedThreadSelectors.getCallTree(state),

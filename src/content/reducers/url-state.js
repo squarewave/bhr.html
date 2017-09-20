@@ -21,6 +21,15 @@ function payloadID(state: string = null, action: Action) {
   }
 }
 
+function historical(state: boolean = false, action: Action) {
+  switch (action.type) {
+    case 'WAITING_FOR_PROFILE_FROM_TELEMETRY':
+      return action.historical;
+    default:
+      return state;
+  }
+}
+
 function durationSpec(state: string = '2048_65536', action: Action) {
   switch (action.type) {
     case 'WAITING_FOR_PROFILE_FROM_TELEMETRY':
@@ -167,7 +176,7 @@ const urlStateReducer: Reducer<URLState> = (regularUrlStateReducer => (state: UR
   callTreeSearchString, callTreeFilters, invertCallstack,
   hidePlatformDetails, categoryFilter, platformFilter, 
   runnableFilter, durationSpec, onlyUserInteracting,
-  payloadID,
+  payloadID, historical,
 }));
 export default urlStateReducer;
 
@@ -175,6 +184,7 @@ const getURLState = (state: State): URLState => state.urlState;
 
 export const getPayloadID = (state: State) => getURLState(state).payloadID;
 export const getDurationSpec = (state: State) => getURLState(state).durationSpec;
+export const getHistorical = (state: State) => getURLState(state).historical;
 export const getRangeFilters = (state: State) => getURLState(state).rangeFilters;
 export const getHidePlatformDetails = (state: State) => getURLState(state).hidePlatformDetails;
 export const getInvertCallstack = (state: State) => getURLState(state).invertCallstack;

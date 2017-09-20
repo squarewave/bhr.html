@@ -8,10 +8,11 @@ import { UniqueStringArray } from '../unique-string-array';
 import { OneToManyIndex } from '../one-to-many-index';
 import { selectedThreadSelectors } from '../reducers/profile-view';
 
-export function waitingForProfileFromTelemetry(durationSpec): Action {
+export function waitingForProfileFromTelemetry(durationSpec: string, historical: boolean): Action {
   return {
     type: 'WAITING_FOR_PROFILE_FROM_TELEMETRY',
-    durationSpec
+    durationSpec,
+    historical,
   };
 }
 
@@ -50,16 +51,22 @@ export function errorReceivingProfileFromTelemetry(error: any): Action {
 }
 
 export function retrieveProfileFromTelemetry(durationSpec: string,
-                                             payloadID: string): ThunkAction {
+                                             payloadID: string,
+                                             historical: boolean): ThunkAction {
   return async dispatch => {
-    dispatch(waitingForProfileFromTelemetry(durationSpec));
+    dispatch(waitingForProfileFromTelemetry(durationSpec, historical));
 
-    let profileURL;
-    if (payloadID) {
-      profileURL = `https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/hang_profile_${durationSpec}_${payloadID}.json`;
-    } else {
-      profileURL = `https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/hang_profile_${durationSpec}.json`;
+    let fileRoot = `hang_profile_${durationSpec}`;
+
+    if (historical) {
+      fileRoot += '_historical';
     }
+
+    if (payloadID) {
+      fileRoot += '_' + payloadID;
+    }
+
+    const profileURL = `https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/${fileRoot}.json`;;
 
     fetch(profileURL).then(res => {
       return res.json();
