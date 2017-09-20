@@ -16,19 +16,34 @@ export function rebuildDateGraph(thread, stack) {
       });
     }
 
-    setTimeout(function () {
-      // Only rebuild if our ticket is current. This prevents a deluge of
-      // rebuild requests from piling up.
-      if (ticket === rebuildTicket) {
-        let stateThread = getState().thread;
-        if (stateThread) {
+    let stateThread = thread || getState().thread;
+
+    if (stateThread) {
+      let length = stateThread.dates.length;
+      let dateGraph = {
+        totalTime: new Float32Array(length),
+        totalCount: new Float32Array(length),
+        length,
+      };
+      setTimeout(function rebuildDate(dateIndex) {
+        dateIndex = dateIndex === undefined ? dateGraph.length - 1 : dateIndex;
+        // Only rebuild if our ticket is current. This prevents a deluge of
+        // rebuild requests from piling up.
+        if (ticket === rebuildTicket) {
+          let dateGraphResult = buildDateGraph(stateThread, stack, dateIndex);
+          dateGraph.totalTime[dateIndex] = dateGraphResult.totalTime;
+          dateGraph.totalCount[dateIndex] = dateGraphResult.totalCount;
           dispatch({
             toContent: true,
             type: 'DATE_GRAPH_REBUILT',
-            dateGraph: buildDateGraph(stateThread, stack),
+            dateGraph: dateGraph,
           });
+
+          if (dateIndex - 1 >= 0) {
+            setTimeout(() => rebuildDate(dateIndex - 1), 0);
+          }
         }
-      }
-    }, 0);
+      }, 0);
+    }
   };
 }
