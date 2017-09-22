@@ -1,4 +1,4 @@
-// flow-typed signature: dd01796cd6f67e502709276bb92654c9
+// flow-typed signature: 8188109f71a2291914fb906709ac6a6c
 // flow-typed version: <<STUB>>/eslint-plugin-flowtype_v^2.30.0/flow_v0.40.0
 
 /**
@@ -8,8 +8,8 @@
  *
  * Fill this stub out by replacing all the `any` types.
  *
- * Once filled out, we encourage you to share your work with the 
- * community by sending a pull request to: 
+ * Once filled out, we encourage you to share your work with the
+ * community by sending a pull request to:
  * https://github.com/flowtype/flow-typed
  */
 
@@ -51,6 +51,10 @@ declare module 'eslint-plugin-flowtype/dist/rules/noDupeKeys' {
 }
 
 declare module 'eslint-plugin-flowtype/dist/rules/noPrimitiveConstructorTypes' {
+  declare module.exports: any;
+}
+
+declare module 'eslint-plugin-flowtype/dist/rules/noTypesMissingFileAnnotation' {
   declare module.exports: any;
 }
 
@@ -214,6 +218,9 @@ declare module 'eslint-plugin-flowtype/dist/rules/noDupeKeys.js' {
 }
 declare module 'eslint-plugin-flowtype/dist/rules/noPrimitiveConstructorTypes.js' {
   declare module.exports: $Exports<'eslint-plugin-flowtype/dist/rules/noPrimitiveConstructorTypes'>;
+}
+declare module 'eslint-plugin-flowtype/dist/rules/noTypesMissingFileAnnotation.js' {
+  declare module.exports: $Exports<'eslint-plugin-flowtype/dist/rules/noTypesMissingFileAnnotation'>;
 }
 declare module 'eslint-plugin-flowtype/dist/rules/noWeakTypes.js' {
   declare module.exports: $Exports<'eslint-plugin-flowtype/dist/rules/noWeakTypes'>;

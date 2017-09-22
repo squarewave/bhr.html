@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
-import type { Action } from '../types/actions';
-import type { State, CategoriesViewState } from '../types/reducers';
+import type { Action } from '../actions/types';
+import type { State, CategoriesViewState } from '../reducers/types';
 import { getProfile } from './profile-view';
 import { createSelector } from 'reselect';
 

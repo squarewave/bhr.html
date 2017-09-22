@@ -6,17 +6,24 @@
 import React, { PureComponent, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import actions from '../actions';
-import { getHash, getDurationSpec, getPayloadID } from '../reducers/url-state';
+
+import type { ThunkAction } from '../actions/types';
+import { getDurationSpec, getPayloadID } from '../reducers/url-state';
+
+type Props = {
+  retrieveProfileFromTelemetry: (string, string | null) => ThunkAction,
+  payloadID: string | null,
+};
 
 class Home extends PureComponent {
   props: Props;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
-    this._profileRetriever = this._profileRetriever.bind(this);
+    (this: any)._profileRetriever = this._profileRetriever.bind(this);
   }
 
-  _profileRetriever(durationSpec) {
+  _profileRetriever(durationSpec: string): () => void {
     return () => {
       const {
         retrieveProfileFromTelemetry,

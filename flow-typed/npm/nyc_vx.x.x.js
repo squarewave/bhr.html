@@ -1,4 +1,4 @@
-// flow-typed signature: 29a4ef35dbf2aa01924049b1a8df2eb7
+// flow-typed signature: 0c7dee4d6f1bb5b4530eb623d2b08232
 // flow-typed version: <<STUB>>/nyc_v^10.0.0/flow_v0.40.0
 
 /**
@@ -8,8 +8,8 @@
  *
  * Fill this stub out by replacing all the `any` types.
  *
- * Once filled out, we encourage you to share your work with the 
- * community by sending a pull request to: 
+ * Once filled out, we encourage you to share your work with the
+ * community by sending a pull request to:
  * https://github.com/flowtype/flow-typed
  */
 
@@ -38,6 +38,10 @@ declare module 'nyc/lib/config-util' {
   declare module.exports: any;
 }
 
+declare module 'nyc/lib/hash' {
+  declare module.exports: any;
+}
+
 declare module 'nyc/lib/instrumenters/istanbul' {
   declare module.exports: any;
 }
@@ -55,6 +59,10 @@ declare module 'nyc/lib/process' {
 }
 
 declare module 'nyc/lib/self-coverage-helper' {
+  declare module.exports: any;
+}
+
+declare module 'nyc/lib/source-maps' {
   declare module.exports: any;
 }
 
@@ -77,6 +85,9 @@ declare module 'nyc/lib/commands/instrument.js' {
 declare module 'nyc/lib/config-util.js' {
   declare module.exports: $Exports<'nyc/lib/config-util'>;
 }
+declare module 'nyc/lib/hash.js' {
+  declare module.exports: $Exports<'nyc/lib/hash'>;
+}
 declare module 'nyc/lib/instrumenters/istanbul.js' {
   declare module.exports: $Exports<'nyc/lib/instrumenters/istanbul'>;
 }
@@ -91,4 +102,7 @@ declare module 'nyc/lib/process.js' {
 }
 declare module 'nyc/lib/self-coverage-helper.js' {
   declare module.exports: $Exports<'nyc/lib/self-coverage-helper'>;
+}
+declare module 'nyc/lib/source-maps.js' {
+  declare module.exports: $Exports<'nyc/lib/source-maps'>;
 }

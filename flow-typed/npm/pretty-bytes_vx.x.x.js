@@ -1,4 +1,4 @@
-// flow-typed signature: 7f20d00e9e0b483b3931ab039d227430
+// flow-typed signature: 918bf7328bf72d6ec38bc69f1846cf2b
 // flow-typed version: <<STUB>>/pretty-bytes_v^4.0.2/flow_v0.40.0
 
 /**
@@ -8,8 +8,8 @@
  *
  * Fill this stub out by replacing all the `any` types.
  *
- * Once filled out, we encourage you to share your work with the 
- * community by sending a pull request to: 
+ * Once filled out, we encourage you to share your work with the
+ * community by sending a pull request to:
  * https://github.com/flowtype/flow-typed
  */
 

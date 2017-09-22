@@ -1,4 +1,4 @@
-// flow-typed signature: 2d706ebde7bf442b4d626562f62e8239
+// flow-typed signature: ff3565c4c8558bafd0a3996678709c48
 // flow-typed version: <<STUB>>/eslint-plugin-react_v^6.4.0/flow_v0.40.0
 
 /**
@@ -8,8 +8,8 @@
  *
  * Fill this stub out by replacing all the `any` types.
  *
- * Once filled out, we encourage you to share your work with the 
- * community by sending a pull request to: 
+ * Once filled out, we encourage you to share your work with the
+ * community by sending a pull request to:
  * https://github.com/flowtype/flow-typed
  */
 
@@ -27,6 +27,14 @@ declare module 'eslint-plugin-react/lib/rules/display-name' {
 }
 
 declare module 'eslint-plugin-react/lib/rules/forbid-component-props' {
+  declare module.exports: any;
+}
+
+declare module 'eslint-plugin-react/lib/rules/forbid-elements' {
+  declare module.exports: any;
+}
+
+declare module 'eslint-plugin-react/lib/rules/forbid-foreign-prop-types' {
   declare module.exports: any;
 }
 
@@ -250,6 +258,10 @@ declare module 'eslint-plugin-react/lib/rules/style-prop-object' {
   declare module.exports: any;
 }
 
+declare module 'eslint-plugin-react/lib/rules/void-dom-elements-no-children' {
+  declare module.exports: any;
+}
+
 declare module 'eslint-plugin-react/lib/rules/wrap-multilines' {
   declare module.exports: any;
 }
@@ -290,6 +302,12 @@ declare module 'eslint-plugin-react/lib/rules/display-name.js' {
 }
 declare module 'eslint-plugin-react/lib/rules/forbid-component-props.js' {
   declare module.exports: $Exports<'eslint-plugin-react/lib/rules/forbid-component-props'>;
+}
+declare module 'eslint-plugin-react/lib/rules/forbid-elements.js' {
+  declare module.exports: $Exports<'eslint-plugin-react/lib/rules/forbid-elements'>;
+}
+declare module 'eslint-plugin-react/lib/rules/forbid-foreign-prop-types.js' {
+  declare module.exports: $Exports<'eslint-plugin-react/lib/rules/forbid-foreign-prop-types'>;
 }
 declare module 'eslint-plugin-react/lib/rules/forbid-prop-types.js' {
   declare module.exports: $Exports<'eslint-plugin-react/lib/rules/forbid-prop-types'>;
@@ -455,6 +473,9 @@ declare module 'eslint-plugin-react/lib/rules/sort-prop-types.js' {
 }
 declare module 'eslint-plugin-react/lib/rules/style-prop-object.js' {
   declare module.exports: $Exports<'eslint-plugin-react/lib/rules/style-prop-object'>;
+}
+declare module 'eslint-plugin-react/lib/rules/void-dom-elements-no-children.js' {
+  declare module.exports: $Exports<'eslint-plugin-react/lib/rules/void-dom-elements-no-children'>;
 }
 declare module 'eslint-plugin-react/lib/rules/wrap-multilines.js' {
   declare module.exports: $Exports<'eslint-plugin-react/lib/rules/wrap-multilines'>;

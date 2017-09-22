@@ -65,7 +65,6 @@ export function filterThreadToSearchString(thread: Thread, searchString: string)
       funcTable,
       stackTable,
       stringTable,
-      resourceTable,
     } = thread;
 
     function computeFuncMatchesFilter(func) {
@@ -479,5 +478,6 @@ export function getEmptyProfile(): Profile {
   return {
     threads: [],
     dates: [],
+    uuid: '',
   };
 }

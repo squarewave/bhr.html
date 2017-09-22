@@ -1,4 +1,4 @@
-// flow-typed signature: 40fcfe46cbedcd0342c9ee88f6c6aa21
+// flow-typed signature: 2c32b8ba4dee91fc5e8ff421df179d89
 // flow-typed version: <<STUB>>/fetch-jsonp_v^1.0.2/flow_v0.40.0
 
 /**
@@ -8,8 +8,8 @@
  *
  * Fill this stub out by replacing all the `any` types.
  *
- * Once filled out, we encourage you to share your work with the 
- * community by sending a pull request to: 
+ * Once filled out, we encourage you to share your work with the
+ * community by sending a pull request to:
  * https://github.com/flowtype/flow-typed
  */
 

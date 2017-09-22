@@ -156,6 +156,10 @@ class ThreadStackGraph extends Component {
   }
 
   _onMouseMove(e) {
+    this.setState({
+      mouseX: e.pageX,
+      mouseY: e.pageY,
+    });
     this.mouseX = e.clientX;
     this.mouseY = e.clientY;
     this.mouseIn = true;

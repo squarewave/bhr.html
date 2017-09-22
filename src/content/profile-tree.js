@@ -26,7 +26,7 @@ class ProfileTree {
   _rootTotalTime: number;
   _rootTotalCount: number;
   _rootCount: number;
-  _depth: [];
+  _depth: Uint32Array;
   _nodes: Map<IndexIntoStackTable, Node>;
   _children: Map<IndexIntoStackTable, StackChildren>;
 
@@ -41,7 +41,7 @@ class ProfileTree {
     rootTotalTime: number,
     rootTotalCount: number,
     rootCount: number,
-    depth: number[],
+    depth: Uint32Array,
   ) {
     this._stackTable = stackTable;
     this._stackTimes = stackTimes;

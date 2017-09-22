@@ -23,6 +23,17 @@ export type StackTable = {
   length: number,
 };
 
+export type SampleTable = {
+  stack: (number | null)[],
+  category: Int32Array,
+  runnable: Int32Array,
+  sampleHangMs: Float32Array,
+  sampleHangCount: Float32Array,
+  platform: number[],
+  userInteracting: boolean[],
+  length: number,
+};
+
 export type AllDatesTable = {
   length: number,
   stackHangMs: Float32Array,
@@ -34,10 +45,10 @@ export type AllDatesTable = {
 export type DateTable = {
   date: string,
   length: number,
-  stackHangMs: Float32Array,
-  stackHangCount: Float32Array,
-  totalStackHangMs: Float32Array,
-  totalStackHangCount: Float32Array,
+  sampleHangMs: Float32Array,
+  sampleHangCount: Float32Array,
+  totalSampleHangMs: Float32Array,
+  totalSampleHangCount: Float32Array,
 };
 
 export type Lib = {
@@ -72,6 +83,7 @@ export type Thread = {
   name: string,
   pid: number | void,
   tid: number | void,
+  sampleTable: SampleTable,
   stackTable: StackTable,
   // Strings for profiles are collected into a single table, and are referred to by
   // their index by other tables.
@@ -88,4 +100,5 @@ export type Thread = {
 export type Profile = {
   threads: Thread[],
   dates: string[],
+  uuid: string,
 };

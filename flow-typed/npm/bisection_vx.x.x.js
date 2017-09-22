@@ -1,4 +1,4 @@
-// flow-typed signature: 514fab8c56ca0a23baab4b0312dadce2
+// flow-typed signature: e6ce567b0941527136cad353e294f68a
 // flow-typed version: <<STUB>>/bisection_v0.0.3/flow_v0.40.0
 
 /**
@@ -8,8 +8,8 @@
  *
  * Fill this stub out by replacing all the `any` types.
  *
- * Once filled out, we encourage you to share your work with the 
- * community by sending a pull request to: 
+ * Once filled out, we encourage you to share your work with the
+ * community by sending a pull request to:
  * https://github.com/flowtype/flow-typed
  */
 

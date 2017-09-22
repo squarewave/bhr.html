@@ -5,6 +5,7 @@ import type {
 } from '../actions/types';
 import type { Days, StartEndRange } from '../../common/types/units';
 import type { IndexIntoFuncTable, Profile, ThreadIndex } from '../../common/types/profile';
+import type { DateGraph, CategorySummary } from '../../common/types/workers';
 
 export type Reducer<T> = (T, Action) => T;
 
@@ -35,8 +36,17 @@ export type RangeFilterState = {
   end: number,
 };
 
+export type RunnablesViewState = {
+  expanded: Set<number>,
+  runnables: Object,
+};
+
+export type CategoriesViewState = {
+  expanded: Set<number> | null,
+  categories: CategorySummary[] | null,
+};
+
 export type URLState = {
-  hash: string,
   selectedTab: string,
   rangeFilters: RangeFilterState[],
   selectedThread: ThreadIndex,
@@ -44,6 +54,13 @@ export type URLState = {
   callTreeFilters: CallTreeFiltersPerThread,
   invertCallstack: boolean,
   hidePlatformDetails: boolean,
+  historical: boolean,
+  durationSpec: string,
+  runnableFilter: string | null,
+  categoryFilter: string,
+  platformFilter: string,
+  onlyUserInteracting: boolean,
+  payloadID: string | null,
 };
 
 export type IconState = Set<string>;
@@ -51,7 +68,10 @@ export type IconState = Set<string>;
 export type State = {
   app: AppState,
   profileView: ProfileViewState,
+  runnablesView: RunnablesViewState,
+  categoriesView: CategoriesViewState,
   urlState: URLState,
+  dateGraph: DateGraph,
   icons: IconState,
 };
 

@@ -1,4 +1,4 @@
-// flow-typed signature: c30f3fdbbf8bcc8ec62ee3324ab2bf8f
+// flow-typed signature: 95c28d25e2bd957bfa9d3bf6f461ae4b
 // flow-typed version: <<STUB>>/webpack_v^2.1.0-beta.27/flow_v0.40.0
 
 /**
@@ -8,8 +8,8 @@
  *
  * Fill this stub out by replacing all the `any` types.
  *
- * Once filled out, we encourage you to share your work with the 
- * community by sending a pull request to: 
+ * Once filled out, we encourage you to share your work with the
+ * community by sending a pull request to:
  * https://github.com/flowtype/flow-typed
  */
 
@@ -55,6 +55,10 @@ declare module 'webpack/buildin/harmony-module' {
 }
 
 declare module 'webpack/buildin/module' {
+  declare module.exports: any;
+}
+
+declare module 'webpack/buildin/system' {
   declare module.exports: any;
 }
 
@@ -278,7 +282,7 @@ declare module 'webpack/lib/dependencies/HarmonyAcceptImportDependency' {
   declare module.exports: any;
 }
 
-declare module 'webpack/lib/dependencies/HarmonyCompatiblilityDependency' {
+declare module 'webpack/lib/dependencies/HarmonyCompatibilityDependency' {
   declare module.exports: any;
 }
 
@@ -335,6 +339,22 @@ declare module 'webpack/lib/dependencies/ImportDependenciesBlock' {
 }
 
 declare module 'webpack/lib/dependencies/ImportDependency' {
+  declare module.exports: any;
+}
+
+declare module 'webpack/lib/dependencies/ImportEagerContextDependency' {
+  declare module.exports: any;
+}
+
+declare module 'webpack/lib/dependencies/ImportEagerDependency' {
+  declare module.exports: any;
+}
+
+declare module 'webpack/lib/dependencies/ImportLazyContextDependency' {
+  declare module.exports: any;
+}
+
+declare module 'webpack/lib/dependencies/ImportLazyOnceContextDependency' {
   declare module.exports: any;
 }
 
@@ -527,6 +547,10 @@ declare module 'webpack/lib/Entrypoint' {
 }
 
 declare module 'webpack/lib/EnvironmentPlugin' {
+  declare module.exports: any;
+}
+
+declare module 'webpack/lib/ErrorHelpers' {
   declare module.exports: any;
 }
 
@@ -723,6 +747,10 @@ declare module 'webpack/lib/MultiStats' {
 }
 
 declare module 'webpack/lib/MultiWatching' {
+  declare module.exports: any;
+}
+
+declare module 'webpack/lib/NamedChunksPlugin' {
   declare module.exports: any;
 }
 
@@ -974,6 +1002,10 @@ declare module 'webpack/lib/UseStrictPlugin' {
   declare module.exports: any;
 }
 
+declare module 'webpack/lib/util/identifier' {
+  declare module.exports: any;
+}
+
 declare module 'webpack/lib/validateSchema' {
   declare module.exports: any;
 }
@@ -995,6 +1027,10 @@ declare module 'webpack/lib/webpack' {
 }
 
 declare module 'webpack/lib/webpack.web' {
+  declare module.exports: any;
+}
+
+declare module 'webpack/lib/WebpackError' {
   declare module.exports: any;
 }
 
@@ -1030,6 +1066,10 @@ declare module 'webpack/lib/webworker/WebWorkerTemplatePlugin' {
   declare module.exports: any;
 }
 
+declare module 'webpack/schemas/ajv.absolutePath' {
+  declare module.exports: any;
+}
+
 declare module 'webpack/web_modules/node-libs-browser' {
   declare module.exports: any;
 }
@@ -1061,6 +1101,9 @@ declare module 'webpack/buildin/harmony-module.js' {
 }
 declare module 'webpack/buildin/module.js' {
   declare module.exports: $Exports<'webpack/buildin/module'>;
+}
+declare module 'webpack/buildin/system.js' {
+  declare module.exports: $Exports<'webpack/buildin/system'>;
 }
 declare module 'webpack/hot/dev-server.js' {
   declare module.exports: $Exports<'webpack/hot/dev-server'>;
@@ -1227,8 +1270,8 @@ declare module 'webpack/lib/dependencies/HarmonyAcceptDependency.js' {
 declare module 'webpack/lib/dependencies/HarmonyAcceptImportDependency.js' {
   declare module.exports: $Exports<'webpack/lib/dependencies/HarmonyAcceptImportDependency'>;
 }
-declare module 'webpack/lib/dependencies/HarmonyCompatiblilityDependency.js' {
-  declare module.exports: $Exports<'webpack/lib/dependencies/HarmonyCompatiblilityDependency'>;
+declare module 'webpack/lib/dependencies/HarmonyCompatibilityDependency.js' {
+  declare module.exports: $Exports<'webpack/lib/dependencies/HarmonyCompatibilityDependency'>;
 }
 declare module 'webpack/lib/dependencies/HarmonyDetectionParserPlugin.js' {
   declare module.exports: $Exports<'webpack/lib/dependencies/HarmonyDetectionParserPlugin'>;
@@ -1271,6 +1314,18 @@ declare module 'webpack/lib/dependencies/ImportDependenciesBlock.js' {
 }
 declare module 'webpack/lib/dependencies/ImportDependency.js' {
   declare module.exports: $Exports<'webpack/lib/dependencies/ImportDependency'>;
+}
+declare module 'webpack/lib/dependencies/ImportEagerContextDependency.js' {
+  declare module.exports: $Exports<'webpack/lib/dependencies/ImportEagerContextDependency'>;
+}
+declare module 'webpack/lib/dependencies/ImportEagerDependency.js' {
+  declare module.exports: $Exports<'webpack/lib/dependencies/ImportEagerDependency'>;
+}
+declare module 'webpack/lib/dependencies/ImportLazyContextDependency.js' {
+  declare module.exports: $Exports<'webpack/lib/dependencies/ImportLazyContextDependency'>;
+}
+declare module 'webpack/lib/dependencies/ImportLazyOnceContextDependency.js' {
+  declare module.exports: $Exports<'webpack/lib/dependencies/ImportLazyOnceContextDependency'>;
 }
 declare module 'webpack/lib/dependencies/ImportParserPlugin.js' {
   declare module.exports: $Exports<'webpack/lib/dependencies/ImportParserPlugin'>;
@@ -1415,6 +1470,9 @@ declare module 'webpack/lib/Entrypoint.js' {
 }
 declare module 'webpack/lib/EnvironmentPlugin.js' {
   declare module.exports: $Exports<'webpack/lib/EnvironmentPlugin'>;
+}
+declare module 'webpack/lib/ErrorHelpers.js' {
+  declare module.exports: $Exports<'webpack/lib/ErrorHelpers'>;
 }
 declare module 'webpack/lib/EvalDevToolModulePlugin.js' {
   declare module.exports: $Exports<'webpack/lib/EvalDevToolModulePlugin'>;
@@ -1562,6 +1620,9 @@ declare module 'webpack/lib/MultiStats.js' {
 }
 declare module 'webpack/lib/MultiWatching.js' {
   declare module.exports: $Exports<'webpack/lib/MultiWatching'>;
+}
+declare module 'webpack/lib/NamedChunksPlugin.js' {
+  declare module.exports: $Exports<'webpack/lib/NamedChunksPlugin'>;
 }
 declare module 'webpack/lib/NamedModulesPlugin.js' {
   declare module.exports: $Exports<'webpack/lib/NamedModulesPlugin'>;
@@ -1749,6 +1810,9 @@ declare module 'webpack/lib/UnsupportedFeatureWarning.js' {
 declare module 'webpack/lib/UseStrictPlugin.js' {
   declare module.exports: $Exports<'webpack/lib/UseStrictPlugin'>;
 }
+declare module 'webpack/lib/util/identifier.js' {
+  declare module.exports: $Exports<'webpack/lib/util/identifier'>;
+}
 declare module 'webpack/lib/validateSchema.js' {
   declare module.exports: $Exports<'webpack/lib/validateSchema'>;
 }
@@ -1766,6 +1830,9 @@ declare module 'webpack/lib/webpack.js' {
 }
 declare module 'webpack/lib/webpack.web.js' {
   declare module.exports: $Exports<'webpack/lib/webpack.web'>;
+}
+declare module 'webpack/lib/WebpackError.js' {
+  declare module.exports: $Exports<'webpack/lib/WebpackError'>;
 }
 declare module 'webpack/lib/WebpackOptionsApply.js' {
   declare module.exports: $Exports<'webpack/lib/WebpackOptionsApply'>;
@@ -1790,6 +1857,9 @@ declare module 'webpack/lib/webworker/WebWorkerMainTemplatePlugin.js' {
 }
 declare module 'webpack/lib/webworker/WebWorkerTemplatePlugin.js' {
   declare module.exports: $Exports<'webpack/lib/webworker/WebWorkerTemplatePlugin'>;
+}
+declare module 'webpack/schemas/ajv.absolutePath.js' {
+  declare module.exports: $Exports<'webpack/schemas/ajv.absolutePath'>;
 }
 declare module 'webpack/web_modules/node-libs-browser.js' {
   declare module.exports: $Exports<'webpack/web_modules/node-libs-browser'>;

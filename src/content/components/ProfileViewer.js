@@ -5,6 +5,7 @@
 // @flow
 import React, { PureComponent, PropTypes } from 'react';
 import { connect } from 'react-redux';
+import type { Action, ThunkAction } from '../actions/types';
 import ProfileCallTreeView from '../containers/ProfileCallTreeView';
 import ProfileTopBarActions from './ProfileTopBarActions';
 import ProfileCategoriesView from './ProfileCategoriesView';
@@ -16,6 +17,12 @@ import ProfileCallTreeContextMenu from '../containers/ProfileCallTreeContextMenu
 import ProfileFilterNavigator from '../containers/ProfileFilterNavigator';
 import ProfileViewerHeader from '../containers/ProfileViewerHeader';
 import ProfileThreadHeaderContextMenu from '../containers/ProfileThreadHeaderContextMenu';
+
+type Props = {
+  className: string,
+  changeSelectedTab: (string) => Action | ThunkAction,
+  selectedTab: string,
+};
 
 class ProfileViewer extends PureComponent {
   props: Props;

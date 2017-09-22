@@ -1,4 +1,4 @@
-// flow-typed signature: 4261b928ba3d59763837046048552945
+// flow-typed signature: 2b4b5ccdf4bcc8741c4921417244f514
 // flow-typed version: <<STUB>>/webpack-dev-server_v^2.1.0-beta.12/flow_v0.40.0
 
 /**
@@ -8,8 +8,8 @@
  *
  * Fill this stub out by replacing all the `any` types.
  *
- * Once filled out, we encourage you to share your work with the 
- * community by sending a pull request to: 
+ * Once filled out, we encourage you to share your work with the
+ * community by sending a pull request to:
  * https://github.com/flowtype/flow-typed
  */
 
@@ -39,6 +39,10 @@ declare module 'webpack-dev-server/client/live.bundle' {
 }
 
 declare module 'webpack-dev-server/client/live' {
+  declare module.exports: any;
+}
+
+declare module 'webpack-dev-server/client/overlay' {
   declare module.exports: any;
 }
 
@@ -78,6 +82,14 @@ declare module 'webpack-dev-server/lib/Server' {
   declare module.exports: any;
 }
 
+declare module 'webpack-dev-server/lib/util/addDevServerEntrypoints' {
+  declare module.exports: any;
+}
+
+declare module 'webpack-dev-server/lib/util/createDomain' {
+  declare module.exports: any;
+}
+
 // Filename aliases
 declare module 'webpack-dev-server/bin/webpack-dev-server.js' {
   declare module.exports: $Exports<'webpack-dev-server/bin/webpack-dev-server'>;
@@ -93,6 +105,9 @@ declare module 'webpack-dev-server/client/live.bundle.js' {
 }
 declare module 'webpack-dev-server/client/live.js' {
   declare module.exports: $Exports<'webpack-dev-server/client/live'>;
+}
+declare module 'webpack-dev-server/client/overlay.js' {
+  declare module.exports: $Exports<'webpack-dev-server/client/overlay'>;
 }
 declare module 'webpack-dev-server/client/socket.js' {
   declare module.exports: $Exports<'webpack-dev-server/client/socket'>;
@@ -120,4 +135,10 @@ declare module 'webpack-dev-server/lib/OptionsValidationError.js' {
 }
 declare module 'webpack-dev-server/lib/Server.js' {
   declare module.exports: $Exports<'webpack-dev-server/lib/Server'>;
+}
+declare module 'webpack-dev-server/lib/util/addDevServerEntrypoints.js' {
+  declare module.exports: $Exports<'webpack-dev-server/lib/util/addDevServerEntrypoints'>;
+}
+declare module 'webpack-dev-server/lib/util/createDomain.js' {
+  declare module.exports: $Exports<'webpack-dev-server/lib/util/createDomain'>;
 }

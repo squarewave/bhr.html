@@ -12,7 +12,7 @@ import type {
 } from '../actions/types';
 import type { State, URLState, Reducer } from './types';
 
-function payloadID(state: string = null, action: Action) {
+function payloadID(state: string | null = null, action: Action) {
   switch (action.type) {
     case 'RECEIVE_PROFILE_FROM_TELEMETRY':
       return action.profile.uuid;

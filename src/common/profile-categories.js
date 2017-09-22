@@ -4,19 +4,19 @@
 
 // @flow
 import { timeCode } from '../common/time-code';
-import type { Profile, Thread, IndexIntoStackTable } from '../types/profile';
+import type { Profile, Thread } from './types/profile';
 
 export type Summary = { [id: string]: number };
 type MatchingFunction = (string, string) => boolean;
 type StacksInCategory = { [id: string]: { [id: string]: number } };
 type SummarySegment = {
-  percentage: { [id: string]: number },
+  percentage?: { [id: string]: number },
+  samples: { [id: string]: number },
 };
 type RollingSummary = SummarySegment[];
 type CategoryDatum = {
   category: string | null,
-  hangMs: number,
-  hangCount: number
+  hangMs: number
 };
 type Categories = Array<CategoryDatum>;
 type ThreadCategories = Categories[];
@@ -47,7 +47,7 @@ const match: { [id: string]: MatchingFunction } = {
  */
 
 const categories = [
-  [match.ignore, null, 'content_script'],
+  [match.ignore, '', 'content_script'],
   [match.stem, 'mozilla::ipc::MessageChannel::WaitForSyncNotify', 'sync_ipc'],
   [match.stem, 'mozilla::ipc::MessageChannel::WaitForInterruptNotify', 'sync_ipc'],
   [match.prefix, 'mozilla::places::', 'places'],
@@ -161,7 +161,7 @@ function functionNameCategorizer() {
 /**
  * A function that categorizes a sample.
  */
-type SampleCategorizer = (sampleIndex: IndexIntoSampleTable) =>
+type SampleCategorizer = (sampleIndex: number) =>
   | string
   | null;
 
@@ -172,7 +172,7 @@ type SampleCategorizer = (sampleIndex: IndexIntoSampleTable) =>
  */
 export function sampleCategorizer(thread: Thread): SampleCategorizer {
   if (thread.sampleTable.category) {
-    return function(sampleIndex: IndexIntoSampleTable):
+    return function(sampleIndex: number):
       | string
       | null {
       const category = thread.sampleTable.category[sampleIndex];
@@ -183,7 +183,7 @@ export function sampleCategorizer(thread: Thread): SampleCategorizer {
 
   const categorizeFuncName = functionNameCategorizer();
 
-  function computeCategory(stackIndex: IndexIntoStackTable):
+  function computeCategory(stackIndex: number):
     | string
     | null {
     if (stackIndex === -1) {
@@ -213,12 +213,12 @@ export function sampleCategorizer(thread: Thread): SampleCategorizer {
     return prefixCategory;
   }
 
-  const stackCategoryCache: Map<IndexIntoStackTable, string | null> = new Map();
+  const stackCategoryCache: Map<number, string | null> = new Map();
 
-  function categorizeSampleStack(stackIndex: IndexIntoStackTable):
+  function categorizeSampleStack(stackIndex: number | null):
     | string
     | null {
-    if (stackIndex === -1) {
+    if (stackIndex === -1 || stackIndex == null) {
       return null;
     }
     let category = stackCategoryCache.get(stackIndex);
@@ -231,7 +231,7 @@ export function sampleCategorizer(thread: Thread): SampleCategorizer {
     return category;
   }
 
-  return function(sampleIndex: IndexIntoSampleTable):
+  return function(sampleIndex: number):
     | string
     | null {
     return categorizeSampleStack(thread.sampleTable.stack[sampleIndex]);
@@ -306,23 +306,6 @@ function logStacks(stacksInCategory: StacksInCategory, maxLogLength = 10) {
   /* eslint-enable no-console */
 }
 
-function stackToString(
-  stackIndex: IndexIntoStackTable,
-  thread: Thread
-): string {
-  const { stackTable, frameTable, funcTable, stringTable } = thread;
-  const stack = [];
-  let nextStackIndex = stackIndex;
-  while (nextStackIndex !== -1) {
-    const frameIndex = stackTable.frame[nextStackIndex];
-    const funcIndex = frameTable.func[frameIndex];
-    const name = stringTable._array[funcTable.name[funcIndex]];
-    stack.push(name);
-    nextStackIndex = stackTable.prefix[nextStackIndex];
-  }
-  return stack.join('\n');
-}
-
 function incrementPerThreadCount(
   container: StacksInCategory,
   key: string,
@@ -393,7 +376,7 @@ export function calculateRollingSummaries(
         totalTime += thread.dates[i].sampleHangMs[j];
       }
 
-      for (let time of Object.values(samples)) {
+      for (let [key, time] of objectEntries(samples)) {
         if (time > maxTime) {
           maxTime = time;
         }

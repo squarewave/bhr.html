@@ -7,21 +7,21 @@ import type {
   Action
 } from './types';
 
-export function profileRunnablesProcessed(runnables: object): Action {
+export function profileRunnablesProcessed(runnables: Object): Action {
   return {
     type: 'PROFILE_RUNNABLES_PROCESSED',
     runnables,
   };
 }
 
-export function expandRunnablesThread(threadIndex: ThreadIndex): Action {
+export function expandRunnablesThread(threadIndex: number): Action {
   return {
     type: 'PROFILE_SUMMARY_EXPAND',
     threadIndex,
   };
 }
 
-export function collapseRunnablesThread(threadIndex: ThreadIndex): Action {
+export function collapseRunnablesThread(threadIndex: number): Action {
   return {
     type: 'PROFILE_SUMMARY_COLLAPSE',
     threadIndex,

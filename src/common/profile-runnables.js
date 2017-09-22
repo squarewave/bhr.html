@@ -4,19 +4,19 @@
 
 // @flow
 import { timeCode } from '../common/time-code';
-import type { Profile, Thread, IndexIntoStackTable } from '../types/profile';
+import type { Profile, Thread, IndexIntoStackTable } from './types/profile';
 
 export type Summary = { [id: string]: number };
 type MatchingFunction = (string, string) => boolean;
 type StacksInCategory = { [id: string]: { [id: string]: number } };
 type SummarySegment = {
-  percentage: { [id: string]: number },
+  percentage?: { [id: string]: number },
+  samples: { [string]: number },
 };
 type RollingSummary = SummarySegment[];
 type RunnableDatum = {
   runnable: string | null,
   hangMs: number,
-  hangCount: number
 };
 type Runnables = Array<RunnableDatum>;
 type ThreadRunnables = Runnables[];
@@ -103,23 +103,6 @@ function logStacks(stacksInCategory: StacksInCategory, maxLogLength = 10) {
   /* eslint-enable no-console */
 }
 
-function stackToString(
-  stackIndex: IndexIntoStackTable,
-  thread: Thread
-): string {
-  const { stackTable, frameTable, funcTable, stringTable } = thread;
-  const stack = [];
-  let nextStackIndex = stackIndex;
-  while (nextStackIndex !== -1) {
-    const frameIndex = stackTable.frame[nextStackIndex];
-    const funcIndex = frameTable.func[frameIndex];
-    const name = stringTable._array[funcTable.name[funcIndex]];
-    stack.push(name);
-    nextStackIndex = stackTable.prefix[nextStackIndex];
-  }
-  return stack.join('\n');
-}
-
 function incrementPerThreadCount(
   container: StacksInCategory,
   key: string,
@@ -146,7 +129,7 @@ export function getRunnablesForThreadData(profile: Profile): ThreadRunnables {
 
 function mapProfileToThreadRunnables(profile: Profile): ThreadRunnables {
   return profile.threads.map(thread => {
-    return thread.dates.reduce((memo, next) => memo.concat(
+    return thread.dates.reduce((memo: RunnableDatum[], next) => memo.concat(
       Array.from(next.sampleHangMs).map((hangMs, i) => ({
         runnable: thread.stringTable._array[thread.sampleTable.runnable[i]],
         hangMs,
@@ -191,7 +174,7 @@ export function calculateRollingSummaries(
         }
       }
 
-      for (let [key, time] of Object.entries(samples)) {
+      for (let [key, time] of objectEntries(samples)) {
         if (time > maxTime) {
           maxKey = key;
           maxTime = time;

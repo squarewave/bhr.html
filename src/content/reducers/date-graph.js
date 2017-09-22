@@ -3,13 +3,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
-import type { Action } from '../types/actions';
+import type { ThunkAction } from '../actions/types';
+import type { State } from '../reducers/types';
+import type { DateGraph } from '../../common/types/workers';
 import { getProfile } from './profile-view';
 import { createSelector } from 'reselect';
 
 export default function dateGraphReducer(
-  state = { length: 0, totalTime: [], totalCount: [] },
-  action: Action
+  state: DateGraph = { length: 0, totalTime: new Float32Array(), totalCount: new Float32Array() },
+  action: ThunkAction
 ) {
   switch (action.type) {
     case 'DATE_GRAPH_REBUILT': {
@@ -20,4 +22,4 @@ export default function dateGraphReducer(
   }
 }
 
-export const getDateGraph = state => state.dateGraph;
+export const getDateGraph = (state: State): DateGraph => state.dateGraph;

@@ -1,5 +1,6 @@
 // @flow
 import type { Profile, Thread, ThreadIndex, IndexIntoFuncTable } from '../../common/types/profile';
+import type { DateGraph, CategorySummary } from '../../common/types/workers';
 import type { State } from '../reducers/types';
 
 export type ExpandedSet = Set<ThreadIndex>;
@@ -78,6 +79,7 @@ type URLStateAction =
   { type: 'CHANGE_CALL_TREE_SEARCH_STRING', searchString: string } |
   { type: 'CHANGE_CATEGORY', category: string } |
   { type: 'CHANGE_RUNNABLE', runnable: string } |
+  { type: 'CHANGE_PLATFORM', platform: string } |
   { type: 'ADD_CALL_TREE_FILTER', threadIndex: ThreadIndex, filter: CallTreeFilter } |
   { type: 'POP_CALL_TREE_FILTERS', threadIndex: ThreadIndex, firstRemovedFilterIndex: number } |
   { type: 'CHANGE_INVERT_CALLSTACK', invertCallstack: boolean } |
@@ -88,12 +90,26 @@ type IconsAction =
   { type: 'ICON_HAS_LOADED', icon: string } |
   { type: 'ICON_IN_ERROR', icon: string };
 
+type WorkerAction =
+  { type: 'PROFILE_PROCESSED', toSummaryWorker: boolean, profile: Profile } |
+  { type: 'SUMMARIZE_PROFILE', toSummaryWorker: boolean } |
+  { type: 'REBUILD_DATE_GRAPH', toDateGraphWorker: boolean, thread?: Thread, selectedStack: number } |
+  { type: 'PROFILE_SUMMARY_EXPAND', threadIndex: number } |
+  { type: 'DATE_GRAPH_REBUILT', dateGraph: DateGraph } |
+  { type: 'PROFILE_CATEGORIES_PROCESSED', categories: CategorySummary[] } |
+  { type: 'PROFILE_SUMMARY_COLLAPSE', threadIndex: number };
+
+type RunnablesAction = 
+  { type: 'PROFILE_RUNNABLES_PROCESSED', runnables: Object };
+
 export type Action =
   ProfileAction |
   ReceiveProfileAction |
   TimelineAction |
   URLEnhancerAction |
   URLStateAction |
+  RunnablesAction |
+  WorkerAction |
   IconsAction;
 
 export type GetState = () => State;

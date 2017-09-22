@@ -1,4 +1,4 @@
-// flow-typed signature: 1cb0d0f5730163ef0c8cdf4e9431abc6
+// flow-typed signature: c2143fbb8aacc8b6070561e58f053d74
 // flow-typed version: <<STUB>>/array-range_v^1.0.1/flow_v0.40.0
 
 /**
@@ -8,8 +8,8 @@
  *
  * Fill this stub out by replacing all the `any` types.
  *
- * Once filled out, we encourage you to share your work with the 
- * community by sending a pull request to: 
+ * Once filled out, we encourage you to share your work with the
+ * community by sending a pull request to:
  * https://github.com/flowtype/flow-typed
  */
 

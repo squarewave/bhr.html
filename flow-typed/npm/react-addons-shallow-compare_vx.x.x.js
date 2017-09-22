@@ -1,4 +1,4 @@
-// flow-typed signature: 447b8afd7b2a7d63c222c13d5cf3f87b
+// flow-typed signature: abdc5cf43e261072e68e78da00df8861
 // flow-typed version: <<STUB>>/react-addons-shallow-compare_v^15.4.1/flow_v0.40.0
 
 /**
@@ -8,8 +8,8 @@
  *
  * Fill this stub out by replacing all the `any` types.
  *
- * Once filled out, we encourage you to share your work with the 
- * community by sending a pull request to: 
+ * Once filled out, we encourage you to share your work with the
+ * community by sending a pull request to:
  * https://github.com/flowtype/flow-typed
  */
 
@@ -22,7 +22,13 @@ declare module 'react-addons-shallow-compare' {
  * require those files directly. Feel free to delete any files that aren't
  * needed.
  */
+declare module 'react-addons-shallow-compare/react-addons-shallow-compare' {
+  declare module.exports: any;
+}
 
+declare module 'react-addons-shallow-compare/react-addons-shallow-compare.min' {
+  declare module.exports: any;
+}
 
 // Filename aliases
 declare module 'react-addons-shallow-compare/index' {
@@ -30,4 +36,10 @@ declare module 'react-addons-shallow-compare/index' {
 }
 declare module 'react-addons-shallow-compare/index.js' {
   declare module.exports: $Exports<'react-addons-shallow-compare'>;
+}
+declare module 'react-addons-shallow-compare/react-addons-shallow-compare.js' {
+  declare module.exports: $Exports<'react-addons-shallow-compare/react-addons-shallow-compare'>;
+}
+declare module 'react-addons-shallow-compare/react-addons-shallow-compare.min.js' {
+  declare module.exports: $Exports<'react-addons-shallow-compare/react-addons-shallow-compare.min'>;
 }
