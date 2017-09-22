@@ -1,10 +1,11 @@
-import React, { Component, PropTypes } from 'react';
+import React, { Component, PureComponent, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import actions from '../actions';
 import shallowCompare from 'react-addons-shallow-compare';
 import classNames from 'classnames';
 import { timeCode } from '../../common/time-code';
 import { getDateGraph } from '../reducers/date-graph';
+import Tooltip from './Tooltip'
 
 const BAR_WIDTH_RATIO = 0.8;
 const TOOLTIP_MARGIN = 3;
@@ -20,10 +21,7 @@ class ThreadStackGraph extends Component {
     this._onMouseUp = this._onMouseUp.bind(this);
     this._onMouseMove = this._onMouseMove.bind(this);
     this._onMouseOut = this._onMouseOut.bind(this);
-
-    this.mouseX = 0;
-    this.mouseY = 0;
-    this.mouseIn = false;
+    this.state = {};
   }
 
   _scheduleDraw() {
@@ -65,16 +63,7 @@ class ThreadStackGraph extends Component {
     const ctx = c.getContext('2d');
     const rangeLength = rangeEnd - rangeStart + 1;
 
-    let maxHangMs = 0;
-    let maxHangCount = 0;
-    for (let i = rangeStart; i <= rangeEnd; i++) {
-      if (dateGraph.totalTime[i] > maxHangMs) {
-        maxHangMs = dateGraph.totalTime[i];
-      }
-      if (dateGraph.totalCount[i] > maxHangCount) {
-        maxHangCount = dateGraph.totalCount[i];
-      }
-    }
+    const { maxHangMs, maxHangCount } = this._getMaxGraphValues();
 
     const xDevicePixelsPerDay = c.width / rangeLength;
     const yDevicePixelsPerHangMs = c.height / maxHangMs;
@@ -90,58 +79,67 @@ class ThreadStackGraph extends Component {
       ctx.fillStyle = '#a7b9e5';
       ctx.fillRect((i - rangeStart) * xDevicePixelsPerDay + (xDevicePixelsPerDay * BAR_WIDTH_RATIO), countStartY, xDevicePixelsPerDay * (1 - BAR_WIDTH_RATIO), countHeight);
     }
+  }
 
+  _getMaxGraphValues() {
+    let { rangeStart, rangeEnd, dateGraph } = this.props;
+
+    let maxHangMs = 0;
+    let maxHangCount = 0;
+    for (let i = rangeStart; i <= rangeEnd; i++) {
+      if (dateGraph.totalTime[i] > maxHangMs) {
+        maxHangMs = dateGraph.totalTime[i];
+      }
+      if (dateGraph.totalCount[i] > maxHangCount) {
+        maxHangCount = dateGraph.totalCount[i];
+      }
+    }
+
+    return { maxHangMs, maxHangCount };
+  }
+
+  _pickGraphItem(mouseX, mouseY, canvas) {
+    const { rangeStart, rangeEnd, dateGraph, dates } = this.props;
+    const devicePixelRatio = canvas.ownerDocument ? canvas.ownerDocument.defaultView.devicePixelRatio : 1;
+    const r = canvas.getBoundingClientRect();
+
+    const rangeLength = rangeEnd - rangeStart + 1;
+    const { maxHangMs, maxHangCount } = this._getMaxGraphValues();
     const xPxPerDay = r.width / rangeLength;
     const yPxPerHangMs = r.height / maxHangMs;
     const yPxPerHangCount = r.height / maxHangCount;
 
-    if (this.mouseIn) {
-      const x = this.mouseX - r.left;
-      const y = this.mouseY - r.top;
-      const invertedY = r.height - y;
+    const x = mouseX - r.left;
+    const y = mouseY - r.top;
+    const invertedY = r.height - y;
 
-      const normalized = x / xPxPerDay;
-      const floor = Math.floor(normalized);
-      const fract = normalized - floor;
-      const dateIndex = floor + rangeStart;
-      const isCount = fract > BAR_WIDTH_RATIO;
+    const normalized = x / xPxPerDay;
+    const floor = Math.floor(normalized);
+    const fract = normalized - floor;
+    const dateIndex = floor + rangeStart;
+    const isCount = fract > BAR_WIDTH_RATIO;
 
-      let tooltip = null;
-      if (isCount) {
-        if (invertedY < dateGraph.totalCount[dateIndex] * yPxPerHangCount) {
-          tooltip = {
-            width: 116 * devicePixelRatio,
-            text: `${dateGraph.totalCount[dateIndex].toFixed(1)} hangs / hr`
-          };
-        }
-      } else {
-        if (invertedY < dateGraph.totalTime[dateIndex] * yPxPerHangMs) {
-          tooltip = {
-            width: 140 * devicePixelRatio,
-            text: `${(dateGraph.totalTime[dateIndex]).toFixed(1)} ms hanging / hr`
-          };
-        }
+    let hovered = false;
+    if (isCount) {
+      if (invertedY < dateGraph.totalCount[dateIndex] * yPxPerHangCount) {
+        hovered = true;
       }
-
-      const margin = TOOLTIP_MARGIN * devicePixelRatio;
-      const padding = TOOLTIP_PADDING * devicePixelRatio;
-      const height = TOOLTIP_HEIGHT * devicePixelRatio;
-
-      if (tooltip) {
-        let tooltipOffset = 0;
-        if (x + margin + tooltip.width > c.width) {
-          tooltipOffset = 2 * margin + tooltip.width;
-        }
-
-        ctx.fillStyle = '#777';
-        ctx.fillRect(x + margin - tooltipOffset, y - margin, tooltip.width, -height);
-        ctx.fillStyle = '#fff';
-        ctx.font = '14px sans-serif';
-        const totalBorder = margin + padding;
-        let startX = x + totalBorder;
-        ctx.fillText(tooltip.text, x + totalBorder - tooltipOffset, y - totalBorder, tooltip.width - margin - 2 * padding);
+    } else {
+      if (invertedY < dateGraph.totalTime[dateIndex] * yPxPerHangMs) {
+        hovered = true;
       }
     }
+
+    if (hovered) {
+      return {
+        countHovered: isCount,
+        totalTime: dateGraph.totalTime[dateIndex],
+        totalCount: dateGraph.totalCount[dateIndex],
+        date: dates[dateIndex],
+      }
+    }
+
+    return null;
   }
 
   _onMouseUp(e) {
@@ -159,37 +157,84 @@ class ThreadStackGraph extends Component {
     this.setState({
       mouseX: e.pageX,
       mouseY: e.pageY,
+      pickedItem: this._pickGraphItem(e.clientX, e.clientY, this.refs.canvas),
     });
-    this.mouseX = e.clientX;
-    this.mouseY = e.clientY;
-    this.mouseIn = true;
-    this._scheduleDraw();
   }
 
   _onMouseOut(e) {
-    this.mouseIn = false;
-    this._scheduleDraw();
+    this.setState({
+      pickedItem: null
+    });
   }
 
   render() {
     this._scheduleDraw();
+    const { mouseX, mouseY, pickedItem } = this.state;
     return (
       <div className={this.props.className}
            onMouseMove={this._onMouseMove}
            onMouseOut={this._onMouseOut}>
+        {pickedItem &&
+          <Tooltip mouseX={mouseX} mouseY={mouseY}>
+            <StackGraphTooltipContents {...pickedItem}/>
+          </Tooltip>}
         <canvas className={classNames(`${this.props.className}Canvas`, 'threadStackGraphCanvas')}
                 ref='canvas'
                 onMouseUp={this._onMouseUp}/>
       </div>
     );
   }
+}
 
+function formatDate(dateStr /* yyyymmdd */) {
+  let month = dateStr.substr(4, 2).replace(/^0/, '');
+  let day = dateStr.substr(6, 2).replace(/^0/, '');
+  return `${month}/${day}`;
+}
+
+function formatDecimal(decimalNumber) {
+  if (decimalNumber >= 100) {
+    return decimalNumber.toFixed(1);
+  } else {
+    return decimalNumber.toPrecision(3);
+  }
+}
+
+class StackGraphTooltipContents extends PureComponent {
+  render() {
+    const { countHovered, date, totalTime, totalCount, className } = this.props;
+
+    return (
+      <div className={classNames('tooltipMarker', className)}>
+        <div className="tooltipHeader">
+          Build date: {formatDate(date)}
+          <div className={classNames('tooltipOneLine', 'totalTime')}>
+            <div className="tooltipTiming">
+              {formatDecimal(totalTime)}
+            </div>
+            <div className="tooltipTitle">
+              ms/hr hanging in selected node
+            </div>
+          </div>
+          <div className={classNames('tooltipOneLine', 'totalCount')}>
+            <div className="tooltipTiming">
+              {formatDecimal(totalCount)}
+            </div>
+            <div className="tooltipTitle">
+              hangs/hr sampled in selected node
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
 
 ThreadStackGraph.propTypes = {
   rangeStart: PropTypes.number.isRequired,
   rangeEnd: PropTypes.number.isRequired,
   dateGraph: PropTypes.object.isRequired,
+  dates: PropTypes.array.isRequired,
   className: PropTypes.string,
 };
 

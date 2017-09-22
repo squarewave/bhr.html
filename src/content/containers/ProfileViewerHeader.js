@@ -71,6 +71,7 @@ class ProfileViewerHeader extends PureComponent {
       </div>
       <ThreadStackGraph thread={selectedThread}
                         className='threadStackGraph'
+                        dates={dates}
                         rangeStart={timeRange.start}
                         rangeEnd={timeRange.end}
                         selectedStack={selectedStack}/>

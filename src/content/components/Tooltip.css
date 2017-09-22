@@ -33,6 +33,22 @@
   text-overflow: ellipsis;
 }
 
+.tooltipOneLine.totalTime:before {
+  content: '';
+  background: #7990c8;
+  width: 19px;
+  height: 19px;
+  margin-inline-end: 4px;
+}
+
+.tooltipOneLine.totalCount:before {
+  content: '';
+  background: #a7b9e5;
+  width: 19px;
+  height: 19px;
+  margin-inline-end: 4px;
+}
+
 .tooltipTitle {
   flex: 1;
   text-overflow: ellipsis;
