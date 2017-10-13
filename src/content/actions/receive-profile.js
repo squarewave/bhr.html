@@ -56,21 +56,35 @@ export function retrieveProfileFromTelemetry(durationSpec: string,
   return async dispatch => {
     dispatch(waitingForProfileFromTelemetry(durationSpec, historical));
 
-    let fileRoot = `hang_profile_${durationSpec}`;
+    function getProfileURL(thread: string | null = null) {
+      let fileRoot = `hang_profile_${durationSpec}`;
 
-    if (historical) {
-      fileRoot += '_historical';
+      if (historical) {
+        fileRoot += '_historical';
+      }
+
+      if (thread) {
+        fileRoot += '_' + thread;
+      }
+
+      if (payloadID) {
+        fileRoot += '_' + payloadID;
+      }
+
+      return `https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/${fileRoot}.json`;
     }
 
-    if (payloadID) {
-      fileRoot += '_' + payloadID;
-    }
+    const profileURL = getProfileURL();
 
-    const profileURL = `https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/${fileRoot}.json`;;
-
-    fetch(profileURL).then(res => {
-      return res.json();
-    }).then(profile => {
+    try {
+      const res = await fetch(profileURL);
+      let profile = await res.json();
+      if (profile.isSplit) {
+        let threads = await Promise.all(profile.threads.map(t => fetch(getProfileURL(t)).then(r => r.json())));
+        profile.usageHoursByDate = threads[0].usageHoursByDate;
+        profile.uuid = threads[0].uuid;
+        profile.threads = threads.map(t => t.threads[0]);
+      }
 
       function union(setA, setB) {
           let union = new Set();
@@ -156,8 +170,8 @@ export function retrieveProfileFromTelemetry(durationSpec: string,
       }
 
       dispatch(receiveProfileFromTelemetry(profile));
-    }).catch(error => {
+    } catch (error) {
       dispatch(errorReceivingProfileFromTelemetry(error));
-    });
+    }
   };
 }
