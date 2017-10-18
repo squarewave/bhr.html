@@ -4,6 +4,9 @@
 
 import { buildDateGraph } from '../../common/date-graph';
 
+let gWorkerIndex = -1;
+let gNumWorkers = 0;
+
 let rebuildTicket = 0;
 export function rebuildDateGraph(thread, stack) {
   return function(dispatch, getState) {
@@ -37,13 +40,25 @@ export function rebuildDateGraph(thread, stack) {
             toContent: true,
             type: 'DATE_GRAPH_REBUILT',
             dateGraph: dateGraph,
+            workerIndex: gWorkerIndex,
+            numWorkers: gNumWorkers,
           });
 
-          if (dateIndex - 1 >= 0) {
-            setTimeout(() => rebuildDate(dateIndex - 1), 0);
+          while (dateIndex - 1 >= 0) {
+            dateIndex--;
+            if (dateIndex % gNumWorkers === gWorkerIndex) {
+              setTimeout(() => rebuildDate(dateIndex), 0);
+              break;
+            }
           }
         }
       }, 0);
     }
   };
+}
+
+export function setWorkerInformation(workerIndex, numWorkers) {
+  gWorkerIndex = workerIndex;
+  gNumWorkers = numWorkers;
+  return () => {};
 }

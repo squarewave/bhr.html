@@ -23,7 +23,6 @@
 const threadDispatcher = (thread, key) => () => next => action => {
   if (action[key]) {
     thread.postMessage(action);
-    return undefined;
   }
   return next(action);
 };

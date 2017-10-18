@@ -15,7 +15,20 @@ export default function dateGraphReducer(
 ) {
   switch (action.type) {
     case 'DATE_GRAPH_REBUILT': {
-      return action.dateGraph;
+      const newState = {
+        length: action.dateGraph.length,
+        totalTime: action.dateGraph.length === state.length ?
+          Float32Array.from(state.totalTime) : new Float32Array(action.dateGraph.length),
+        totalCount: action.dateGraph.length === state.length ?
+          Float32Array.from(state.totalCount) : new Float32Array(action.dateGraph.length),
+      };
+      for (let i = 0; i < action.dateGraph.length; i++) {
+        if (i % action.numWorkers === action.workerIndex) {
+          newState.totalTime[i] = action.dateGraph.totalTime[i];
+          newState.totalCount[i] = action.dateGraph.totalCount[i];
+        }
+      }
+      return newState;
     }
     default:
       return state;

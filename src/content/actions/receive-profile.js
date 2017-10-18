@@ -80,10 +80,21 @@ export function retrieveProfileFromTelemetry(durationSpec: string,
       const res = await fetch(profileURL);
       let profile = await res.json();
       if (profile.isSplit) {
-        let threads = await Promise.all(profile.threads.map(t => fetch(getProfileURL(t)).then(r => r.json())));
-        profile.usageHoursByDate = threads[0].usageHoursByDate;
-        profile.uuid = threads[0].uuid;
-        profile.threads = threads.map(t => t.threads[0]);
+        let splitFiles = objectEntries(profile.splitFiles)
+          .map(([k, v]) => v.map(subPath => [k, subPath, k + '_' + subPath])).reduce((a, b) => a.concat(b), [])
+          .filter(([k1, k2, suffix]) => k2 !== 'time' && k2 !== 'pruneStackCache');
+        let promises = splitFiles.map(([k1, k2, suffix]) => fetch(getProfileURL(suffix)).then(r => r.json()));
+        let results = await Promise.all(promises);
+        let threadDict = {};
+        for (let i = 0; i < results.length; i++) {
+          let [k1, k2] = splitFiles[i];
+          let threadData = results[i];
+          if (!threadDict[k1]) {
+            threadDict[k1] = {name: k1};
+          }
+          threadDict[k1][k2] = threadData;
+        }
+        profile.threads = objectEntries(threadDict).map(([k, v]) => v);
       }
 
       function union(setA, setB) {
@@ -174,4 +185,30 @@ export function retrieveProfileFromTelemetry(durationSpec: string,
       dispatch(errorReceivingProfileFromTelemetry(error));
     }
   };
+}
+
+function mapObj<T>(object: { [string]: T }, fn: (T, string, number) => T) {
+  let i = 0;
+  const mappedObj = {};
+  for (const key in object) {
+    if (object.hasOwnProperty(key)) {
+      i++;
+      mappedObj[key] = fn(object[key], key, i);
+    }
+  }
+  return mappedObj;
+}
+
+/**
+ * Flow requires a type-safe implementation of Object.entries().
+ * See: https://github.com/facebook/flow/issues/2174
+ */
+function objectEntries<T>(object: { [id: string]: T }): Array<[string, T]> {
+  const entries = [];
+  for (const key in object) {
+    if (object.hasOwnProperty(key)) {
+      entries.push([key, object[key]]);
+    }
+  }
+  return entries;
 }

@@ -29,7 +29,7 @@ class ProfileTreeView extends Component {
 
   componentDidMount() {
     this.focus();
-    this.procureInterestingInitialSelection();
+    this.openRoot();
   }
 
   componentDidUpdate(prevProps) {
@@ -37,6 +37,10 @@ class ProfileTreeView extends Component {
       if (this.refs.treeView) {
         this.refs.treeView.scrollSelectionIntoView();
       }
+    }
+
+    if (this.props.threadIndex !== prevProps.threadIndex) {
+      this.openRoot();
     }
   }
 
@@ -74,7 +78,7 @@ class ProfileTreeView extends Component {
     }
   }
 
-  procureInterestingInitialSelection() {
+  openRoot() {
     // Expand the heaviest callstack up to a certain depth and select the frame
     // at that depth.
     const { tree, expandedStacks } = this.props;
@@ -82,14 +86,6 @@ class ProfileTreeView extends Component {
     const maxInterestingDepth = 17; // scientifically determined
     let currentStack = tree.getRoots()[0];
     newExpandedStacks.push(currentStack);
-    for (let i = 0; i < maxInterestingDepth; i++) {
-      const children = tree.getChildren(currentStack);
-      if (children.length === 0) {
-        break;
-      }
-      currentStack = children[0];
-      newExpandedStacks.push(currentStack);
-    }
     this._onExpandedStacksChange(newExpandedStacks);
     this._onSelectedStackChange(currentStack);
   }

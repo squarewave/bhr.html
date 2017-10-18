@@ -21,5 +21,5 @@ messages.PROFILE_RUNNABLES_PROCESSED = function(message, call) {
 };
 
 messages.DATE_GRAPH_REBUILT = function(message, call) {
-  call(dateGraphRebuilt, message.dateGraph);
+  call(dateGraphRebuilt, message.dateGraph, message.workerIndex, message.numWorkers);
 };
