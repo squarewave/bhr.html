@@ -2,6 +2,7 @@ import React, { Component, PropTypes } from 'react';
 import shallowCompare from 'react-addons-shallow-compare';
 import classNames from 'classnames';
 import VirtualList from './VirtualList';
+import Tooltip from './Tooltip';
 import { BackgroundImageStyleDef } from './StyleDef';
 
 import { ContextMenuTrigger } from 'react-contextmenu';
@@ -56,6 +57,9 @@ class TreeViewRowFixedColumns extends Component {
   constructor(props) {
     super(props);
     this._onClick = this._onClick.bind(this);
+    this._onMouseMove = this._onMouseMove.bind(this);
+    this._onMouseOut = this._onMouseOut.bind(this);
+    this.state = {};
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -67,11 +71,24 @@ class TreeViewRowFixedColumns extends Component {
     onClick(nodeId, event);
   }
 
+  _onMouseMove(event) {
+    this.setState({mouseIn: true, mouseX: event.pageX, mouseY: event.pageY});
+  }
+
+  _onMouseOut(event) {
+    this.setState({mouseIn: false});
+  }
+
   render() {
     const { node, columns, index, selected, highlightString } = this.props;
+    const { mouseIn, mouseX, mouseY } = this.state;
     const evenOddClassName = (index % 2) === 0 ? 'even' : 'odd';
     return (
-      <div className={`treeViewRow treeViewRowFixedColumns ${evenOddClassName} ${selected ? 'selected' : ''}`} style={{height: '16px'}} onMouseDown={this._onClick}>
+      <div className={`treeViewRow treeViewRowFixedColumns ${evenOddClassName} ${selected ? 'selected' : ''}`}
+           style={{height: '16px'}}
+           onMouseDown={this._onClick}
+           onMouseMove={this._onMouseMove}
+           onMouseOut={this._onMouseOut}>
         {
           columns.map(col => {
             const RenderComponent = col.component;
@@ -87,6 +104,21 @@ class TreeViewRowFixedColumns extends Component {
                    </span>;
           })
         }
+        {mouseIn &&
+          <Tooltip mouseX={mouseX} mouseY={mouseY}>
+            <div className="tooltipHeader">
+              {columns.map(col => {
+                return <div key={col.tooltipProp} className="tooltipOneLine">
+                  <div className="tooltipTiming">
+                    {node[col.tooltipProp]}
+                  </div>
+                  <div className="tooltipTitle">
+                    ({col.title})
+                  </div>
+                </div>;
+              })}
+            </div>
+          </Tooltip>}
       </div>
     );
   }

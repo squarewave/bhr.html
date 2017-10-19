@@ -4,6 +4,7 @@
 
 // @flow
 import { timeCode } from '../common/time-code';
+import { mapObj, objectEntries } from '../common/utils';
 import type { Profile, Thread, IndexIntoStackTable } from './types/profile';
 
 export type Summary = { [id: string]: number };
@@ -192,30 +193,4 @@ export function calculateRollingSummaries(
 
     return rollingSummary;
   });
-}
-
-function mapObj<T>(object: { [string]: T }, fn: (T, string, number) => T) {
-  let i = 0;
-  const mappedObj = {};
-  for (const key in object) {
-    if (object.hasOwnProperty(key)) {
-      i++;
-      mappedObj[key] = fn(object[key], key, i);
-    }
-  }
-  return mappedObj;
-}
-
-/**
- * Flow requires a type-safe implementation of Object.entries().
- * See: https://github.com/facebook/flow/issues/2174
- */
-function objectEntries<T>(object: { [id: string]: T }): Array<[string, T]> {
-  const entries = [];
-  for (const key in object) {
-    if (object.hasOwnProperty(key)) {
-      entries.push([key, object[key]]);
-    }
-  }
-  return entries;
 }

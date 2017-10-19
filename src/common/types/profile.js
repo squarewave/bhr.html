@@ -94,11 +94,16 @@ export type Thread = {
   allDates: AllDatesTable,
 };
 
+export type UsageHoursByDate = {
+  [date: string]: number,
+};
+
 /**
  * All of the data for a processed profile.
  */
 export type Profile = {
   threads: Thread[],
   dates: string[],
+  usageHoursByDate: UsageHoursByDate,
   uuid: string,
 };

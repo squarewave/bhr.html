@@ -4,6 +4,7 @@ import type {
   ThunkAction,
 } from './types';
 import type { Profile } from '../../common/types/profile';
+import { objectValues, objectEntries } from '../../common/utils';
 import { UniqueStringArray } from '../unique-string-array';
 import { OneToManyIndex } from '../one-to-many-index';
 import { selectedThreadSelectors } from '../reducers/profile-view';
@@ -142,6 +143,9 @@ export function retrieveProfileFromTelemetry(durationSpec: string,
           });
         }
 
+        const totalUsageHours = objectValues(profile.usageHoursByDate)
+          .reduce((sum: number, next: number) => sum + next, 0);
+
         thread.sampleTable.sampleHangMs = new Float32Array(thread.sampleTable.length);
         thread.sampleTable.sampleHangCount = new Float32Array(thread.sampleTable.length);
 
@@ -155,8 +159,10 @@ export function retrieveProfileFromTelemetry(durationSpec: string,
             sampleHangCount.set(threadDate.sampleHangCount);
 
             for (let i = 0; i < thread.sampleTable.length; i++) {
-              thread.sampleTable.sampleHangMs[i] += sampleHangMs[i];
-              thread.sampleTable.sampleHangCount[i] += sampleHangCount[i];
+              thread.sampleTable.sampleHangMs[i] += sampleHangMs[i] *
+                profile.usageHoursByDate[date] / totalUsageHours;
+              thread.sampleTable.sampleHangCount[i] += sampleHangCount[i] *
+                profile.usageHoursByDate[date] / totalUsageHours;
             }
 
             return Object.assign({}, threadDate, {date, sampleHangMs, sampleHangCount});
@@ -185,30 +191,4 @@ export function retrieveProfileFromTelemetry(durationSpec: string,
       dispatch(errorReceivingProfileFromTelemetry(error));
     }
   };
-}
-
-function mapObj<T>(object: { [string]: T }, fn: (T, string, number) => T) {
-  let i = 0;
-  const mappedObj = {};
-  for (const key in object) {
-    if (object.hasOwnProperty(key)) {
-      i++;
-      mappedObj[key] = fn(object[key], key, i);
-    }
-  }
-  return mappedObj;
-}
-
-/**
- * Flow requires a type-safe implementation of Object.entries().
- * See: https://github.com/facebook/flow/issues/2174
- */
-function objectEntries<T>(object: { [id: string]: T }): Array<[string, T]> {
-  const entries = [];
-  for (const key in object) {
-    if (object.hasOwnProperty(key)) {
-      entries.push([key, object[key]]);
-    }
-  }
-  return entries;
 }

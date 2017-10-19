@@ -49,6 +49,13 @@
   margin-inline-end: 4px;
 }
 
+.tooltipOneLine.noColor:before {
+  content: '';
+  width: 19px;
+  height: 19px;
+  margin-inline-end: 4px;
+}
+
 .tooltipTitle {
   flex: 1;
   text-overflow: ellipsis;

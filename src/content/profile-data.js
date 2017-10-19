@@ -2,6 +2,7 @@
 import type {
   Profile,
   Thread,
+  UsageHoursByDate,
   AllDatesTable,
   StackTable,
   FuncTable,
@@ -10,6 +11,7 @@ import type {
   IndexIntoStackTable,
 } from '../common/types/profile';
 import { timeCode } from '../common/time-code';
+import { objectValues } from '../common/utils';
 import { sampleCategorizer, categoryNames } from '../common/profile-categories';
 import { OneToManyIndex } from './one-to-many-index';
 
@@ -337,7 +339,11 @@ export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIn
   });
 }
 
-export function filterThreadToRange(thread: Thread, rangeStart: number, rangeEnd: number) {
+export function filterThreadToRange(thread: Thread, usageHoursByDate: UsageHoursByDate,
+                                    rangeStart: number, rangeEnd: number) {
+  const totalUsageHours = objectValues(usageHoursByDate)
+    .reduce((sum: number, next: number) => sum + next, 0);
+
   const { dates, stackTable } = thread;
   let sampleTable = Object.assign({}, thread.sampleTable, {
     sampleHangMs: new Float32Array(thread.sampleTable.length),
@@ -346,9 +352,10 @@ export function filterThreadToRange(thread: Thread, rangeStart: number, rangeEnd
 
   let newDates = dates.slice(rangeStart, rangeEnd + 1);
   for (let date of newDates) {
+    let usageHours = usageHoursByDate[date.date];
     for (let i = 0; i < sampleTable.length; i++) {
-      sampleTable.sampleHangMs[i] += date.sampleHangMs[i];
-      sampleTable.sampleHangCount[i] += date.sampleHangCount[i];
+      sampleTable.sampleHangMs[i] += date.sampleHangMs[i] * usageHours / totalUsageHours;
+      sampleTable.sampleHangCount[i] += date.sampleHangCount[i] * usageHours / totalUsageHours;
     }
   }
 
@@ -478,6 +485,7 @@ export function getEmptyProfile(): Profile {
   return {
     threads: [],
     dates: [],
+    usageHoursByDate: {},
     uuid: '',
   };
 }

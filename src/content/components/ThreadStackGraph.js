@@ -5,6 +5,7 @@ import shallowCompare from 'react-addons-shallow-compare';
 import classNames from 'classnames';
 import { timeCode } from '../../common/time-code';
 import { getDateGraph } from '../reducers/date-graph';
+import { getUsageHoursByDate } from '../reducers/profile-view';
 import Tooltip from './Tooltip'
 
 const BAR_WIDTH_RATIO = 0.8;
@@ -99,7 +100,7 @@ class ThreadStackGraph extends Component {
   }
 
   _pickGraphItem(mouseX, mouseY, canvas) {
-    const { rangeStart, rangeEnd, dateGraph, dates } = this.props;
+    const { rangeStart, rangeEnd, dateGraph, dates, usageHoursByDate } = this.props;
     const devicePixelRatio = canvas.ownerDocument ? canvas.ownerDocument.defaultView.devicePixelRatio : 1;
     const r = canvas.getBoundingClientRect();
 
@@ -136,6 +137,7 @@ class ThreadStackGraph extends Component {
         totalTime: dateGraph.totalTime[dateIndex],
         totalCount: dateGraph.totalCount[dateIndex],
         date: dates[dateIndex],
+        usageHours: usageHoursByDate[dates[dateIndex]],
       }
     }
 
@@ -194,20 +196,22 @@ function formatDate(dateStr /* yyyymmdd */) {
 
 function formatDecimal(decimalNumber) {
   if (decimalNumber >= 100) {
-    return decimalNumber.toFixed(1);
+    return parseFloat(decimalNumber.toFixed(1)).toLocaleString();
   } else {
-    return decimalNumber.toPrecision(3);
+    return parseFloat(decimalNumber.toPrecision(3)).toLocaleString();
   }
 }
 
 class StackGraphTooltipContents extends PureComponent {
   render() {
-    const { countHovered, date, totalTime, totalCount, className } = this.props;
+    const { countHovered, date, totalTime, totalCount, className, usageHours } = this.props;
 
     return (
       <div className={classNames('tooltipMarker', className)}>
         <div className="tooltipHeader">
-          Build date: {formatDate(date)}
+          <div>
+            Build date: {formatDate(date)}
+          </div>
           <div className={classNames('tooltipOneLine', 'totalTime')}>
             <div className="tooltipTiming">
               {formatDecimal(totalTime)}
@@ -224,6 +228,22 @@ class StackGraphTooltipContents extends PureComponent {
               hangs/hr sampled in selected node
             </div>
           </div>
+          <div className={classNames('tooltipOneLine', 'noColor')}>
+            <div className="tooltipTiming">
+              {Math.round(totalCount * usageHours).toLocaleString()}
+            </div>
+            <div className="tooltipTitle">
+              samples collected
+            </div>
+          </div>
+          <div className={classNames('tooltipOneLine', 'noColor')}>
+            <div className="tooltipTiming">
+              {formatDecimal(totalTime / totalCount)}
+            </div>
+            <div className="tooltipTitle">
+              ms mean hang duration
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -235,9 +255,11 @@ ThreadStackGraph.propTypes = {
   rangeEnd: PropTypes.number.isRequired,
   dateGraph: PropTypes.object.isRequired,
   dates: PropTypes.array.isRequired,
+  usageHoursByDate: PropTypes.object.isRequired,
   className: PropTypes.string,
 };
 
 export default connect(state => ({
   dateGraph: getDateGraph(state),
+  usageHoursByDate: getUsageHoursByDate(state),
 }), actions)(ThreadStackGraph);

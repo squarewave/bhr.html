@@ -14,6 +14,14 @@ function extractFaviconFromLibname(libname: string): string | null {
   return url.href;
 }
 
+function formatDecimal(decimalNumber) {
+  if (decimalNumber >= 100) {
+    return decimalNumber.toFixed(1);
+  } else {
+    return decimalNumber.toPrecision(3);
+  }
+}
+
 class ProfileTree {
 
   _stackTable: StackTable;
@@ -137,6 +145,9 @@ class ProfileTree {
         totalTimePercent: `${(100 * this._stackTimes.totalTime[stackIndex] / this._rootTotalTime).toFixed(1)}%`,
         selfTime: `${(100 * this._stackTimes.selfTime[stackIndex] / this._rootTotalTime).toFixed(1)}%`,
         totalCountPercent: `${(100 * this._stackCounts.totalCount[stackIndex] / this._rootTotalCount).toFixed(1)}%`,
+        totalTimeAbsolute: `${formatDecimal(this._stackTimes.totalTime[stackIndex])} ms/h`,
+        selfTimeAbsolute: `${formatDecimal(this._stackTimes.selfTime[stackIndex])} ms/h`,
+        totalCountAbsolute: `${formatDecimal(this._stackCounts.totalCount[stackIndex] * 1000.0)} hangs/kh`,
         name: funcName,
         lib: libName,
         dim: false,

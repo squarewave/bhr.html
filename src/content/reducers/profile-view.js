@@ -9,6 +9,7 @@ import * as ProfileTree from '../profile-tree';
 import type {
   Profile,
   Thread,
+  UsageHoursByDate,
   ThreadIndex,
   IndexIntoFuncTable,
   IndexIntoStackTable,
@@ -242,6 +243,7 @@ export type SelectorsForThread = {
 };
 
 const selectorsForThreads: { [key: ThreadIndex]: SelectorsForThread } = {};
+export const getUsageHoursByDate = (state: State): UsageHoursByDate => getProfile(state).usageHoursByDate;
 
 export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread => {
   if (!(threadIndex in selectorsForThreads)) {
@@ -260,10 +262,11 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
     );
     const getRangeFilteredThread = createSelector(
       getThread,
+      getUsageHoursByDate,
       getDisplayRange,
-      (thread, range): Thread => {
+      (thread, usageHoursByDate, range): Thread => {
         const { start, end } = range;
-        return ProfileData.filterThreadToRange(thread, start, end);
+        return ProfileData.filterThreadToRange(thread, usageHoursByDate, start, end);
       }
     );
     const _getRangeAndCallTreeFilteredThread = createSelector(
@@ -327,13 +330,14 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
     );
     const getRangeSelectionFilteredThread = createSelector(
       getFilteredThread,
+      getUsageHoursByDate,
       getProfileViewOptions,
-      (thread, viewOptions): Thread => {
+      (thread, usageHoursByDate, viewOptions): Thread => {
         if (!viewOptions.selection.hasSelection) {
           return thread;
         }
         const { selectionStart, selectionEnd } = viewOptions.selection;
-        return ProfileData.filterThreadToRange(thread, selectionStart, selectionEnd);
+        return ProfileData.filterThreadToRange(thread, usageHoursByDate, selectionStart, selectionEnd);
       }
     );
     const _getSelectedStackAsFuncArray = createSelector(
@@ -372,6 +376,7 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
 
     selectorsForThreads[threadIndex] = {
       getThread,
+      getUsageHoursByDate,
       getFriendlyThreadName,
       getViewOptions,
       getCallTreeFilters,

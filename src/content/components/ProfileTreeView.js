@@ -15,9 +15,9 @@ class ProfileTreeView extends Component {
   constructor(props) {
     super(props);
     this._fixedColumns = [
-      { propName: 'totalTimePercent', title: 'Time' },
-      { propName: 'selfTime', title: 'Self time' },
-      { propName: 'totalCountPercent', title: 'Count' },
+      { propName: 'totalTimePercent', title: 'Time', 'tooltipProp': 'totalTimeAbsolute' },
+      { propName: 'selfTime', title: 'Self time', 'tooltipProp': 'selfTimeAbsolute' },
+      { propName: 'totalCountPercent', title: 'Count', 'tooltipProp': 'totalCountAbsolute'  },
     ];
     this._mainColumn = { propName: 'name', title: '' };
     this._appendageColumn = { propName: 'lib', title: '' };
