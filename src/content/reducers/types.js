@@ -28,6 +28,7 @@ export type ProfileViewState = {
 
 export type AppState = {
   view: string,
+  error: string,
   isURLSetupDone: boolean,
 };
 
@@ -61,6 +62,7 @@ export type URLState = {
   platformFilter: string,
   onlyUserInteracting: boolean,
   payloadID: string | null,
+  mode: string,
 };
 
 export type IconState = Set<string>;

@@ -5,7 +5,7 @@ import { stringifyCallTreeFilters, parseCallTreeFilters } from './call-tree-filt
 import type { URLState } from './reducers/types';
 
 export function urlFromState(urlState: URLState) {
-  const pathname = '/';
+  const pathname = '/' + urlState.mode === 'none' ? '' : urlState.mode;
 
   // Start with the query parameters that are shown regardless of the active tab.
   const query: Object = {
@@ -29,6 +29,7 @@ export function urlFromState(urlState: URLState) {
 
 export function stateFromCurrentLocation(): URLState {
   const pathname = window.location.pathname;
+  const mode = pathname.split('/').filter(x => x)[0] || 'none';
   const qString = window.location.search.substr(1);
   const hash = window.location.hash;
   const query = queryString.parse(qString);
@@ -52,5 +53,6 @@ export function stateFromCurrentLocation(): URLState {
     invertCallstack: query.invertCallstack !== undefined,
     onlyUserInteracting: query.onlyUserInteracting !== undefined,
     hidePlatformDetails: query.hidePlatformDetails !== undefined,
+    mode,
   };
 }

@@ -12,6 +12,10 @@ import type {
 } from '../actions/types';
 import type { State, URLState, Reducer } from './types';
 
+function mode(state: string = 'none', action: Action) {
+  return state;
+}
+
 function payloadID(state: string | null = null, action: Action) {
   switch (action.type) {
     case 'RECEIVE_PROFILE_FROM_TELEMETRY':
@@ -24,7 +28,7 @@ function payloadID(state: string | null = null, action: Action) {
 function historical(state: boolean = false, action: Action) {
   switch (action.type) {
     case 'WAITING_FOR_PROFILE_FROM_TELEMETRY':
-      return action.historical;
+      return !!action.historical;
     default:
       return state;
   }
@@ -176,12 +180,13 @@ const urlStateReducer: Reducer<URLState> = (regularUrlStateReducer => (state: UR
   callTreeSearchString, callTreeFilters, invertCallstack,
   hidePlatformDetails, categoryFilter, platformFilter, 
   runnableFilter, durationSpec, onlyUserInteracting,
-  payloadID, historical,
+  payloadID, historical, mode,
 }));
 export default urlStateReducer;
 
 const getURLState = (state: State): URLState => state.urlState;
 
+export const getMode = (state: State) => getURLState(state).mode;
 export const getPayloadID = (state: State) => getURLState(state).payloadID;
 export const getDurationSpec = (state: State) => getURLState(state).durationSpec;
 export const getHistorical = (state: State) => getURLState(state).historical;

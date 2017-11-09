@@ -13,6 +13,11 @@ body, #root, .profileViewer {
   max-height: 100%;
 }
 
+.profileViewer {
+  height: 100%;
+  background-color: #fff;
+}
+
 .treeView {
   display: flex;
   flex-flow: column nowrap;

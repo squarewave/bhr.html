@@ -1,0 +1,86 @@
+.home {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.5;
+}
+
+.homeSection {
+  position: relative;
+  width: 75%;
+  max-width: 1200px;
+  box-sizing: border-box;
+  border: 1px solid #CCC;
+  border-radius: 3px;
+  padding: 8em;
+  font-size: 130%;
+  box-shadow: 0 5px 25px #0b1f50;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.homeTitle {
+  margin-top: 0;
+  margin-bottom: 0.5em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid #DDD;
+}
+
+.homeTitleSubtext {
+  font-weight: normal;
+}
+
+.homeTitleGithubIcon {
+  float: right;
+}
+
+.homeTitleGithubIcon svg {
+  vertical-align: middle;
+}
+
+.homeOptions {
+  display: flex;
+  margin-top: 30px;
+}
+
+.homeOptionsLeft,
+.homeOptionsRight {
+  width: 50%;
+}
+
+.homeOptionsRight {
+  padding-left: 30px;
+}
+
+.homeOptionsSubdivision {
+  background-color: #eee;
+  padding: 8px;
+  margin-bottom: 12px;
+}
+
+.homeOptionsButtonRowHeader {
+  margin-bottom: 6px;
+}
+
+.homeOptionsButtonRow {
+  margin-bottom: 6px;
+}
+
+.homeButton {
+  display: inline-block;
+  padding: 0.4em;
+  background-color: #0088cc;
+  color: #fff;
+  text-decoration: none;
+  transition: background-color 300ms;
+  font-weight: bold;
+  font-size: 14px;
+  margin-right: 12px;
+}
+
+.homeButton:hover {
+  color: #fff;
+  background-color: #0088cc;
+}

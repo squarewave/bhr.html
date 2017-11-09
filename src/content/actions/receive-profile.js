@@ -44,10 +44,10 @@ export function receiveProfileFromTelemetry(profile: Profile): ThunkAction {
   };
 }
 
-export function errorReceivingProfileFromTelemetry(error: any): Action {
+export function errorReceivingProfileFromTelemetry(error: Error): Action {
   return {
     type: 'ERROR_RECEIVING_PROFILE_FROM_TELEMETRY',
-    error,
+    error: error.toString(),
   };
 }
 

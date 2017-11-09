@@ -1,0 +1,14 @@
+.root {
+  position: relative;
+  margin: auto auto;
+  width: 75%;
+  max-width: 1200px;
+  box-sizing: border-box;
+  border: 1px solid #CCC;
+  border-radius: 3px;
+  padding: 8em;
+  font-size: 130%;
+  box-shadow: 0 5px 25px #0b1f50;
+  background-color: #fff;
+  overflow: hidden;
+}
