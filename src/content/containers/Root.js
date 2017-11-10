@@ -32,7 +32,8 @@ class ProfileViewWhenReadyImpl extends Component {
       durationSpec,
       payloadID, 
       historical,
-      retrieveProfileFromTelemetry
+      retrieveProfileFromTelemetry,
+      retrieveTrackedDataFromTelemetry,
     } = this.props;
 
     if (mode == 'none') {
@@ -52,6 +53,7 @@ class ProfileViewWhenReadyImpl extends Component {
     } else if (mode == 'track') {
       switch (view) {
         case 'INITIALIZING':
+          retrieveTrackedDataFromTelemetry();
           return this._initializingView();
         case 'ERROR':
           return this._errorView();

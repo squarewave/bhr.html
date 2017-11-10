@@ -98,10 +98,10 @@ class Home extends PureComponent {
               <div className="homeOptionsSubdivision">
                 <div className="homeOptionsButtonRowHeader">Tracked hangs</div>
                 <div className="homeOptionsButtonRow">
-                  {this._homeButton("/track?durationSpec=2048_65536&historical=false", "All hangs")}
+                  {this._homeButton("/track", "All hangs")}
                 </div>
                 <div className="homeOptionsButtonRow">
-                  {this._homeButton("/track?durationSpec=2048_65536&historical=false", "Devtools hangs")}
+                  {this._homeButton("/track", "Devtools hangs")}
                 </div>
               </div>
             </div>

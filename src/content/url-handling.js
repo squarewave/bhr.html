@@ -29,10 +29,18 @@ export function urlFromState(urlState: URLState) {
 
 export function stateFromCurrentLocation(): URLState {
   const pathname = window.location.pathname;
-  const mode = pathname.split('/').filter(x => x)[0] || 'none';
   const qString = window.location.search.substr(1);
   const hash = window.location.hash;
   const query = queryString.parse(qString);
+
+  let mode = pathname.split('/').filter(x => x)[0];
+  if (!mode) {
+    if (query.durationSpec) {
+      mode = 'explore';
+    } else {
+      mode = 'none';
+    }
+  }
 
   const selectedThread = query.thread !== undefined ? +query.thread : 0;
 

@@ -4,16 +4,35 @@ import type {
   ThunkAction,
 } from './types';
 import type { Profile } from '../../common/types/profile';
+import type { TrackedData } from '../../common/types/trackedData';
 import { objectValues, objectEntries } from '../../common/utils';
 import { UniqueStringArray } from '../unique-string-array';
 import { OneToManyIndex } from '../one-to-many-index';
 import { selectedThreadSelectors } from '../reducers/profile-view';
+
+function getCacheBuster() {
+  let date = new Date();
+  return 'd=' + date.getMonth() + '' + date.getDate();
+}
 
 export function waitingForProfileFromTelemetry(durationSpec: string, historical: boolean): Action {
   return {
     type: 'WAITING_FOR_PROFILE_FROM_TELEMETRY',
     durationSpec,
     historical,
+  };
+}
+
+export function waitingForTrackedDataFromTelemetry(): Action {
+  return {
+    type: 'WAITING_FOR_TRACKED_DATA_FROM_TELEMETRY',
+  };
+}
+
+export function receiveTrackedDataFromTelemetry(trackedData: TrackedData): Action {
+  return {
+    type: 'RECEIVE_TRACKED_DATA_FROM_TELEMETRY',
+    trackedData,
   };
 }
 
@@ -48,6 +67,22 @@ export function errorReceivingProfileFromTelemetry(error: Error): Action {
   return {
     type: 'ERROR_RECEIVING_PROFILE_FROM_TELEMETRY',
     error: error.toString(),
+  };
+}
+
+export function retrieveTrackedDataFromTelemetry(): ThunkAction {
+  return async dispatch => {
+    dispatch(waitingForTrackedDataFromTelemetry());
+
+    try {
+      const url = `https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/historical_data.json?${getCacheBuster()}`;
+      const res = await fetch(url);
+      const profile = await res.json();
+
+      dispatch(receiveTrackedDataFromTelemetry(profile)); 
+    } catch(e) {
+      dispatch(errorReceivingProfileFromTelemetry(e)); 
+    }
   };
 }
 

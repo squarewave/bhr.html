@@ -7,25 +7,27 @@
 import React, { PureComponent, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import type { Action, ThunkAction } from '../actions/types';
+import type { TrackedData } from '../../common/types/trackedData'
 import actions from '../actions';
+import { getTrackedData } from '../reducers/tracked-data-view'
 
 type Props = {
   className: string,
+  trackedData: TrackedData,
 };
 
 class TrackedDataViewer extends PureComponent {
   props: Props;
 
-  constructor(props) {
-    super(props);
-  }
-
   render() {
     const {
       className,
+      trackedData,
     } = this.props;
+
     return (
       <div className={className}>
+        {trackedData.length}
       </div>
     );
   }
@@ -33,8 +35,10 @@ class TrackedDataViewer extends PureComponent {
 
 TrackedDataViewer.propTypes = {
   className: PropTypes.string.isRequired,
+  trackedData: PropTypes.array.isRequired,
 };
 
 export default connect(state => ({
   className: 'trackedDataViewer',
+  trackedData: getTrackedData(state),
 }), actions)(TrackedDataViewer);

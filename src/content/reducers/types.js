@@ -5,6 +5,7 @@ import type {
 } from '../actions/types';
 import type { Days, StartEndRange } from '../../common/types/units';
 import type { IndexIntoFuncTable, Profile, ThreadIndex } from '../../common/types/profile';
+import type { TrackedData } from '../../common/types/trackedData';
 import type { DateGraph, CategorySummary } from '../../common/types/workers';
 
 export type Reducer<T> = (T, Action) => T;
@@ -24,6 +25,10 @@ export type ProfileViewState = {
     zeroAt: Days,
   },
   profile: Profile,
+};
+
+export type TrackedDataViewState = {
+  trackedData: TrackedData,
 };
 
 export type AppState = {
@@ -70,6 +75,7 @@ export type IconState = Set<string>;
 export type State = {
   app: AppState,
   profileView: ProfileViewState,
+  trackedDataView: TrackedDataViewState,
   runnablesView: RunnablesViewState,
   categoriesView: CategoriesViewState,
   urlState: URLState,

@@ -1,5 +1,6 @@
 // @flow
 import type { Profile, Thread, ThreadIndex, IndexIntoFuncTable } from '../../common/types/profile';
+import type { TrackedData } from '../../common/types/trackedData';
 import type { DateGraph, CategorySummary } from '../../common/types/workers';
 import type { State } from '../reducers/types';
 
@@ -55,6 +56,7 @@ type ReceiveProfileAction =
   { type: "RECEIVE_PROFILE_FROM_FILE", profile: Profile } |
   { type: "RECEIVE_PROFILE_FROM_WEB", profile: Profile } |
   { type: "RECEIVE_PROFILE_FROM_TELEMETRY", profile: Profile } |
+  { type: "RECEIVE_TRACKED_DATA_FROM_TELEMETRY", trackedData: TrackedData } |
   { type: 'REQUESTING_SYMBOL_TABLE', requestedLib: RequestedLib } |
   { type: 'RECEIVED_SYMBOL_TABLE_REPLY', requestedLib: RequestedLib } |
   { type: 'START_SYMBOLICATING' } |
@@ -71,6 +73,7 @@ type URLEnhancerAction =
 type URLStateAction =
   { type: 'WAITING_FOR_PROFILE_FROM_FILE' } |
   { type: 'WAITING_FOR_PROFILE_FROM_TELEMETRY', durationSpec: string, historical: boolean } |
+  { type: 'WAITING_FOR_TRACKED_DATA_FROM_TELEMETRY' } |
   { type: 'PROFILE_PUBLISHED', hash: string } |
   { type: 'CHANGE_SELECTED_TAB', selectedTab: string } |
   { type: 'ADD_RANGE_FILTER', start: number, end: number } |

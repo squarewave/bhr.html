@@ -7,8 +7,10 @@ import type { State, AppState, Reducer } from './types';
 function view(state: string = 'INITIALIZING', action: Action) {
   switch (action.type) {
     case 'RECEIVE_PROFILE_FROM_TELEMETRY':
+    case 'RECEIVE_TRACKED_DATA_FROM_TELEMETRY':
       return 'PROFILE';
     case 'WAITING_FOR_PROFILE_FROM_TELEMETRY':
+    case 'WAITING_FOR_TRACKED_DATA_FROM_TELEMETRY':
       return 'INITIALIZING';
     case 'ERROR_RECEIVING_PROFILE_FROM_TELEMETRY':
       return 'ERROR';
