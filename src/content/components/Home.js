@@ -103,6 +103,11 @@ class Home extends PureComponent {
                 <div className="homeOptionsButtonRow">
                   {this._homeButton("/?mode=track&trackedStat=" + encodeURIComponent("Devtools Hangs"), "Devtools hangs")}
                 </div>
+                <div className="homeOptionsButtonRow">
+                  <a href="https://github.com/squarewave/bhr.html/issues/new?title=Add%20Tracking%20for%20[What%20you%20want%20to%20track]&body=[Explain%20the%20details%20of%20what%20you%20need%20tracked,%20like%20%22stacks%20containing%20foobar%22]">
+                    Track something new
+                  </a>
+                </div>
               </div>
             </div>
           </div>
