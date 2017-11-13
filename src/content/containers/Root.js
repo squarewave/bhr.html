@@ -13,15 +13,30 @@ require('./Root.css');
 
 class ProfileViewWhenReadyImpl extends Component {
   _errorView(error) {
-    return <div className="root">Received error: {error}</div>;
+    return (
+      <div className="root">
+        <div><a href="/">&lt;&lt; back</a></div>
+        Received error: {error}
+      </div>
+    );
   }
 
   _initializingView() {
-    return <div className="root">Waiting for profile from telemetry</div>;
+    return (
+      <div className="root">
+        <div><a href="/">&lt;&lt; back</a></div>
+        Waiting for profile from telemetry...
+      </div>
+    );
   }
 
   _notFoundView() {
-    return <div className="root">View not found.</div>;
+    return (
+      <div className="root">
+        <div><a href="/">&lt;&lt; back</a></div>
+        View not found.
+      </div>
+    );
   }
 
   render() {
@@ -44,7 +59,7 @@ class ProfileViewWhenReadyImpl extends Component {
           retrieveProfileFromTelemetry(durationSpec, payloadID, historical);
           return this._initializingView();
         case 'ERROR':
-          return this._errorView();
+          return this._errorView(error);
         case 'PROFILE':
           return <ProfileViewer/>;
         default:

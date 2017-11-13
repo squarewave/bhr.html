@@ -5,11 +5,12 @@ import { stringifyCallTreeFilters, parseCallTreeFilters } from './call-tree-filt
 import type { URLState, ExploreURLState, TrackURLState, UnknownURLState } from './reducers/types';
 
 export function urlFromState(urlState: any) {
-  const pathname = '/' + urlState.mode === 'none' ? '' : urlState.mode;
+  const pathname = '/';
 
   // Start with the query parameters that are shown regardless of the active tab.
   let query: Object = {};
 
+  query.mode = urlState.mode;
   if (urlState.mode == 'explore') {
     query.range = stringifyRangeFilters(urlState.rangeFilters) || undefined,
     query.thread = `${urlState.selectedThread}`,
@@ -36,7 +37,7 @@ export function stateFromCurrentLocation(): URLState {
   const hash = window.location.hash;
   const query = queryString.parse(qString);
 
-  let mode = pathname.split('/').filter(x => x)[0];
+  let mode = query.mode;
   if (!mode) {
     if (query.durationSpec) {
       mode = 'explore';
@@ -45,9 +46,8 @@ export function stateFromCurrentLocation(): URLState {
     }
   }
 
-  const selectedThread = query.thread !== undefined ? +query.thread : 0;
-
   if (mode == 'explore') {
+    const selectedThread = query.thread !== undefined ? +query.thread : 0;
     return ({
       selectedTab: 'calltree',
       durationSpec: query.durationSpec || '2048_65536',

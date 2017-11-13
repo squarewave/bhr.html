@@ -76,21 +76,21 @@ class Home extends PureComponent {
               <div className="homeOptionsSubdivision">
                 <div className="homeOptionsButtonRowHeader">Light hangs (128-512ms)</div>
                 <div className="homeOptionsButtonRow">
-                  {this._homeButton("/explore?durationSpec=128_512&historical=false", "Past 9 days")}
+                  {this._homeButton("/?mode=explore&durationSpec=128_512&historical=false", "Past 9 days")}
                 </div>
               </div>
               <div className="homeOptionsSubdivision">
                 <div className="homeOptionsButtonRowHeader">Medium hangs (512-2048ms)</div>
                 <div className="homeOptionsButtonRow">
-                  {this._homeButton("/explore?durationSpec=512_2048&historical=false", "Past 9 days")}
-                  {this._homeButton("/explore?durationSpec=512_2048&historical=true", "Since Sept. 1st (Experimental)")}
+                  {this._homeButton("/?mode=explore&durationSpec=512_2048&historical=false", "Past 9 days")}
+                  {this._homeButton("/?mode=explore&durationSpec=512_2048&historical=true", "Since Sept. 1st (Experimental)")}
                 </div>
               </div>
               <div className="homeOptionsSubdivision">
                 <div className="homeOptionsButtonRowHeader">Severe hangs (2048ms+)</div>
                 <div className="homeOptionsButtonRow">
-                  {this._homeButton("/explore?durationSpec=2048_65536&historical=false", "Past 9 days")}
-                  {this._homeButton("/explore?durationSpec=2048_65536&historical=true", "Since Sept. 1st (Experimental)")}
+                  {this._homeButton("/?mode=explore&durationSpec=2048_65536&historical=false", "Past 9 days")}
+                  {this._homeButton("/?mode=explore&durationSpec=2048_65536&historical=true", "Since Sept. 1st (Experimental)")}
                 </div>
               </div>
             </div>
@@ -98,10 +98,10 @@ class Home extends PureComponent {
               <div className="homeOptionsSubdivision">
                 <div className="homeOptionsButtonRowHeader">Tracked hangs</div>
                 <div className="homeOptionsButtonRow">
-                  {this._homeButton("/track?trackedStat=" + encodeURIComponent("All Hangs"), "All Hangs")}
+                  {this._homeButton("/?mode=track&trackedStat=" + encodeURIComponent("All Hangs"), "All Hangs")}
                 </div>
                 <div className="homeOptionsButtonRow">
-                  {this._homeButton("/track?trackedStat=" + encodeURIComponent("Devtools Hangs"), "Devtools hangs")}
+                  {this._homeButton("/?mode=track&trackedStat=" + encodeURIComponent("Devtools Hangs"), "Devtools hangs")}
                 </div>
               </div>
             </div>

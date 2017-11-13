@@ -80,7 +80,7 @@ class TrackedDataViewer extends PureComponent {
     let chartDatasets = [5,4,3,2,1,0].map(n => {
       let hangGroup = 128 << n;
       return {
-        label: `${hangGroup}ms+`,
+        label: `> ${hangGroup}ms`,
         backgroundColor: colorForHangGroup(n),
         data: postProcessData(entries.map(([date, hist]) => sumHistogram(hist, n)), 7).slice(start),
       }
