@@ -22,13 +22,19 @@ class FilterNavigatorBar extends PureComponent {
                                transitionLeaveTimeout={300}
                                component='ol'
                                className={classNames('filterNavigatorBar', className)}>
+        <li className={classNames(
+              'filterNavigatorBarItem',
+              'filterNavigatorBarRootItem'
+            )}
+            onClick={() => window.location.href = '/'}>
+          <span className='filterNavigatorBarItemContent'>Home</span>
+        </li>
         {
           items.map((item, i) => (
             <li key={i}
                 data-index={i}
                 className={classNames(
                   'filterNavigatorBarItem', {
-                    'filterNavigatorBarRootItem': i === 0,
                     'filterNavigatorBarBeforeSelectedItem': i === selectedItem - 1,
                     'filterNavigatorBarSelectedItem': i === selectedItem,
                     'filterNavigatorBarLeafItem': i === items.length - 1,
