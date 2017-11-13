@@ -1,5 +1,6 @@
 import React, { Component, PureComponent, PropTypes } from 'react';
 import { connect } from 'react-redux';
+import * as colors from 'photon-colors';
 import actions from '../actions';
 import shallowCompare from 'react-addons-shallow-compare';
 import classNames from 'classnames';
@@ -62,7 +63,7 @@ class ThreadStackGraph extends Component {
     c.width = Math.round(r.width * devicePixelRatio);
     c.height = Math.round(r.height * devicePixelRatio);
     const ctx = c.getContext('2d');
-    const rangeLength = rangeEnd - rangeStart + 1;
+    const rangeLength = rangeEnd - rangeStart;
 
     const { maxHangMs, maxHangCount } = this._getMaxGraphValues();
 
@@ -70,15 +71,46 @@ class ThreadStackGraph extends Component {
     const yDevicePixelsPerHangMs = c.height / maxHangMs;
     const yDevicePixelsPerHangCount = c.height / maxHangCount;
 
+    ctx.lineWidth = 2;
+
+    ctx.strokeStyle = colors.BLUE_50;
+    ctx.fillStyle = colors.BLUE_50;
+    for (let i = rangeStart; i <= rangeEnd; i++) {
+      const countHeight = dateGraph.totalCount[i] * yDevicePixelsPerHangCount;
+      const countY = c.height - countHeight;
+      if (i == 0) {
+        ctx.moveTo(0, countY);
+      } else {
+        ctx.lineTo((i - rangeStart) * xDevicePixelsPerDay, countY);
+      }
+    }
+    ctx.stroke();
+    for (let i = rangeStart; i <= rangeEnd; i++) {
+      const countHeight = dateGraph.totalCount[i] * yDevicePixelsPerHangCount;
+      const countY = c.height - countHeight;
+      ctx.beginPath();
+      ctx.arc((i - rangeStart) * xDevicePixelsPerDay, countY, 5, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = colors.BLUE_70;
+    ctx.fillStyle = colors.BLUE_70;
     for (let i = rangeStart; i <= rangeEnd; i++) {
       const timeHeight = dateGraph.totalTime[i] * yDevicePixelsPerHangMs;
-      const countHeight = dateGraph.totalCount[i] * yDevicePixelsPerHangCount;
-      const timeStartY = c.height - timeHeight;
-      const countStartY = c.height - countHeight;
-      ctx.fillStyle = '#7990c8';
-      ctx.fillRect((i - rangeStart) * xDevicePixelsPerDay, timeStartY, xDevicePixelsPerDay * BAR_WIDTH_RATIO, timeHeight);
-      ctx.fillStyle = '#a7b9e5';
-      ctx.fillRect((i - rangeStart) * xDevicePixelsPerDay + (xDevicePixelsPerDay * BAR_WIDTH_RATIO), countStartY, xDevicePixelsPerDay * (1 - BAR_WIDTH_RATIO), countHeight);
+      const timeY = c.height - timeHeight;
+      if (i == 0) {
+        ctx.moveTo(0, timeY);
+      } else {
+        ctx.lineTo((i - rangeStart) * xDevicePixelsPerDay, timeY);
+      }
+    }
+    ctx.stroke();
+    for (let i = rangeStart; i <= rangeEnd; i++) {
+      const timeHeight = dateGraph.totalTime[i] * yDevicePixelsPerHangMs;
+      const timeY = c.height - timeHeight;
+      ctx.beginPath();
+      ctx.arc((i - rangeStart) * xDevicePixelsPerDay, timeY, 5, 0, 2 * Math.PI);
+      ctx.fill();
     }
   }
 
@@ -104,7 +136,7 @@ class ThreadStackGraph extends Component {
     const devicePixelRatio = canvas.ownerDocument ? canvas.ownerDocument.defaultView.devicePixelRatio : 1;
     const r = canvas.getBoundingClientRect();
 
-    const rangeLength = rangeEnd - rangeStart + 1;
+    const rangeLength = rangeEnd - rangeStart;
     const { maxHangMs, maxHangCount } = this._getMaxGraphValues();
     const xPxPerDay = r.width / rangeLength;
     const yPxPerHangMs = r.height / maxHangMs;
@@ -115,9 +147,9 @@ class ThreadStackGraph extends Component {
     const invertedY = r.height - y;
 
     const normalized = x / xPxPerDay;
-    const floor = Math.floor(normalized);
-    const fract = normalized - floor;
-    const dateIndex = floor + rangeStart;
+    const rounded = Math.round(normalized);
+    const fract = normalized - rounded;
+    const dateIndex = rounded + rangeStart;
     const isCount = fract > BAR_WIDTH_RATIO;
 
     let hovered = false;

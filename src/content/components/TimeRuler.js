@@ -27,7 +27,7 @@ class TimeRuler extends Component {
     }
 
     const { zeroAt, rangeStart, rangeEnd, width } = this.props;
-    const pixelsPerDay = width / (rangeEnd - rangeStart + 1);
+    const pixelsPerDay = width / (rangeEnd - rangeStart);
     const minimumNotchWidth = 55; // pixels
     const firstNotchIndex = rangeStart - zeroAt;
     const lastNotchIndex = rangeEnd - zeroAt;

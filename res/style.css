@@ -15,7 +15,7 @@ body, #root, .profileViewer {
 
 .profileViewer {
   height: 100%;
-  background-color: #fff;
+  background-color: var(--grey-10);
 }
 
 .treeView {
@@ -26,13 +26,13 @@ body, #root, .profileViewer {
   -moz-user-select: none;
   user-select: none;
   cursor: default;
-  border-top: 1px solid #D6D6D6;
-  border-right: 1px solid #D6D6D6;
+  border-top: 1px solid var(--grey-30);
+  border-right: 1px solid var(--grey-30);
 }
 
 .treeViewHeader {
   padding: 1px 0;
-  border-bottom: 1px solid #D6D6D6;
+  border-bottom: 1px solid var(--grey-30);
   position: relative;
   height: 16px;
   background: white;
@@ -107,12 +107,12 @@ body, #root, .profileViewer {
   right: 0;
   bottom: 3px;
   width: 1px;
-  background: #E5E5E5;
+  background: var(--grey-20);
 }
 
 .treeViewRowColumn.treeViewFixedColumn {
   box-sizing: border-box;
-  border-right: 1px solid #D6D6D6;
+  border-right: 1px solid var(--grey-30);
 }
 .treeViewFixedColumn.totalTimePercent {
   left: 0px;
@@ -145,14 +145,14 @@ body, #root, .profileViewer {
 
 .treeViewAppendageColumn {
   margin-left: 10px;
-  color: #999;
+  color: var(--grey-50);
 }
 
 .treeViewRow.even, .treeViewRow.even > .treeViewFixedColumn {
-  background-color: #FFFFFF;
+  background-color: var(--grey-10);
 }
 .treeViewRow.odd, .treeViewRow.odd > .treeViewFixedColumn {
-  background-color: #F5F5F5;
+  background-color: var(--grey-20);
 }
 .treeViewRow.selected,
 .treeViewRow.selected > .treeViewFixedColumn {
@@ -160,7 +160,7 @@ body, #root, .profileViewer {
   color: black;
 }
 .treeViewRow.dim > .treeViewMainColumn {
-  color: #aaa;
+  color: var(--grey-40);
 }
 .treeViewBody:focus > * > * > * > .treeViewRow.selected,
 .treeViewBody:focus > * > * > * > .treeViewRow.selected > .treeViewFixedColumn {
@@ -171,8 +171,8 @@ body, #root, .profileViewer {
 .treeViewHighlighting {
   padding: 1px;
   margin: -1px;
-  color: #000;
-  background: #cbe8fe;
+  color: var(--ink-90);
+  background: var(--blue-40);
   border-radius: 2px;
   box-shadow: 0 0 0 0.5px rgba(0,0,0,0.05), 0 1px 1px rgba(0,0,0,.3);
   position: relative;
@@ -246,7 +246,7 @@ body, #root, .profileViewer {
   display: flex;
   flex-flow: column nowrap;
   flex: 1;
-  border-top: 1px solid #D6D6D6;
+  border-top: 1px solid var(--grey-30);
   max-width: 480px;
   overflow: auto;
 }
@@ -271,7 +271,7 @@ body, #root, .profileViewer {
   padding: 1px 5px;
   line-height: 16px;
   white-space: nowrap;
-  border-bottom: 1px solid #D6D6D6;
+  border-bottom: 1px solid var(--grey-30);
 }
 
 .pseudoStackRow {
@@ -280,16 +280,16 @@ body, #root, .profileViewer {
 }
 
 .pseudoStackMsBar {
-  background-color: #a7b9e5;
+  background-color: var(--blue-40);
   height: 12px;
 }
 
 .pseudoStackRow.even {
-  background-color: #FFFFFF;
+  background-color: var(--grey-10);
 }
 
 .pseudoStackRow.odd {
-  background-color: #F5F5F5;
+  background-color: var(--grey-20);
 }
 
 .profileViewerTopBar {
@@ -298,8 +298,8 @@ body, #root, .profileViewer {
   padding: 0;
   display: flex;
   flex-flow: row nowrap;
-  background: #EEE;
-  border-bottom: 1px solid #D6D6D6;
+  background: var(--grey-20);
+  border-bottom: 1px solid var(--grey-30);
 }
 
 .profileFilterNavigator {
@@ -310,7 +310,7 @@ body, #root, .profileViewer {
 .profileViewerHeader {
   position: relative;
   margin-left: 149px;
-  border-left: 1px solid #D6D6D6;
+  border-left: 1px solid var(--grey-30);
   -moz-user-focus: ignore;
 }
 
@@ -326,7 +326,7 @@ body, #root, .profileViewer {
   left: -150px;
   right: 0;
   height: 1px;
-  background: #D6D6D6;
+  background: var(--grey-30);
   z-index: 3;
 }
 
@@ -345,7 +345,7 @@ body, #root, .profileViewer {
   user-select: none;
   line-height: 20px;
   font-size: 9px;
-  color: #888;
+  color: var(--grey-50);
   cursor: default;
 }
 
@@ -358,7 +358,7 @@ body, #root, .profileViewer {
   margin-left: -1px;
   white-space: nowrap;
   text-align: right;
-  background: linear-gradient(transparent, #D6D6D6 19px, #D6D6D6 20px, #D6D6D666 0);
+  background: linear-gradient(transparent, var(--grey-30) 19px, var(--grey-30) 20px, var(--grey-30) 0);
 }
 
 .timeRulerNotchText {
@@ -375,7 +375,7 @@ body, #root, .profileViewer {
 
 .profileViewerHeaderIntervalMarkerOverviewContainerJank {
   padding: 6px 0;
-  border-bottom: 1px solid #D6D6D6;
+  border-bottom: 1px solid var(--grey-30);
 }
 
 .profileViewerHeaderIntervalMarkerOverviewJank {
@@ -396,12 +396,12 @@ body, #root, .profileViewer {
 
 .profileViewerHeaderIntervalMarkerOverview.selected {
   opacity: 1;
-  background-color: #e4eaf6;
+  background-color: var(--blue-40);
 }
 
 .profileViewerHeaderIntervalMarkerOverviewThreadGeckoMain {
   height: 18px;
-  border-bottom: 1px solid #D6D6D6;
+  border-bottom: 1px solid var(--grey-30);
 }
 
 .intervalMarkerTimelineCanvas {
@@ -416,7 +416,7 @@ body, #root, .profileViewer {
   width: 150px;
   position: absolute;
   padding: 0;
-  box-shadow: inset 0 1px #D6D6D6;
+  box-shadow: inset 0 1px var(--grey-30);
 }
 
 .profileThreadHeaderBar {
@@ -425,8 +425,8 @@ body, #root, .profileViewer {
   height: 30px;
   display: flex;
   flex-flow: row nowrap;
-  border-top: 1px solid #D6D6D6;
-  box-shadow: 0 1px #D6D6D6;
+  border-top: 1px solid var(--grey-30);
+  box-shadow: 0 1px var(--grey-30);
   background-color: white;
 }
 
@@ -440,7 +440,7 @@ body, #root, .profileViewer {
   font: message-box;
   font-size: 100%;
   line-height: 30px;
-  border-right: 1px solid #D6D6D6;
+  border-right: 1px solid var(--grey-30);
   margin: 0;
   margin-left: 14px;
   cursor: default;
@@ -458,14 +458,14 @@ body, #root, .profileViewer {
 }
 
 .threadStackGraph {
-  height: 120px;
+  height: 180px;
   width: 100%;
   position: relative;
 }
 
 .threadStackGraphCanvas {
   display: block;
-  height: 120px;
+  height: 180px;
   width: 100%;
 }
 
@@ -519,7 +519,7 @@ body, #root, .profileViewer {
 .grippyRangeEnd {
   width: 0px;
   padding: 3px;
-  background: #AAA;
+  background: var(--grey-40);
   border: 1px solid white;
   margin: 0 -4px;
   cursor: ew-resize;
@@ -532,7 +532,7 @@ body, #root, .profileViewer {
 .grippyRangeStart.dragging,
 .grippyRangeEnd:hover,
 .grippyRangeEnd.dragging {
-  background: #888;
+  background: var(--grey-60);
 }
 
 .grippyMoveRange {
@@ -596,8 +596,8 @@ body, #root, .profileViewer {
 .tabBarContainer {
   display: flex;
   flex-flow: row nowrap;
-  background: #EEE;
-  border-top: 1px solid #D6D6D6;
+  background: var(--grey-20);
+  border-top: 1px solid var(--grey-30);
   position: relative;
 }
 
@@ -618,7 +618,7 @@ body, #root, .profileViewer {
   -moz-user-select: none;
   text-align: center;
   padding: 4px;
-  border: solid #D6D6D6;
+  border: solid var(--grey-30);
   border-width: 0 1px;
   margin: 0 -0.5px;
   white-space: nowrap;
@@ -630,11 +630,11 @@ body, #root, .profileViewer {
 }
 
 .tabBarTabWrapper:not(.beingReordered) > .tabBarTab:not(.selected):hover {
-  background-color: #DDD;
+  background-color: var(--grey-30);
 }
 
 .profileSummaryView {
-  border-top: 1px solid #D6D6D6;
+  border-top: 1px solid var(--grey-30);
   padding: 10px;
   flex: 1;
   overflow-y: auto;
@@ -664,7 +664,7 @@ body, #root, .profileViewer {
 
 .taskTracerViewWrapper,
 .logViewWrapper {
-  border-top: 1px solid #D6D6D6;
+  border-top: 1px solid var(--grey-30);
   flex: 1;
   overflow: auto;
   position: relative;
@@ -709,8 +709,8 @@ body, #root, .profileViewer {
 .taskTracerThreadViewThreadName {
   width: 150px;
   margin: 0;
-  border-right: 1px solid #D6D6D6;
-  border-bottom: 1px solid #D6D6D6;
+  border-right: 1px solid var(--grey-30);
+  border-bottom: 1px solid var(--grey-30);
   font-size: 1em;
   font-weight: normal;
   box-sizing: border-box;
@@ -736,21 +736,6 @@ body, #root, .profileViewer {
   overflow: hidden;
 }
 
-.taskTracerThreadViewTrackTask {
-  margin: 0;
-  position: absolute;
-  z-index: 2;
-  top: 0;
-  height: 4px;
-  border-bottom: 1px solid white;
-  background: #7990c8;
-  box-sizing: border-box;
-}
-
-.taskTracerThreadViewTrackTask:hover {
-  background: #38445f;
-}
-
 .taskTracerThreadViewTrackTaskBeginDelay {
   display: block;
   position: absolute;
@@ -774,7 +759,7 @@ body, #root, .profileViewer {
 
 .initializing-text {
   max-width: 50%;
-  border: 1px solid #CCC;
+  border: 1px solid var(--grey-40);
   padding: 3em;
   font-size: 130%;
 }
@@ -783,16 +768,16 @@ body, #root, .profileViewer {
   margin-top: 0;
   margin-bottom: 0.5em;
   padding-bottom: 0.5em;
-  border-bottom: 1px solid #DDD;
+  border-bottom: 1px solid var(--grey-30);
 }
 
 .initializing-text span {
-  background-color: #F6F6F6;
-  border: 1px solid #CCC;
+  background-color: var(--grey-10);
+  border: 1px solid var(--grey-40);
   border-radius: 0.2em;
   display:inline-block;
   padding: 0.0em 0.5em;
-  box-shadow: 0.1em 0.1em 0 #BBB;
+  box-shadow: 0.1em 0.1em 0 var(--grey-20);
   margin: 0 0.2em;
 }
 
@@ -843,9 +828,9 @@ body, #root, .profileViewer {
   padding: 3px 0;
   margin: 2px 0 0;
   font-size: 12px;
-  color: #000;
+  color: var(--ink-90);
   text-align: left;
-  background-color: #fff;
+  background-color: var(--grey-10);
   border-radius: 3px;
   display: none;
   box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1), 0 10px 12px rgba(0, 0, 0, 0.3);
@@ -876,7 +861,7 @@ body, #root, .profileViewer {
 
 .react-contextmenu-item.react-contextmenu-item--disabled,
 .react-contextmenu-item.react-contextmenu-item--disabled:hover {
-  color: #888;
+  color: var(--grey-50);
   background-color: transparent;
 }
 
@@ -898,7 +883,7 @@ body, #root, .profileViewer {
   height: 0;
   border: 6px solid transparent;
   content: "";
-  border-left-color: #000;
+  border-left-color: var(--grey-90);
   top: 5px;
 }
 
@@ -922,11 +907,11 @@ body, #root, .profileViewer {
   top: 6px;
   width: 3px;
   height: 6px;
-  border: solid #000;
+  border: solid var(--ink-90);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
 
 .checked:hover {
-  border-color: #fff;
+  border-color: var(--grey-10);
 }

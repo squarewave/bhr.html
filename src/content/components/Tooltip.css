@@ -11,7 +11,7 @@
   display: inline-block;
   padding: 5px;
   border: 1px solid #ccc;
-  background-color: #f9f9f9;
+  background-color: var(--grey-10);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   text-align: left;
   overflow: hidden;
@@ -35,7 +35,7 @@
 
 .tooltipOneLine.totalTime:before {
   content: '';
-  background: #7990c8;
+  background: var(--blue-70);
   width: 19px;
   height: 19px;
   margin-inline-end: 4px;
@@ -43,7 +43,7 @@
 
 .tooltipOneLine.totalCount:before {
   content: '';
-  background: #a7b9e5;
+  background: var(--blue-50);
   width: 19px;
   height: 19px;
   margin-inline-end: 4px;
