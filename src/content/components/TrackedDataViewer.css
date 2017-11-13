@@ -1,0 +1,9 @@
+.trackedDataViewer {
+  width: 1000px;
+  margin: 0 auto;
+  box-shadow: 0 5px 25px #0b1f50;
+  background-color: #fff;
+  padding: 4em 8em;
+  border-radius: 3px;
+  border: 1px solid #CCC;
+}

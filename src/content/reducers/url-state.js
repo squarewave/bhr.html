@@ -10,9 +10,13 @@ import type { StartEndRange } from '../../common/types/units';
 import type {
   Action, CallTreeFiltersPerThread, CallTreeFilter,
 } from '../actions/types';
-import type { State, URLState, Reducer } from './types';
+import type { State, URLState, ExploreURLState, TrackURLState, Reducer } from './types';
 
 function mode(state: string = 'none', action: Action) {
+  return state;
+}
+
+function trackedStat(state: string = 'All Hangs', action: Action) {
   return state;
 }
 
@@ -180,28 +184,31 @@ const urlStateReducer: Reducer<URLState> = (regularUrlStateReducer => (state: UR
   callTreeSearchString, callTreeFilters, invertCallstack,
   hidePlatformDetails, categoryFilter, platformFilter, 
   runnableFilter, durationSpec, onlyUserInteracting,
-  payloadID, historical, mode,
+  payloadID, historical, mode, trackedStat,
 }));
 export default urlStateReducer;
 
 const getURLState = (state: State): URLState => state.urlState;
+const getExploreURLState = (state: State): ExploreURLState => (state.urlState : any);
+const getTrackURLState = (state: State): TrackURLState => (state.urlState : any);
 
 export const getMode = (state: State) => getURLState(state).mode;
-export const getPayloadID = (state: State) => getURLState(state).payloadID;
-export const getDurationSpec = (state: State) => getURLState(state).durationSpec;
-export const getHistorical = (state: State) => getURLState(state).historical;
-export const getRangeFilters = (state: State) => getURLState(state).rangeFilters;
-export const getHidePlatformDetails = (state: State) => getURLState(state).hidePlatformDetails;
-export const getInvertCallstack = (state: State) => getURLState(state).invertCallstack;
-export const getOnlyUserInteracting = (state: State) => getURLState(state).onlyUserInteracting;
-export const getCategoryFilter = (state: State) => getURLState(state).categoryFilter;
-export const getPlatformFilter = (state: State) => getURLState(state).platformFilter;
-export const getRunnableFilter = (state: State) => getURLState(state).runnableFilter;
-export const getSearchString = (state: State) => getURLState(state).callTreeSearchString;
-export const getSelectedTab = (state: State) => getURLState(state).selectedTab;
-export const getSelectedThreadIndex = (state: State) => getURLState(state).selectedThread;
+export const getTrackedStat = (state: State) => getTrackURLState(state).trackedStat;
+export const getPayloadID = (state: State) => getExploreURLState(state).payloadID;
+export const getDurationSpec = (state: State) => getExploreURLState(state).durationSpec;
+export const getHistorical = (state: State) => getExploreURLState(state).historical;
+export const getRangeFilters = (state: State) => getExploreURLState(state).rangeFilters;
+export const getHidePlatformDetails = (state: State) => getExploreURLState(state).hidePlatformDetails;
+export const getInvertCallstack = (state: State) => getExploreURLState(state).invertCallstack;
+export const getOnlyUserInteracting = (state: State) => getExploreURLState(state).onlyUserInteracting;
+export const getCategoryFilter = (state: State) => getExploreURLState(state).categoryFilter;
+export const getPlatformFilter = (state: State) => getExploreURLState(state).platformFilter;
+export const getRunnableFilter = (state: State) => getExploreURLState(state).runnableFilter;
+export const getSearchString = (state: State) => getExploreURLState(state).callTreeSearchString;
+export const getSelectedTab = (state: State) => getExploreURLState(state).selectedTab;
+export const getSelectedThreadIndex = (state: State) => getExploreURLState(state).selectedThread;
 export const getCallTreeFilters = (state: State, threadIndex: ThreadIndex): CallTreeFilter[] => {
-  return getURLState(state).callTreeFilters[threadIndex] || [];
+  return getExploreURLState(state).callTreeFilters[threadIndex] || [];
 };
 
 export const getURLPredictor = createSelector(

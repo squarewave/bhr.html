@@ -98,10 +98,10 @@ class Home extends PureComponent {
               <div className="homeOptionsSubdivision">
                 <div className="homeOptionsButtonRowHeader">Tracked hangs</div>
                 <div className="homeOptionsButtonRow">
-                  {this._homeButton("/track", "All hangs")}
+                  {this._homeButton("/track?trackedStat=" + encodeURIComponent("All Hangs"), "All Hangs")}
                 </div>
                 <div className="homeOptionsButtonRow">
-                  {this._homeButton("/track", "Devtools hangs")}
+                  {this._homeButton("/track?trackedStat=" + encodeURIComponent("Devtools Hangs"), "Devtools hangs")}
                 </div>
               </div>
             </div>

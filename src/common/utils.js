@@ -39,3 +39,24 @@ export function objectValues<T>(object: { [id: string]: T }): Array<T> {
   }
   return values;
 }
+
+
+export function friendlyThreadName(threadName: string): string {
+  let label;
+  switch (threadName) {
+    case 'Gecko':
+      label = 'Main Thread';
+      break;
+    case 'Gecko_Child':
+      label = 'Content';
+      break;
+    case 'Gecko_Child_ForcePaint':
+      label = 'Content ForcePaint';
+      break;
+  }
+
+  if (!label) {
+    label = threadName;
+  }
+  return label;
+}

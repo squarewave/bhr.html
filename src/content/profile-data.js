@@ -11,7 +11,7 @@ import type {
   IndexIntoStackTable,
 } from '../common/types/profile';
 import { timeCode } from '../common/time-code';
-import { objectValues } from '../common/utils';
+import { objectValues, friendlyThreadName } from '../common/utils';
 import { sampleCategorizer, categoryNames } from '../common/profile-categories';
 import { OneToManyIndex } from './one-to-many-index';
 
@@ -385,23 +385,7 @@ export function getStackFromFuncArray(funcArray: IndexIntoFuncTable[], stackTabl
 }
 
 export function getFriendlyThreadName(threads: Thread[], thread: Thread): string {
-  let label;
-  switch (thread.name) {
-    case 'Gecko':
-      label = 'Main Thread';
-      break;
-    case 'Gecko_Child':
-      label = 'Content';
-      break;
-    case 'Gecko_Child_ForcePaint':
-      label = 'Content ForcePaint';
-      break;
-  }
-
-  if (!label) {
-    label = thread.name;
-  }
-  return label;
+  return friendlyThreadName(thread.name);
 }
 
 export function getStackAsFuncArray(stackIndex: IndexIntoStackTable, stackTable: StackTable): IndexIntoFuncTable[] {

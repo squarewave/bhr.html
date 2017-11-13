@@ -52,7 +52,7 @@ export type CategoriesViewState = {
   categories: CategorySummary[] | null,
 };
 
-export type URLState = {
+export type ExploreURLState = {
   selectedTab: string,
   rangeFilters: RangeFilterState[],
   selectedThread: ThreadIndex,
@@ -69,6 +69,17 @@ export type URLState = {
   payloadID: string | null,
   mode: string,
 };
+
+export type TrackURLState = {
+  trackedStat: string,
+  mode: string,
+};
+
+export type UnknownURLState = {
+  mode: string,
+};
+
+export type URLState = ExploreURLState | TrackURLState | UnknownURLState;
 
 export type IconState = Set<string>;
 
