@@ -57,6 +57,7 @@ class ThreadStackGraph extends Component {
 
   drawCanvas(c) {
     let { rangeStart, rangeEnd, dateGraph } = this.props;
+    let { pickedItem } = this.state;
 
     const devicePixelRatio = c.ownerDocument ? c.ownerDocument.defaultView.devicePixelRatio : 1;
     const r = c.getBoundingClientRect();
@@ -72,7 +73,6 @@ class ThreadStackGraph extends Component {
     const yDevicePixelsPerHangCount = c.height / maxHangCount;
 
     ctx.lineWidth = 2;
-
     ctx.strokeStyle = colors.BLUE_50;
     ctx.fillStyle = colors.BLUE_50;
     for (let i = rangeStart; i <= rangeEnd; i++) {
@@ -85,14 +85,21 @@ class ThreadStackGraph extends Component {
       }
     }
     ctx.stroke();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = colors.TEAL_50;
     for (let i = rangeStart; i <= rangeEnd; i++) {
+      const isPicked = pickedItem && pickedItem.dateIndex == i;
       const countHeight = dateGraph.totalCount[i] * yDevicePixelsPerHangCount;
       const countY = c.height - countHeight;
       ctx.beginPath();
       ctx.arc((i - rangeStart) * xDevicePixelsPerDay, countY, 5, 0, 2 * Math.PI);
       ctx.fill();
+      if (isPicked) {
+        ctx.stroke();
+      }
     }
 
+    ctx.lineWidth = 2;
     ctx.strokeStyle = colors.BLUE_70;
     ctx.fillStyle = colors.BLUE_70;
     for (let i = rangeStart; i <= rangeEnd; i++) {
@@ -105,12 +112,18 @@ class ThreadStackGraph extends Component {
       }
     }
     ctx.stroke();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = colors.BLUE_40;
     for (let i = rangeStart; i <= rangeEnd; i++) {
+      const isPicked = pickedItem && pickedItem.dateIndex == i;
       const timeHeight = dateGraph.totalTime[i] * yDevicePixelsPerHangMs;
       const timeY = c.height - timeHeight;
       ctx.beginPath();
       ctx.arc((i - rangeStart) * xDevicePixelsPerDay, timeY, 5, 0, 2 * Math.PI);
       ctx.fill();
+      if (isPicked) {
+        ctx.stroke();
+      }
     }
   }
 
@@ -146,34 +159,26 @@ class ThreadStackGraph extends Component {
     const y = mouseY - r.top;
     const invertedY = r.height - y;
 
-    const normalized = x / xPxPerDay;
-    const rounded = Math.round(normalized);
-    const fract = normalized - rounded;
-    const dateIndex = rounded + rangeStart;
-    const isCount = fract > BAR_WIDTH_RATIO;
+    const normalizedX = x / xPxPerDay;
+    const roundedX = Math.round(normalizedX);
+    const fractX = Math.abs(normalizedX - roundedX);
+    const dateIndex = roundedX + rangeStart;
+    const xIsClose = fractX < 0.2;
+    const normalizedY = invertedY / r.height;
+    const countY = dateGraph.totalCount[dateIndex] / maxHangCount;
+    const timeY = dateGraph.totalTime[dateIndex] / maxHangMs;
+    const deltaY = Math.min(Math.abs(countY - normalizedY), Math.abs(timeY - normalizedY));
+    const yIsClose = deltaY < 0.2;
 
-    let hovered = false;
-    if (isCount) {
-      if (invertedY < dateGraph.totalCount[dateIndex] * yPxPerHangCount) {
-        hovered = true;
-      }
-    } else {
-      if (invertedY < dateGraph.totalTime[dateIndex] * yPxPerHangMs) {
-        hovered = true;
-      }
-    }
-
-    if (hovered) {
+    if (xIsClose && yIsClose) {
       return {
-        countHovered: isCount,
+        dateIndex: dateIndex,
         totalTime: dateGraph.totalTime[dateIndex],
         totalCount: dateGraph.totalCount[dateIndex],
         date: dates[dateIndex],
         usageHours: usageHoursByDate[dates[dateIndex]],
       }
     }
-
-    return null;
   }
 
   _onMouseUp(e) {
@@ -236,7 +241,7 @@ function formatDecimal(decimalNumber) {
 
 class StackGraphTooltipContents extends PureComponent {
   render() {
-    const { countHovered, date, totalTime, totalCount, className, usageHours } = this.props;
+    const { date, totalTime, totalCount, className, usageHours } = this.props;
 
     return (
       <div className={classNames('tooltipMarker', className)}>
@@ -244,37 +249,37 @@ class StackGraphTooltipContents extends PureComponent {
           <div>
             Build date: {formatDate(date)}
           </div>
-          <div className={classNames('tooltipOneLine', 'totalTime')}>
-            <div className="tooltipTiming">
-              {formatDecimal(totalTime)}
-            </div>
-            <div className="tooltipTitle">
-              ms/hr hanging in selected node
-            </div>
+        </div>
+        <div className={classNames('tooltipOneLine', 'totalTime')}>
+          <div className="tooltipTiming">
+            {formatDecimal(totalTime)}
           </div>
-          <div className={classNames('tooltipOneLine', 'totalCount')}>
-            <div className="tooltipTiming">
-              {formatDecimal(totalCount)}
-            </div>
-            <div className="tooltipTitle">
-              hangs/hr sampled in selected node
-            </div>
+          <div className="tooltipTitle">
+            ms/hr hanging in selected node
           </div>
-          <div className={classNames('tooltipOneLine', 'noColor')}>
-            <div className="tooltipTiming">
-              {Math.round(totalCount * usageHours).toLocaleString()}
-            </div>
-            <div className="tooltipTitle">
-              samples collected
-            </div>
+        </div>
+        <div className={classNames('tooltipOneLine', 'totalCount')}>
+          <div className="tooltipTiming">
+            {formatDecimal(totalCount)}
           </div>
-          <div className={classNames('tooltipOneLine', 'noColor')}>
-            <div className="tooltipTiming">
-              {formatDecimal(totalTime / totalCount)}
-            </div>
-            <div className="tooltipTitle">
-              ms mean hang duration
-            </div>
+          <div className="tooltipTitle">
+            hangs/hr sampled in selected node
+          </div>
+        </div>
+        <div className={classNames('tooltipOneLine', 'noColor')}>
+          <div className="tooltipTiming">
+            {Math.round(totalCount * usageHours).toLocaleString()}
+          </div>
+          <div className="tooltipTitle">
+            samples collected
+          </div>
+        </div>
+        <div className={classNames('tooltipOneLine', 'noColor')}>
+          <div className="tooltipTiming">
+            {formatDecimal(totalTime / totalCount)}
+          </div>
+          <div className="tooltipTitle">
+            ms mean hang duration
           </div>
         </div>
       </div>
