@@ -103,7 +103,7 @@ type WorkerAction =
   { type: 'PROFILE_SUMMARY_COLLAPSE', threadIndex: number };
 
 type RunnablesAction = 
-  { type: 'PROFILE_RUNNABLES_PROCESSED', runnables: Object };
+  { type: 'PROFILE_RUNNABLES_PROCESSED', runnables: Object[] };
 
 export type Action =
   ProfileAction |

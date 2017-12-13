@@ -44,7 +44,7 @@ export type RangeFilterState = {
 
 export type RunnablesViewState = {
   expanded: Set<number>,
-  runnables: Object,
+  runnables: Object[],
 };
 
 export type CategoriesViewState = {

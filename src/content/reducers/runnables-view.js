@@ -9,7 +9,7 @@ import { getProfile } from './profile-view';
 import { createSelector } from 'reselect';
 
 export default function runnablesViewReducer(
-  state: RunnablesViewState = { expanded: new Set(), runnables: {} },
+  state: RunnablesViewState = { expanded: new Set(), runnables: [] },
   action: Action
 ): RunnablesViewState {
   switch (action.type) {

@@ -7,7 +7,7 @@ import type {
   Action
 } from './types';
 
-export function profileRunnablesProcessed(runnables: Object): Action {
+export function profileRunnablesProcessed(runnables: Object[]): Action {
   return {
     type: 'PROFILE_RUNNABLES_PROCESSED',
     runnables,
