@@ -24,17 +24,27 @@ class ThreadStackGraph extends Component {
     this._onMouseMove = this._onMouseMove.bind(this);
     this._onMouseOut = this._onMouseOut.bind(this);
     this.state = {};
+    this.previousParameters = {};
   }
 
-  _scheduleDraw() {
+  _maybeScheduleDraw() {
     if (!this._requestedAnimationFrame) {
       this._requestedAnimationFrame = true;
       window.requestAnimationFrame(() => {
         this._requestedAnimationFrame = false;
-        if (this.refs.canvas) {
-          timeCode('ThreadStackGraph render', () => {
-            this.drawCanvas(this.refs.canvas);
-          });
+        if (this.refs.canvas && (
+            this.previousParameters.rangeStart !== this.props.rangeStart ||
+            this.previousParameters.rangeEnd !== this.props.rangeEnd ||
+            this.previousParameters.dateGraph !== this.props.dateGraph ||
+            this.previousParameters.pickedItem !== this.state.pickedItem
+            )) {
+          this.previousParameters = {
+            rangeStart: this.props.rangeStart,
+            rangeEnd: this.props.rangeEnd,
+            dateGraph: this.props.dateGraph,
+            pickedItem: this.state.pickedItem,
+          };
+          this.drawCanvas(this.refs.canvas);
         }
       });
     }
@@ -72,7 +82,7 @@ class ThreadStackGraph extends Component {
     const yDevicePixelsPerHangMs = c.height / maxHangMs;
     const yDevicePixelsPerHangCount = c.height / maxHangCount;
 
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2 * devicePixelRatio;
     ctx.strokeStyle = colors.BLUE_50;
     ctx.fillStyle = colors.BLUE_50;
     for (let i = rangeStart; i <= rangeEnd; i++) {
@@ -85,21 +95,21 @@ class ThreadStackGraph extends Component {
       }
     }
     ctx.stroke();
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = colors.TEAL_50;
+    ctx.lineWidth = 1 * devicePixelRatio;
+    ctx.strokeStyle = colors.BLUE_40;
     for (let i = rangeStart; i <= rangeEnd; i++) {
       const isPicked = pickedItem && pickedItem.dateIndex == i;
       const countHeight = dateGraph.totalCount[i] * yDevicePixelsPerHangCount;
       const countY = c.height - countHeight;
       ctx.beginPath();
-      ctx.arc((i - rangeStart) * xDevicePixelsPerDay, countY, 5, 0, 2 * Math.PI);
+      ctx.arc((i - rangeStart) * xDevicePixelsPerDay, countY, 5 * devicePixelRatio, 0, 2 * Math.PI);
       ctx.fill();
       if (isPicked) {
         ctx.stroke();
       }
     }
 
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2 * devicePixelRatio;
     ctx.strokeStyle = colors.BLUE_70;
     ctx.fillStyle = colors.BLUE_70;
     for (let i = rangeStart; i <= rangeEnd; i++) {
@@ -112,14 +122,14 @@ class ThreadStackGraph extends Component {
       }
     }
     ctx.stroke();
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1 * devicePixelRatio;
     ctx.strokeStyle = colors.BLUE_40;
     for (let i = rangeStart; i <= rangeEnd; i++) {
       const isPicked = pickedItem && pickedItem.dateIndex == i;
       const timeHeight = dateGraph.totalTime[i] * yDevicePixelsPerHangMs;
       const timeY = c.height - timeHeight;
       ctx.beginPath();
-      ctx.arc((i - rangeStart) * xDevicePixelsPerDay, timeY, 5, 0, 2 * Math.PI);
+      ctx.arc((i - rangeStart) * xDevicePixelsPerDay, timeY, 5 * devicePixelRatio, 0, 2 * Math.PI);
       ctx.fill();
       if (isPicked) {
         ctx.stroke();
@@ -207,7 +217,7 @@ class ThreadStackGraph extends Component {
   }
 
   render() {
-    this._scheduleDraw();
+    this._maybeScheduleDraw();
     const { mouseX, mouseY, pickedItem } = this.state;
     return (
       <div className={this.props.className}

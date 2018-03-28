@@ -5,7 +5,14 @@ import ThreadStackGraph from '../components/ThreadStackGraph';
 import TimeSelectionScrubber from '../components/TimeSelectionScrubber';
 import OverflowEdgeIndicator from '../components/OverflowEdgeIndicator';
 import { connect } from 'react-redux';
-import { getProfile, getProfileViewOptions, getThreadOrder, getDisplayRange, getZeroAt, selectorsForThread } from '../reducers/profile-view';
+import {
+  getProfile,
+  getProfileViewOptions,
+  getThreadOrder,
+  getDisplayRange,
+  getZeroAt,
+  selectedThreadSelectors
+} from '../reducers/profile-view';
 import { getSelectedThreadIndex } from '../reducers/url-state';
 import actions from '../actions';
 
@@ -94,10 +101,9 @@ ProfileViewerHeader.propTypes = {
 
 export default connect(state => {
   const threadIndex = getSelectedThreadIndex(state);
-  const selectors = selectorsForThread(threadIndex);
   return {
-    selectedThread: selectors.getFilteredThread(state),
-    selectedStack: selectors.getSelectedStack(state),
+    selectedThread: selectedThreadSelectors.getFilteredThread(state),
+    selectedStack: selectedThreadSelectors.getSelectedStack(state),
     profile: getProfile(state),
     selection: getProfileViewOptions(state).selection,
     className: 'profileViewer',

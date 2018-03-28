@@ -7,6 +7,8 @@ import { BackgroundImageStyleDef } from './StyleDef';
 
 import { ContextMenuTrigger } from 'react-contextmenu';
 
+const MAX_VISIBLE_CHILDREN = 256;
+
 const TreeViewHeader = ({ fixedColumns, mainColumn }) => (
   <div className='treeViewHeader'>
     {
@@ -298,7 +300,8 @@ class TreeView extends Component {
       return;
     }
     const children = props.tree.getChildren(nodeId);
-    for (let i = 0; i < children.length; i++) {
+    const length = Math.min(children.length, MAX_VISIBLE_CHILDREN);
+    for (let i = 0; i < length; i++) {
       this._addVisibleRowsFromNode(props, arr, children[i], depth + 1);
     }
   }
@@ -306,7 +309,8 @@ class TreeView extends Component {
   _getAllVisibleRows(props) {
     const roots = props.tree.getRoots();
     const allRows = [];
-    for (let i = 0; i < roots.length; i++) {
+    const length = Math.min(roots.length, MAX_VISIBLE_CHILDREN);
+    for (let i = 0; i < length; i++) {
       this._addVisibleRowsFromNode(props, allRows, roots[i], 0);
     }
     return allRows;

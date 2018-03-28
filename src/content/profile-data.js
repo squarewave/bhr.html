@@ -341,26 +341,28 @@ export function filterThreadToPostfixStack(thread: Thread, postfixFuncs: IndexIn
 
 export function filterThreadToRange(thread: Thread, usageHoursByDate: UsageHoursByDate,
                                     rangeStart: number, rangeEnd: number) {
-  const totalUsageHours = objectValues(usageHoursByDate)
-    .reduce((sum: number, next: number) => sum + next, 0);
+  return timeCode('filterThreadToRange', () => {
+    const totalUsageHours = objectValues(usageHoursByDate)
+      .reduce((sum: number, next: number) => sum + next, 0);
 
-  const { dates, stackTable } = thread;
-  let sampleTable = Object.assign({}, thread.sampleTable, {
-    sampleHangMs: new Float32Array(thread.sampleTable.length),
-    sampleHangCount: new Float32Array(thread.sampleTable.length),
-  });
+    const { dates, stackTable } = thread;
+    let sampleTable = Object.assign({}, thread.sampleTable, {
+      sampleHangMs: new Float32Array(thread.sampleTable.length),
+      sampleHangCount: new Float32Array(thread.sampleTable.length),
+    });
 
-  let newDates = dates.slice(rangeStart, rangeEnd + 1);
-  for (let date of newDates) {
-    let usageHours = usageHoursByDate[date.date];
-    for (let i = 0; i < sampleTable.length; i++) {
-      sampleTable.sampleHangMs[i] += date.sampleHangMs[i] * usageHours / totalUsageHours;
-      sampleTable.sampleHangCount[i] += date.sampleHangCount[i] * usageHours / totalUsageHours;
+    let newDates = dates.slice(rangeStart, rangeEnd + 1);
+    for (let date of newDates) {
+      let usageHours = usageHoursByDate[date.date];
+      for (let i = 0; i < sampleTable.length; i++) {
+        sampleTable.sampleHangMs[i] += date.sampleHangMs[i] * usageHours / totalUsageHours;
+        sampleTable.sampleHangCount[i] += date.sampleHangCount[i] * usageHours / totalUsageHours;
+      }
     }
-  }
 
-  return Object.assign({}, thread, {
-    sampleTable,
+    return Object.assign({}, thread, {
+      sampleTable,
+    });
   });
 }
 
@@ -426,8 +428,8 @@ export function invertCallstack(thread: Thread): Thread {
       let stackIndex = prefixAndFuncToStack.get(prefixAndFuncIndex);
       if (stackIndex === undefined) {
         stackIndex = newStackTable.length++;
-        newStackTable.prefix[stackIndex] = prefix;
-        newStackTable.func[stackIndex] = func;
+        newStackTable.prefix.push(prefix);
+        newStackTable.func.push(func);
         prefixAndFuncToStack.set(prefixAndFuncIndex, stackIndex);
       }
       return stackIndex;
