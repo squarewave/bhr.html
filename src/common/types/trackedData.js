@@ -1,14 +1,18 @@
 // @flow
 
-export type TrackedCategoryHistogram = number[];
+export type TrackedComponentHistogram = number[];
 
-export type TrackedCategoryThread = {
-  [date: string]: TrackedCategoryHistogram,
+export type TrackedComponentCategory = {
+  [date: string]: TrackedComponentHistogram,
 };
 
-export type TrackedCategory = {
-  [thread: string]: TrackedCategoryThread,
+export type TrackedComponentThread = {
+  [category: string]: TrackedComponentCategory,
 };
 
-export type TrackedDataItem = [string, TrackedCategory];
+export type TrackedComponent = {
+  [thread: string]: TrackedComponentThread,
+};
+
+export type TrackedDataItem = [string, TrackedComponent];
 export type TrackedData = TrackedDataItem[];

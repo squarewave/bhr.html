@@ -75,7 +75,7 @@ export function retrieveTrackedDataFromTelemetry(): ThunkAction {
     dispatch(waitingForTrackedDataFromTelemetry());
 
     try {
-      const url = `https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/historical_data.json?${getCacheBuster()}`;
+      const url = `https://analysis-output.telemetry.mozilla.org/bhr/data/hang_aggregates/historical_data_dev.json?${getCacheBuster()}`;
       const res = await fetch(url);
       const profile = await res.json();
 

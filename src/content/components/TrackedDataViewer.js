@@ -9,7 +9,7 @@ import * as colors from 'photon-colors';
 import { Line } from 'react-chartjs-2'
 import { connect } from 'react-redux';
 import type { Action, ThunkAction } from '../actions/types';
-import type { TrackedData } from '../../common/types/trackedData'
+import type { TrackedComponent } from '../../common/types/trackedData'
 import actions from '../actions';
 import { getTrackedData } from '../reducers/tracked-data-view'
 import { getTrackedStat } from '../reducers/url-state'
@@ -17,21 +17,59 @@ import { objectEntries, friendlyThreadName } from '../../common/utils'
 
 require('./TrackedDataViewer.css');
 
-type Props = {
-  className: string,
-  trackedStat: string,
-  trackedData: TrackedData,
-};
+let categoryColorCache = {};
+let nextColorIndex = 0;
 
-function colorForHangGroup(n) {
-  return ([
-    colors.BLUE_40,
-    colors.BLUE_50,
-    colors.BLUE_60,
-    colors.BLUE_70,
-    colors.BLUE_80,
-    colors.BLUE_90,
-  ])[n];
+// color desaturation logic adapted from https://stackoverflow.com/a/13348458
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+function hexToRgb(hex) {
+  return {
+      r: parseInt(hex.slice(1,3), 16),
+      g: parseInt(hex.slice(3,5), 16),
+      b: parseInt(hex.slice(5,7), 16)
+  };
+}
+
+function desaturate(hexColor, saturation) {
+  let rgb = hexToRgb(hexColor);
+  let gray = rgb.r * 0.3086 + rgb.g * 0.6094 + rgb.b * 0.0820;
+  rgb.r = Math.round(rgb.r * saturation + gray * (1 - saturation));
+  rgb.g = Math.round(rgb.g * saturation + gray * (1 - saturation));
+  rgb.b = Math.round(rgb.b * saturation + gray * (1 - saturation));
+  return rgbToHex(rgb.r, rgb.g, rgb.b);
+}
+
+function colorForHangGroup(category, m) {
+  if (!categoryColorCache[category]) {
+    categoryColorCache[category] = nextColorIndex++;
+  }
+  let hues = [
+    'MAGENTA',
+    'PURPLE',
+    'BLUE',
+    'TEAL',
+    'GREEN',
+    'YELLOW',
+    'RED',
+    'ORANGE'
+  ];
+  let values = [
+    50,
+    60,
+    70,
+    80,
+    90,
+  ];
+  let saturated = colors[`${hues[categoryColorCache[category]]}_${values[m]}`];
+  return desaturate(saturated, .5);
 }
 
 function sumHistogram(hist, startN) {
@@ -52,15 +90,33 @@ function movingAverage(items, n) {
   return result;
 }
 
-class TrackedDataViewer extends PureComponent {
+let graphOptions = [
+  ['useWeeklyAverage', 'Show seven-day average'],
+  ['splitByHangDuration', 'Split by hang duration'],
+  ['hideLegend', 'Hide legend'],
+];
+
+type Props = {
+  threadName: string,
+  threadData: TrackedComponent,
+};
+
+class TrackedDataThreadSection extends PureComponent {
   props: Props;
   state: {
     useWeeklyAverage: boolean,
+    splitByHangDuration: boolean,
+    hideLegend: boolean,
   };
 
   constructor(props) {
     super(props);
-    this.state = { useWeeklyAverage: false };
+    this.state = {
+      useWeeklyAverage: false,
+      splitByHangDuration: false,
+      hideLegend: false,
+    };
+    graphOptions.forEach(([key]) => this.state[key] = false);
   }
 
   handleInputChange(e) {
@@ -71,24 +127,53 @@ class TrackedDataViewer extends PureComponent {
     });
   }
 
-  _getThreadChart(threadName, threadData) {
-    let { useWeeklyAverage } = this.state;
-    let entries = objectEntries(threadData);
-    entries.sort(([ka,va], [kb,vb]) => ka.localeCompare(kb));
+  render() {
+    let { threadName, threadData } = this.props;
+    let { useWeeklyAverage, splitByHangDuration, hideLegend } = this.state;
+    let categories = objectEntries(threadData);
     let start = useWeeklyAverage ? 7 : 0;
     let postProcessData = useWeeklyAverage ? movingAverage : (x => x);
-    let chartDatasets = [5,4,3,2,1,0].map(n => {
-      let hangGroup = 128 << n;
+
+    let getHistogramBucket = (hist, bucket) => {
+      return splitByHangDuration ? hist[bucket] : sumHistogram(hist, bucket);
+    };
+
+    let getDatasetForBucket = (category, data, label, m) => {
+      let entries = objectEntries(data);
+      entries.sort(([ka,va], [kb,vb]) => ka.localeCompare(kb));
       return {
-        label: `> ${hangGroup}ms`,
-        backgroundColor: colorForHangGroup(n),
-        data: postProcessData(entries.map(([date, hist]) => sumHistogram(hist, n)), 7).slice(start),
+        label,
+        backgroundColor: colorForHangGroup(category, m),
+        data: postProcessData(entries.map(([date, hist]) => getHistogramBucket(hist, m)), 7).slice(start),
       }
-    });
-    let chartLabels = entries.map(([date, hist]) => date).slice(start);
+    };
+
+    let chartDatasets;
+    if (splitByHangDuration) {
+      // $FlowFixMe
+      chartDatasets = categories.flatMap(([category, data]) => [4,3,2,1,0].map(m => {
+        let hangGroup = 128 << m;
+        return getDatasetForBucket(category, data, `${category} > ${hangGroup}ms`, m);
+      }));
+    } else {
+      // $FlowFixMe
+      chartDatasets = categories.flatMap(([category, data]) => {
+        return getDatasetForBucket(category, data, category, 0);
+      });
+    }
+
+    let chartLabels = objectEntries(categories[0][1]).map(([date, hist]) => date).slice(start);
     return (
       <div key={threadName}>
         <h2>{friendlyThreadName(threadName)}</h2>
+
+        {graphOptions.map(([key, label], n) => (
+          <label key={n} name={key}>
+            <input type="checkbox" name={key} onChange={(e) => this.handleInputChange(e)} />
+            {label}
+          </label>
+        ))}
+
         <Line data={{labels: chartLabels, datasets: chartDatasets}}
               width={1000}
               height={300}
@@ -96,6 +181,7 @@ class TrackedDataViewer extends PureComponent {
                 maintainAspectRatio: false,
                 scales: {
                   yAxes: [{
+                    stacked: true,
                     ticks: { beginAtZero: true },
                     scaleLabel: {
                       display: true,
@@ -110,11 +196,16 @@ class TrackedDataViewer extends PureComponent {
                   }],
                 },
                 responsive: false,
+                elements: {point: {radius: 0}},
+                legend: {display: !hideLegend},
               }}/>
       </div>
     );
   }
 
+}
+
+class TrackedDataViewer extends PureComponent {
   render() {
     const {
       className,
@@ -134,13 +225,9 @@ class TrackedDataViewer extends PureComponent {
         <h1>
           Hang data over time for {trackedStat}
         </h1>
-        <label name="useWeeklyAverage">
-          <input type="checkbox" name="useWeeklyAverage" onChange={(e) => this.handleInputChange(e)} />
-          Show seven-day average
-        </label>
         <div>
           {objectEntries(trackedStatData[1]).map(([threadName, threadData]) => (
-            this._getThreadChart(threadName, threadData)
+            <TrackedDataThreadSection threadName={threadName} threadData={threadData} />
           ))}
         </div>
       </div>
