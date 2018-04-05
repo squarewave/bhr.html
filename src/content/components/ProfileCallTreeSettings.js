@@ -104,6 +104,7 @@ class ProfileCallTreeSettings extends Component {
       runnableFilter,
       onlyUserInteracting,
       platforms,
+      categoryFilter,
     } = this.props;
 
     const {
@@ -143,9 +144,6 @@ class ProfileCallTreeSettings extends Component {
           </div>
         </ReactModal>
         <ul className='profileCallTreeSettingsList'>
-          <li className="profileCallTreeSettingsListItem">
-            <button onClick={() => this.setState({categoryModal: true})}>Edit Categories</button>
-          </li>
           <li className="profileCallTreeSettingsListItem">
             <label className="profileCallTreeSettingsLabel">
               Platform:
@@ -188,6 +186,12 @@ class ProfileCallTreeSettings extends Component {
               </label>
             </li>
           }
+          <li className="profileCallTreeSettingsListItem">
+            <span className="profileCallTreeSettingsCategories"
+                  onClick={() => this.setState({categoryModal: true})}>
+              Categories: {categoryFilter}
+            </span>
+          </li>
         </ul>
         <div className='profileCallTreeSettingsSearchbar'>
           <label className='profileCallTreeSettingsSearchbarLabel'>

@@ -9,6 +9,7 @@ export default connect(state => {
     className: 'profileFilterNavigator',
     items: items,
     selectedItem: items.length - 1,
+    includeHome: true,
   };
 }, {
   onPop: actions.popRangeFiltersAndUnsetSelection,

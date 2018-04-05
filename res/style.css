@@ -15,7 +15,7 @@ body, #root, .profileViewer {
 
 .profileViewer {
   height: 100%;
-  background-color: var(--grey-10);
+  background-color: white;
 }
 
 .treeView {
@@ -26,13 +26,13 @@ body, #root, .profileViewer {
   -moz-user-select: none;
   user-select: none;
   cursor: default;
-  border-top: 1px solid var(--grey-30);
-  border-right: 1px solid var(--grey-30);
+  border-top: 1px solid var(--grey-20);
+  border-right: 1px solid var(--grey-20);
 }
 
 .treeViewHeader {
   padding: 1px 0;
-  border-bottom: 1px solid var(--grey-30);
+  border-bottom: 1px solid var(--grey-20);
   position: relative;
   height: 16px;
   background: white;
@@ -107,12 +107,12 @@ body, #root, .profileViewer {
   right: 0;
   bottom: 3px;
   width: 1px;
-  background: var(--grey-20);
+  background: var(--grey-10);
 }
 
 .treeViewRowColumn.treeViewFixedColumn {
   box-sizing: border-box;
-  border-right: 1px solid var(--grey-30);
+  border-right: 1px solid var(--grey-20);
 }
 .treeViewFixedColumn.totalTimePercent {
   left: 0px;
@@ -149,10 +149,10 @@ body, #root, .profileViewer {
 }
 
 .treeViewRow.even, .treeViewRow.even > .treeViewFixedColumn {
-  background-color: var(--grey-10);
+  background-color: white;
 }
 .treeViewRow.odd, .treeViewRow.odd > .treeViewFixedColumn {
-  background-color: var(--grey-20);
+  background-color: var(--grey-10);
 }
 .treeViewRow.selected,
 .treeViewRow.selected > .treeViewFixedColumn {
@@ -246,7 +246,7 @@ body, #root, .profileViewer {
   display: flex;
   flex-flow: column nowrap;
   flex: 1;
-  border-top: 1px solid var(--grey-30);
+  border-top: 1px solid var(--grey-20);
   max-width: 480px;
   overflow: auto;
 }
@@ -271,7 +271,7 @@ body, #root, .profileViewer {
   padding: 1px 5px;
   line-height: 16px;
   white-space: nowrap;
-  border-bottom: 1px solid var(--grey-30);
+  border-bottom: 1px solid var(--grey-20);
 }
 
 .pseudoStackRow {
@@ -289,7 +289,7 @@ body, #root, .profileViewer {
 }
 
 .pseudoStackRow.odd {
-  background-color: var(--grey-20);
+  background-color: var(--grey-10);
 }
 
 .profileViewerTopBar {
@@ -298,7 +298,7 @@ body, #root, .profileViewer {
   padding: 0;
   display: flex;
   flex-flow: row nowrap;
-  background: var(--grey-20);
+  background: var(--grey-10);
   border-bottom: 1px solid var(--grey-30);
 }
 
@@ -431,7 +431,7 @@ body, #root, .profileViewer {
 }
 
 .profileThreadHeaderBar.selected {
-  background-color: hsl(220, 50%, 93%);
+  background-color: #edf6ff;
 }
 
 .profileThreadHeaderBar > h1 {
@@ -596,9 +596,10 @@ body, #root, .profileViewer {
 .tabBarContainer {
   display: flex;
   flex-flow: row nowrap;
-  background: var(--grey-20);
-  border-top: 1px solid var(--grey-30);
+  background: var(--grey-10);
+  border: solid var(--grey-30);
   position: relative;
+  border-width: 1px 0;
 }
 
 .tabBarTabWrapper {
@@ -612,29 +613,53 @@ body, #root, .profileViewer {
 }
 
 .tabBarTab {
+  font-size: 12px;
   width: 8em;
-  text-align: center;
   cursor: default;
   -moz-user-select: none;
   text-align: center;
-  padding: 4px;
-  border: solid var(--grey-30);
-  border-width: 0 1px;
-  margin: 0 -0.5px;
+  padding: 6px 4px;
   white-space: nowrap;
   background-clip: padding-box;
+  transition: background-color .2s,border-color .2s;
+  transition-timing-function: var(--animation-timing);
+  position: relative;
+  border: solid transparent;
+  border-width: 0 1px;
 }
 
 .tabBarTab.selected {
-  background: white;
+  background: #fff;
+  color: var(--blue-60);
+  border-color: var(--grey-30);
+  top: 1px;
+  padding-top: 5px;
+}
+
+.tabBarTab.selected::before {
+  top: -1px;
+  background-color: var(--blue-50);
+}
+
+.tabBarTab::before {
+  content: "";
+  position: absolute;
+  width: calc(100% + 2px);
+  height: 2px;
+  left: -1px;
+  background-color: transparent;
+  transition: background-color .2s,border-color .2s;
+  transition-timing-function: var(--animation-timing);
+  top: 0;
 }
 
 .tabBarTabWrapper:not(.beingReordered) > .tabBarTab:not(.selected):hover {
-  background-color: var(--grey-30);
+  background-color: var(--grey-20);
+  border-color: var(--grey-20);
 }
 
 .profileSummaryView {
-  border-top: 1px solid var(--grey-30);
+  border-top: 1px solid var(--grey-20);
   padding: 10px;
   flex: 1;
   overflow-y: auto;
@@ -664,7 +689,7 @@ body, #root, .profileViewer {
 
 .taskTracerViewWrapper,
 .logViewWrapper {
-  border-top: 1px solid var(--grey-30);
+  border-top: 1px solid var(--grey-20);
   flex: 1;
   overflow: auto;
   position: relative;
@@ -709,8 +734,8 @@ body, #root, .profileViewer {
 .taskTracerThreadViewThreadName {
   width: 150px;
   margin: 0;
-  border-right: 1px solid var(--grey-30);
-  border-bottom: 1px solid var(--grey-30);
+  border-right: 1px solid var(--grey-20);
+  border-bottom: 1px solid var(--grey-20);
   font-size: 1em;
   font-weight: normal;
   box-sizing: border-box;
@@ -768,7 +793,7 @@ body, #root, .profileViewer {
   margin-top: 0;
   margin-bottom: 0.5em;
   padding-bottom: 0.5em;
-  border-bottom: 1px solid var(--grey-30);
+  border-bottom: 1px solid var(--grey-20);
 }
 
 .initializing-text span {
@@ -777,7 +802,7 @@ body, #root, .profileViewer {
   border-radius: 0.2em;
   display:inline-block;
   padding: 0.0em 0.5em;
-  box-shadow: 0.1em 0.1em 0 var(--grey-20);
+  box-shadow: 0.1em 0.1em 0 var(--grey-10);
   margin: 0 0.2em;
 }
 

@@ -15,20 +15,20 @@ class FilterNavigatorBar extends PureComponent {
   }
 
   render() {
-    const { className, items, selectedItem } = this.props;
+    const { className, items, selectedItem, includeHome } = this.props;
     return (
       <ReactCSSTransitionGroup transitionName='filterNavigatorBarTransition'
                                transitionEnterTimeout={300}
                                transitionLeaveTimeout={300}
                                component='ol'
                                className={classNames('filterNavigatorBar', className)}>
-        <li className={classNames(
-              'filterNavigatorBarItem',
-              'filterNavigatorBarRootItem'
-            )}
+        {includeHome && <li className={classNames(
+            'filterNavigatorBarItem',
+            'filterNavigatorBarRootItem'
+          )}
             onClick={() => window.location.href = '/'}>
           <span className='filterNavigatorBarItemContent'>Home</span>
-        </li>
+        </li>}
         {
           items.map((item, i) => (
             <li key={i}

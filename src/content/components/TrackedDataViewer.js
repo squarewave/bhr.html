@@ -196,7 +196,7 @@ class TrackedDataThreadSection extends PureComponent {
                   }],
                 },
                 responsive: false,
-                elements: {point: {radius: 0}},
+                elements: {point: {radius: 2}},
                 legend: {display: !hideLegend},
               }}/>
       </div>

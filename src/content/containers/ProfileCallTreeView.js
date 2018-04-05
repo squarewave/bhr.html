@@ -5,8 +5,8 @@ import ProfileCallTreeFilterNavigator from './ProfileCallTreeFilterNavigator';
 
 const ProfileCallTreeView = () => (
   <div className='treeAndSidebarWrapper'>
-    <ProfileCallTreeFilterNavigator />
     <ProfileCallTreeSettings />
+    <ProfileCallTreeFilterNavigator />
     <ProfileTreeView/>
   </div>
 );
