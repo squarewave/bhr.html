@@ -17,6 +17,22 @@ import { OneToManyIndex } from './one-to-many-index';
 
 const INVERTED_CALLSTACK_ROOT_THRESHOLD = 0.001;
 
+export function getStackIndexFromPath(path: number[]): number {
+  return 0;
+}
+
+export function toValidImplementationFilter(
+  implementation: string
+): string {
+  switch (implementation) {
+    case 'cpp':
+    case 'js':
+      return implementation;
+    default:
+      return 'combined';
+  }
+}
+
 function getTimeRangeForThread(thread: Thread) {
   if (thread.dates.length === 0) {
     return { start: 0, end: 1 };

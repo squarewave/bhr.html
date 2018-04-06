@@ -159,14 +159,11 @@ export function retrieveProfileFromTelemetry(durationSpec: string,
         {
           let prefix = new Int32Array(thread.stackTable.length);
           let func = new Int32Array(thread.stackTable.length);
-          let depth = new Int32Array(thread.stackTable.length);
           for (let i = 0; i < thread.stackTable.length; i++) {
             if (thread.stackTable.prefix[i] === null) {
               prefix[i] = -1;
-              depth[i] = 0;
             } else {
               prefix[i] = thread.stackTable.prefix[i];
-              depth[i] = 1 + depth[prefix[i]];
             }
             func[i] = thread.stackTable.func[i];
           }
@@ -174,7 +171,6 @@ export function retrieveProfileFromTelemetry(durationSpec: string,
           Object.assign(thread.stackTable, {
             prefix,
             func,
-            depth,
           });
         }
 

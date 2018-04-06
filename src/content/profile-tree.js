@@ -22,7 +22,7 @@ function formatDecimal(decimalNumber) {
   }
 }
 
-class ProfileTree {
+export class ProfileTree {
 
   _stackTable: StackTable;
   _stackTimes: StackTimes;

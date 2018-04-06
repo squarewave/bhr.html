@@ -17,9 +17,8 @@ export type ThreadIndex = number;
  * came before it. Stacks can be shared between samples.
  */
 export type StackTable = {
-  func: Int32Array,
-  prefix: Int32Array,
-  depth: Int32Array,
+  func: number[],
+  prefix: number[],
   length: number,
 };
 
