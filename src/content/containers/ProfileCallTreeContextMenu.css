@@ -1,0 +1,37 @@
+.callNodeContextMenuIcon {
+  width: 16px;
+  height: 16px;
+  pointer-events: auto;
+  position: relative;
+  display: inline-block;
+  margin-inline-end: 8px;
+  top: 2px;
+}
+.react-contextmenu-item--selected > .callNodeContextMenuIcon {
+  filter: invert(1);
+}
+
+.callNodeContextMenuIconMerge {
+  background: url(../../../res/merge-icon.svg) center center no-repeat;
+}
+
+.callNodeContextMenuIconCollapse {
+  background: url(../../../res/collapse-icon.svg) center center no-repeat;
+}
+
+.callNodeContextMenuIconFocus {
+  background: url(../../../res/focus-icon.svg) center center no-repeat;
+}
+
+.callNodeContextMenuIconDrop {
+  background: url(../../../res/drop-icon.svg) center center no-repeat;
+}
+
+.callNodeContextMenuLabel {
+  color: #555;
+  font-weight: bold;
+}
+
+.react-contextmenu-item--selected > .callNodeContextMenuLabel {
+  color: #fff;
+}

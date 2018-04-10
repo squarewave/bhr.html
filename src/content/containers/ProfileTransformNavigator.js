@@ -4,12 +4,12 @@ import { selectedThreadSelectors } from '../reducers/profile-view';
 import { getSelectedThreadIndex } from '../reducers/url-state';
 import FilterNavigatorBar from '../components/FilterNavigatorBar';
 
-import './ProfileCallTreeFilterNavigator.css';
+import './ProfileTransformNavigator.css';
 
 export default connect(state => {
-  const items = selectedThreadSelectors.getCallTreeFilterLabels(state);
+  const items = selectedThreadSelectors.getTransformLabels(state);
   return {
-    className: 'profileCallTreeFilterNavigator',
+    className: 'profileTransformNavigator',
     items,
     selectedItem: items.length - 1,
     threadIndex: getSelectedThreadIndex(state),
@@ -18,5 +18,5 @@ export default connect(state => {
   className: stateProps.className,
   items: stateProps.items,
   selectedItem: stateProps.selectedItem,
-  onPop: i => dispatchProps.popCallTreeFilters(stateProps.threadIndex, i),
+  onPop: dispatchProps.popTransformsFromStack,
 }))(FilterNavigatorBar);

@@ -46,10 +46,8 @@ class ProfileThreadHeaderBar extends Component {
 ProfileThreadHeaderBar.propTypes = {
   threadIndex: PropTypes.number.isRequired,
   changeSelectedThread: PropTypes.func.isRequired,
-  changeSelectedStack: PropTypes.func.isRequired,
   rangeStart: PropTypes.number.isRequired,
   rangeEnd: PropTypes.number.isRequired,
-  selectedStack: PropTypes.number.isRequired,
   isSelected: PropTypes.bool.isRequired,
   style: PropTypes.object,
   threadName: PropTypes.string,
@@ -61,7 +59,6 @@ export default connect((state, props) => {
   const selectedThread = getSelectedThreadIndex(state);
   return {
     threadName: selectors.getFriendlyThreadName(state),
-    selectedStack: threadIndex === selectedThread ? selectors.getSelectedStack(state) : -1,
     isSelected: threadIndex === selectedThread,
     threadIndex,
   };

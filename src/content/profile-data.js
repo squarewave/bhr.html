@@ -11,15 +11,12 @@ import type {
   IndexIntoStackTable,
 } from '../common/types/profile';
 import { timeCode } from '../common/time-code';
+import { hashPath } from '../common/path';
 import { objectValues, friendlyThreadName } from '../common/utils';
 import { sampleCategorizer, categoryNames } from '../common/profile-categories';
 import { OneToManyIndex } from './one-to-many-index';
 
 const INVERTED_CALLSTACK_ROOT_THRESHOLD = 0.001;
-
-export function getStackIndexFromPath(path: number[]): number {
-  return 0;
-}
 
 export function toValidImplementationFilter(
   implementation: string
@@ -383,23 +380,7 @@ export function filterThreadToRange(thread: Thread, usageHoursByDate: UsageHours
 }
 
 export function getStackFromFuncArray(funcArray: IndexIntoFuncTable[], stackTable: StackTable) {
-  let fs = -1;
-  for (let i = 0; i < funcArray.length; i++) {
-    const func = funcArray[i];
-    let nextFS = -1;
-    for (let stackIndex = fs + 1; stackIndex < stackTable.length; stackIndex++) {
-      if (stackTable.prefix[stackIndex] === fs &&
-          stackTable.func[stackIndex] === func) {
-        nextFS = stackIndex;
-        break;
-      }
-    }
-    if (nextFS === -1) {
-      return nextFS;
-    }
-    fs = nextFS;
-  }
-  return fs;
+  return getStackIndexFromFuncPath(funcArray, stackTable);
 }
 
 export function getFriendlyThreadName(threads: Thread[], thread: Thread): string {
@@ -407,21 +388,163 @@ export function getFriendlyThreadName(threads: Thread[], thread: Thread): string
 }
 
 export function getStackAsFuncArray(stackIndex: IndexIntoStackTable, stackTable: StackTable): IndexIntoFuncTable[] {
-  if (stackIndex === -1) {
+  return getFuncPathFromStackIndex(stackIndex, stackTable);
+}
+
+// Returns a list of stack indices from func paths. This function uses a map
+// to speed up the look-up process.
+export function getStackIndicesFromFuncPaths(
+  funcPaths: number[][],
+  stackTable: StackTable
+): Array<number | null> {
+  // This is a Map<string, number>. This map speeds up
+  // the look-up process by caching every func path we handle which avoids
+  // looking up parents again and again.
+  const cache = new Map();
+  return funcPaths.map(path =>
+    _getStackIndexFromPathWithCache(path, stackTable, cache)
+  );
+}
+
+// Returns a stack index from a func path, using and contributing to the
+// cache parameter.
+function _getStackIndexFromPathWithCache(
+  funcPath: number[],
+  stackTable: StackTable,
+  cache: Map<string, number>
+): number | null {
+  const hashFullPath = hashPath(funcPath);
+  const result = cache.get(hashFullPath);
+  if (result !== undefined) {
+    // The cache already has the result for the full path.
+    return result;
+  }
+
+  // This array serves as a map and stores the hashes of funcPath's
+  // parents to speed up the algorithm. First we'll follow the tree from the
+  // bottom towards the top, pushing hashes as we compute them, and then we'll
+  // move back towards the bottom popping hashes from this array.
+  const sliceHashes = [hashFullPath];
+
+  // Step 1: find whether we already computed the index for one of the path's
+  // parents, starting from the closest parent and looping towards the "top" of
+  // the tree.
+  // If we find it for one of the parents, we'll be able to start at this point
+  // in the following look up.
+  let i = funcPath.length;
+  let index;
+  while (--i > 0) {
+    // Looking up each parent for this call node, starting from the deepest node.
+    // If we find a parent this makes it possible to start the look up from this location.
+    const subPath = funcPath.slice(0, i);
+    const hash = hashPath(subPath);
+    index = cache.get(hash);
+    if (index !== undefined) {
+      // Yay, we already have the result for a parent!
+      break;
+    }
+    // Cache the hashed value because we'll need it later, after resolving this path.
+    // Note we don't add the hash if we found the parent in the cache, so the
+    // last added element here will accordingly be the first popped in the next
+    // algorithm.
+    sliceHashes.push(hash);
+  }
+
+  // Step 2: look for the requested path using the call node table, starting at
+  // the parent we already know if we found one, and looping down the tree.
+  // We're contributing to the cache at the same time.
+
+  // `index` is undefined if no parent was found in the cache. In that case we
+  // start from the start, and use `-1` which is the prefix we use to indicate
+  // the root node.
+  if (index === undefined) {
+    index = -1;
+  }
+
+  while (i < funcPath.length) {
+    // Resolving the index for subpath `funcPath.slice(0, i+1)` given we
+    // know the index for the subpath `funcPath.slice(0, i)` (its parent).
+    const func = funcPath[i];
+    const nextNodeIndex = _getStackIndexFromParentAndFunc(
+      index,
+      func,
+      stackTable
+    );
+
+    // We couldn't find this path into the call node table. This shouldn't
+    // normally happen.
+    if (nextNodeIndex === null) {
+      return null;
+    }
+
+    // Contributing to the shared cache
+    const hash = sliceHashes.pop();
+    cache.set(hash, nextNodeIndex);
+
+    index = nextNodeIndex;
+    i++;
+  }
+
+  return index < 0 ? null : index;
+}
+
+// Returns the stack index that matches the function `func` and whose parent's
+// stack index is `parent`.
+function _getStackIndexFromParentAndFunc(
+  parent: number,
+  func: IndexIntoFuncTable,
+  stackTable: StackTable
+): number | null {
+  // Node children always come after their parents in the call node table,
+  // that's why we start looping at `parent + 1`.
+  // Note that because the root parent is `-1`, we correctly start at `0` when
+  // we look for a top-level item.
+  for (
+    let stackIndex = parent + 1; // the root parent is -1
+    stackIndex < stackTable.length;
+    stackIndex++
+  ) {
+    if (
+      stackTable.prefix[stackIndex] === parent &&
+      stackTable.func[stackIndex] === func
+    ) {
+      return stackIndex;
+    }
+  }
+
+  return null;
+}
+
+// This function returns a stack index from a func path, using the
+// specified `stackTable`.
+export function getStackIndexFromFuncPath(
+  funcPath: number[],
+  stackTable: StackTable
+): number | null {
+  const [result] = getStackIndicesFromFuncPaths([funcPath], stackTable);
+  return result;
+}
+
+// This function returns a CallNodePath from a stack index.
+export function getFuncPathFromStackIndex(
+  stackIndex: number | null,
+  stackTable: StackTable
+): number[] {
+  if (stackIndex === null) {
     return [];
   }
   if (stackIndex * 1 !== stackIndex) {
-    console.log('bad stackIndex in getStackAsFuncArray:', stackIndex);
+    console.log('bad stackIndex in getFuncPathFromStackIndex:', stackIndex);
     return [];
   }
-  const funcArray = [];
+  const funcPath = [];
   let fs = stackIndex;
   while (fs !== -1) {
-    funcArray.push(stackTable.func[fs]);
+    funcPath.push(stackTable.func[fs]);
     fs = stackTable.prefix[fs];
   }
-  funcArray.reverse();
-  return funcArray;
+  funcPath.reverse();
+  return funcPath;
 }
 
 export function invertCallstack(thread: Thread): Thread {

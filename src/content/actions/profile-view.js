@@ -1,9 +1,10 @@
 // @flow
 import type {
-  Action, ThunkAction, ProfileSelection, CallTreeFilter
+  Action, ThunkAction, ProfileSelection
 } from './types';
 import type { Thread, ThreadIndex, IndexIntoFuncTable, } from '../../common/types/profile';
-import { selectedThreadSelectors } from '../reducers/profile-view';
+import { selectedThreadSelectors, selectorsForThread } from '../reducers/profile-view';
+import { getSelectedThreadIndex } from '../reducers/url-state';
 
 /**
  * The actions that pertain to changing the view on the profile, including searching
@@ -207,12 +208,19 @@ export function popRangeFiltersAndUnsetSelection(firstRemovedFilterIndex: number
   };
 }
 
-export function addCallTreeFilter(threadIndex: ThreadIndex, filter: CallTreeFilter): ThunkAction {
+export function addTransformToStack(
+  threadIndex: ThreadIndex,
+  transform: Transform
+): ThunkAction<void> {
   return (dispatch, getState) => {
+    const selectors = selectorsForThread(threadIndex);
+    const transformedThread = selectors.getRangeAndTransformFilteredThread(getState());
+
     dispatch({
-      type: 'ADD_CALL_TREE_FILTER',
+      type: 'ADD_TRANSFORM_TO_STACK',
       threadIndex,
-      filter,
+      transform,
+      transformedThread,
     });
 
     dispatch({
@@ -224,10 +232,13 @@ export function addCallTreeFilter(threadIndex: ThreadIndex, filter: CallTreeFilt
   };
 }
 
-export function popCallTreeFilters(threadIndex: ThreadIndex, firstRemovedFilterIndex: number): ThunkAction {
+export function popTransformsFromStack(
+  firstRemovedFilterIndex: number
+): ThunkAction<void> {
   return (dispatch, getState) => {
+    const threadIndex = getSelectedThreadIndex(getState());
     dispatch({
-      type: 'POP_CALL_TREE_FILTERS',
+      type: 'POP_TRANSFORMS_FROM_STACK',
       threadIndex,
       firstRemovedFilterIndex,
     });

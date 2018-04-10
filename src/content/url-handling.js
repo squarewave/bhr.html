@@ -1,7 +1,7 @@
 // @flow
 import queryString from 'query-string';
 import { stringifyRangeFilters, parseRangeFilters } from './range-filters';
-import { stringifyCallTreeFilters, parseCallTreeFilters } from './call-tree-filters';
+import { stringifyTransforms, parseTransforms } from './transforms';
 import type { URLState, ExploreURLState, TrackURLState, UnknownURLState } from './reducers/types';
 
 export function urlFromState(urlState: any) {
@@ -13,10 +13,10 @@ export function urlFromState(urlState: any) {
   query.mode = urlState.mode;
   if (urlState.mode == 'explore') {
     query.range = stringifyRangeFilters(urlState.rangeFilters) || undefined,
+    query.transforms = stringifyTransforms(urlState.transforms[urlState.selectedThread]) || undefined,
     query.thread = `${urlState.selectedThread}`,
     query.search = urlState.callTreeSearchString || undefined;
     query.invertCallstack = urlState.invertCallstack ? null : undefined;
-    query.callTreeFilters = stringifyCallTreeFilters(urlState.callTreeFilters[urlState.selectedThread]) || undefined;
     query.category = urlState.categoryFilter || undefined;
     query.platform = urlState.platformFilter || undefined;
     query.runnable = urlState.runnableFilter || undefined;
@@ -59,12 +59,12 @@ export function stateFromCurrentLocation(): URLState {
       categoryFilter: query.category || 'all',
       platformFilter: query.platform || '',
       runnableFilter: query.runnable || null,
-      callTreeFilters: {
-        [selectedThread]: query.callTreeFilters ? parseCallTreeFilters(query.callTreeFilters) : [],
-      },
       invertCallstack: query.invertCallstack !== undefined,
       onlyUserInteracting: query.onlyUserInteracting !== undefined,
       hidePlatformDetails: query.hidePlatformDetails !== undefined,
+      transforms: {
+        [selectedThread]: query.transforms ? parseTransforms(query.transforms) : [],
+      },
       mode,
     } : ExploreURLState);
   } else if (mode == 'track') {

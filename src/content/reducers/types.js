@@ -1,10 +1,11 @@
 // @flow
 
 import type {
-  Action, ExpandedSet, CallTreeFiltersPerThread, ProfileSelection,
+  Action, ExpandedSet, ProfileSelection,
 } from '../actions/types';
 import type { Days, StartEndRange } from '../../common/types/units';
 import type { IndexIntoFuncTable, Profile, ThreadIndex } from '../../common/types/profile';
+import type { TransformStacksPerThread } from '../../common/types/transforms';
 import type { TrackedData } from '../../common/types/trackedData';
 import type { DateGraph, CategorySummary } from '../../common/types/workers';
 
@@ -57,7 +58,6 @@ export type ExploreURLState = {
   rangeFilters: RangeFilterState[],
   selectedThread: ThreadIndex,
   callTreeSearchString: string,
-  callTreeFilters: CallTreeFiltersPerThread,
   invertCallstack: boolean,
   hidePlatformDetails: boolean,
   historical: boolean,
@@ -68,6 +68,7 @@ export type ExploreURLState = {
   onlyUserInteracting: boolean,
   payloadID: string | null,
   mode: string,
+  transforms: TransformStacksPerThread,
 };
 
 export type TrackURLState = {

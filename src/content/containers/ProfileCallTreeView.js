@@ -1,12 +1,12 @@
 import React from 'react';
 import ProfileTreeView from '../components/ProfileTreeView';
 import ProfileCallTreeSettings from '../components/ProfileCallTreeSettings';
-import ProfileCallTreeFilterNavigator from './ProfileCallTreeFilterNavigator';
+import ProfileTransformNavigator from './ProfileTransformNavigator';
 
 const ProfileCallTreeView = () => (
   <div className='treeAndSidebarWrapper'>
     <ProfileCallTreeSettings />
-    <ProfileCallTreeFilterNavigator />
+    <ProfileTransformNavigator />
     <ProfileTreeView/>
   </div>
 );

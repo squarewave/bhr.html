@@ -62,20 +62,18 @@ class ProfileTreeView extends Component {
 
   _onAppendageButtonClick(stackIndex) {
     const {
-      thread, threadIndex, addCallTreeFilter,
+      thread,
+      threadIndex,
+      addTransformToStack,
       invertCallstack,
     } = this.props;
-    if (invertCallstack) {
-      addCallTreeFilter(threadIndex, {
-        type: 'postfix',
-        postfixFuncs: getStackAsFuncArray(stackIndex, thread.stackTable),
-      });
-    } else {
-      addCallTreeFilter(threadIndex, {
-        type: 'prefix',
-        prefixFuncs: getStackAsFuncArray(stackIndex, thread.stackTable),
-      });
-    }
+    const funcPath = getStackAsFuncArray(stackIndex, thread.stackTable);
+    addTransformToStack(threadIndex, {
+      type: 'focus-subtree',
+      funcPath,
+      implementation: 'combined',
+      inverted: invertCallstack,
+    });
   }
 
   openRoot() {
@@ -126,7 +124,6 @@ ProfileTreeView.propTypes = {
   changeExpandedStacks: PropTypes.func.isRequired,
   searchString: PropTypes.string,
   disableOverscan: PropTypes.bool,
-  addCallTreeFilter: PropTypes.func.isRequired,
   invertCallstack: PropTypes.bool.isRequired,
   icons: PropTypes.array.isRequired,
 };

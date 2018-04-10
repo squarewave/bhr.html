@@ -1,20 +1,11 @@
 // @flow
 import type { Profile, Thread, ThreadIndex, IndexIntoFuncTable } from '../../common/types/profile';
+import type { Transform } from '../../common/types/transforms';
 import type { TrackedData } from '../../common/types/trackedData';
 import type { DateGraph, CategorySummary } from '../../common/types/workers';
 import type { State } from '../reducers/types';
 
 export type ExpandedSet = Set<ThreadIndex>;
-export type PrefixCallTreeFilter = {
-  type: 'prefix',
-  prefixFuncs: IndexIntoFuncTable[],
-};
-export type PostfixCallTreeFilter = {
-  type: 'postfix',
-  postfixFuncs: IndexIntoFuncTable[],
-};
-export type CallTreeFilter = PrefixCallTreeFilter | PostfixCallTreeFilter;
-export type CallTreeFiltersPerThread = { [id: ThreadIndex]: CallTreeFilter[] };
 export type ProfileSelection =
   { hasSelection: false, isModifying: false } |
   {
@@ -83,8 +74,17 @@ type URLStateAction =
   { type: 'CHANGE_CATEGORY', category: string } |
   { type: 'CHANGE_RUNNABLE', runnable: string } |
   { type: 'CHANGE_PLATFORM', platform: string } |
-  { type: 'ADD_CALL_TREE_FILTER', threadIndex: ThreadIndex, filter: CallTreeFilter } |
-  { type: 'POP_CALL_TREE_FILTERS', threadIndex: ThreadIndex, firstRemovedFilterIndex: number } |
+  {
+    type: 'ADD_TRANSFORM_TO_STACK',
+    threadIndex: ThreadIndex,
+    transform: Transform,
+    transformedThread: Thread,
+  } |
+  {
+    type: 'POP_TRANSFORMS_FROM_STACK',
+    threadIndex: ThreadIndex,
+    firstRemovedFilterIndex: number,
+  } |
   { type: 'CHANGE_INVERT_CALLSTACK', invertCallstack: boolean } |
   { type: 'CHANGE_ONLY_USER_INTERACTING', onlyUserInteracting: boolean } |
   { type: 'CHANGE_HIDE_PLATFORM_DETAILS', hidePlatformDetails: boolean };

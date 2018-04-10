@@ -1,10 +1,13 @@
 // @flow
 import { combineReducers } from 'redux';
 import { createSelector } from 'reselect';
-import * as CallTreeFilters from '../call-tree-filters';
-import * as URLState from './url-state';
+import memoize from 'memoize-immutable';
+import WeakTupleMap from 'weaktuplemap';
+import * as UrlState from './url-state';
 import * as ProfileData from '../profile-data';
+import * as Transforms from '../transforms';
 import * as ProfileTree from '../profile-tree';
+import { arePathsEqual, PathSet } from '../../common/path';
 
 import type {
   Profile,
@@ -15,7 +18,7 @@ import type {
   IndexIntoStackTable,
 } from '../../common/types/profile';
 import type { Days, StartEndRange } from '../../common/types/units';
-import type { Action, CallTreeFilter, ProfileSelection } from '../actions/types';
+import type { Action, ProfileSelection } from '../actions/types';
 import type {
   State,
   Reducer,
@@ -31,13 +34,6 @@ function profile(state: Profile = ProfileData.getEmptyProfile(), action: Action)
     default:
       return state;
   }
-}
-
-function stackAfterCallTreeFilter(funcArray: IndexIntoFuncTable[], filter: CallTreeFilter) {
-  if (filter.type === 'prefix') {
-    return removePrefixFromFuncArray(filter.prefixFuncs, funcArray);
-  }
-  return funcArray;
 }
 
 function removePrefixFromFuncArray(prefixFuncs: IndexIntoFuncTable[], funcArray: IndexIntoFuncTable[]) {
@@ -98,17 +94,47 @@ function viewOptionsPerThread(state: ThreadViewOptions[] = [], action: Action) {
     case 'RECEIVE_PROFILE_FROM_TELEMETRY':
       return action.profile.threads.map(() => ({
         selectedStack: [],
-        expandedStacks: [],
+        expandedStacks: new PathSet(),
       }));
     case 'CHANGE_SELECTED_STACK': {
       const { selectedStack, threadIndex } = action;
-      const expandedStacks = state[threadIndex].expandedStacks.slice();
-      for (let i = 1; i < selectedStack.length; i++) {
-        expandedStacks.push(selectedStack.slice(0, i));
+
+      const threadState = state[threadIndex];
+      const previousSelectedStack = threadState.selectedStack;
+
+      // If the selected node doesn't actually change, let's return the previous
+      // state to avoid rerenders.
+      if (arePathsEqual(selectedStack, previousSelectedStack)) {
+        return state;
       }
+
+      let { expandedStacks } = threadState;
+
+      /* Looking into the current state to know whether we want to generate a
+       * new one. It can be expensive to clone when we have a lot of expanded
+       * lines, but it's very infrequent that we actually want to expand new
+       * lines as a result of a selection. */
+      const selectedNodeParentPaths = [];
+      for (let i = 1; i < selectedStack.length; i++) {
+        selectedNodeParentPaths.push(selectedStack.slice(0, i));
+      }
+      const hasNewExpandedPaths = selectedNodeParentPaths.some(
+        path => !expandedStacks.has(path)
+      );
+
+      if (hasNewExpandedPaths) {
+        expandedStacks = new PathSet(expandedStacks);
+        selectedNodeParentPaths.forEach(path =>
+          expandedStacks.add(path)
+        );
+      }
+
       return [
         ...state.slice(0, threadIndex),
-        Object.assign({}, state[threadIndex], { selectedStack, expandedStacks }),
+        Object.assign({}, state[threadIndex], {
+          selectedStack,
+          expandedStacks,
+        }),
         ...state.slice(threadIndex + 1),
       ];
     }
@@ -116,17 +142,51 @@ function viewOptionsPerThread(state: ThreadViewOptions[] = [], action: Action) {
       const { threadIndex, expandedStacks } = action;
       return [
         ...state.slice(0, threadIndex),
-        Object.assign({}, state[threadIndex], { expandedStacks }),
+        Object.assign({}, state[threadIndex], {
+          expandedStacks: new PathSet(expandedStacks),
+        }),
         ...state.slice(threadIndex + 1),
       ];
     }
-    case 'ADD_CALL_TREE_FILTER': {
-      const { threadIndex, filter } = action;
-      const expandedStacks = state[threadIndex].expandedStacks.map(fs => stackAfterCallTreeFilter(fs, filter));
-      const selectedStack = stackAfterCallTreeFilter(state[threadIndex].selectedStack, filter);
+    case 'ADD_TRANSFORM_TO_STACK': {
+      const { threadIndex, transform, transformedThread } = action;
+      const expandedStacks = new PathSet(
+        Array.from(state[threadIndex].expandedStacks)
+          .map(path =>
+            Transforms.applyTransformToFuncPath(
+              path,
+              transform,
+              transformedThread
+            )
+          )
+          .filter(path => path.length > 0)
+      );
+
+      const selectedStack = Transforms.applyTransformToFuncPath(
+        state[threadIndex].selectedStack,
+        transform,
+        transformedThread
+      );
+
       return [
         ...state.slice(0, threadIndex),
-        Object.assign({}, state[threadIndex], { selectedStack, expandedStacks }),
+        Object.assign({}, state[threadIndex], {
+          selectedStack,
+          expandedStacks,
+        }),
+        ...state.slice(threadIndex + 1),
+      ];
+    }
+    case 'POP_TRANSFORMS_FROM_STACK': {
+      // Simply reset the selected and expanded paths until this bug is fixed:
+      // https://github.com/devtools-html/perf.html/issues/882
+      const { threadIndex } = action;
+      return [
+        ...state.slice(0, threadIndex),
+        Object.assign({}, state[threadIndex], {
+          selectedStack: [],
+          expandedStacks: new PathSet(),
+        }),
         ...state.slice(threadIndex + 1),
       ];
     }
@@ -208,7 +268,7 @@ export const getThreadOrder = createSelector(
 export const getDisplayRange = createSelector(
   (state: State) => getProfileViewOptions(state).rootRange,
   (state: State) => getProfileViewOptions(state).zeroAt,
-  URLState.getRangeFilters,
+  UrlState.getRangeFilters,
   (rootRange, zeroAt, rangeFilters): StartEndRange => {
     if (rangeFilters.length > 0) {
       let { start, end } = rangeFilters[rangeFilters.length - 1];
@@ -231,8 +291,6 @@ export type SelectorsForThread = {
   getThread: State => Thread,
   getFriendlyThreadName: State => string,
   getViewOptions: State => ThreadViewOptions,
-  getCallTreeFilters: State => CallTreeFilter[],
-  getCallTreeFilterLabels: State => string[],
   getRangeFilteredThread: State => Thread,
   getFilteredThread: State => Thread,
   getRangeSelectionFilteredThread: State => Thread,
@@ -249,16 +307,10 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
   if (!(threadIndex in selectorsForThreads)) {
     const getThread = (state: State): Thread => getProfile(state).threads[threadIndex];
     const getViewOptions = (state: State): ThreadViewOptions => getProfileViewOptions(state).perThread[threadIndex];
-    const getCallTreeFilters = (state: State): CallTreeFilter[] => URLState.getCallTreeFilters(state, threadIndex);
     const getFriendlyThreadName = createSelector(
       getThreads,
       getThread,
       ProfileData.getFriendlyThreadName
-    );
-    const getCallTreeFilterLabels: (state: State) => string[] = createSelector(
-      getThread,
-      getCallTreeFilters,
-      CallTreeFilters.getCallTreeFilterLabels
     );
     const getRangeFilteredThread = createSelector(
       getThread,
@@ -269,61 +321,118 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
         return ProfileData.filterThreadToRange(thread, usageHoursByDate, start, end);
       }
     );
-    const _getRangeAndCallTreeFilteredThread = createSelector(
+    const applyTransform = (thread: Thread, transform: Transform) => {
+      switch (transform.type) {
+        case 'focus-subtree':
+          return transform.inverted
+            ? Transforms.focusInvertedSubtree(
+                thread,
+                transform.funcPath,
+                transform.implementation
+              )
+            : Transforms.focusSubtree(
+                thread,
+                transform.funcPath,
+                transform.implementation
+              );
+        case 'merge-path-into-caller':
+          return Transforms.mergePathIntoCaller(
+            thread,
+            transform.funcPath,
+            transform.implementation
+          );
+        case 'merge-function':
+          return Transforms.mergeFunction(thread, transform.funcIndex);
+        case 'drop-function':
+          return Transforms.dropFunction(thread, transform.funcIndex);
+        case 'focus-function':
+          return Transforms.focusFunction(thread, transform.funcIndex);
+        case 'collapse-lib':
+          return Transforms.collapseLib(
+            thread,
+            transform.libIndex,
+            transform.implementation
+          );
+        case 'collapse-direct-recursion':
+          return Transforms.collapseDirectRecursion(
+            thread,
+            transform.funcIndex,
+            transform.implementation
+          );
+        case 'collapse-function-subtree':
+          return Transforms.collapseFunctionSubtree(
+            thread,
+            transform.funcIndex
+          );
+        default:
+          throw assertExhaustiveCheck(transform);
+      }
+    };
+    // It becomes very expensive to apply each transform over and over again as they
+    // typically take around 100ms to run per transform on a fast machine. Memoize
+    // memoize each step individually so that they transform stack can be pushed and
+    // popped frequently and easily.
+    const applyTransformMemoized = memoize(applyTransform, {
+      cache: new WeakTupleMap(),
+    });
+    const getTransformStack = (state: State): TransformStack =>
+      UrlState.getTransformStack(state, threadIndex);
+    const getRangeAndTransformFilteredThread = createSelector(
       getRangeFilteredThread,
-      getCallTreeFilters,
-      (thread, callTreeFilters): Thread => {
-        const result = callTreeFilters.reduce((t, filter) => {
-          switch (filter.type) {
-            case 'prefix':
-              return ProfileData.filterThreadToPrefixStack(t, filter.prefixFuncs);
-            case 'postfix':
-              return ProfileData.filterThreadToPostfixStack(t, filter.postfixFuncs);
-            default:
-              throw new Error('unhandled call tree filter');
-          }
-        }, thread);
-        return result;
+      getTransformStack,
+      (startingThread, transforms): Thread => {
+        const transformed = transforms.reduce(
+          // Apply the reducer using an arrow function to ensure correct memoization.
+          (thread, transform) => applyTransformMemoized(thread, transform),
+          startingThread
+        );
+        return Transforms.postProcessTransforms(transformed);
       }
     );
+    const getTransformLabels = createSelector(
+      getRangeAndTransformFilteredThread,
+      getFriendlyThreadName,
+      getTransformStack,
+      Transforms.getTransformLabels
+    );
     const _getSearchFilteredThread = createSelector(
-      _getRangeAndCallTreeFilteredThread,
-      URLState.getSearchString,
+      getRangeAndTransformFilteredThread,
+      UrlState.getSearchString,
       (thread, searchString): Thread => {
         return ProfileData.filterThreadToSearchString(thread, searchString);
       }
     );
     const _getCategoryFilteredThread = createSelector(
       _getSearchFilteredThread,
-      URLState.getCategoryFilter,
+      UrlState.getCategoryFilter,
       (thread, categoryFilter): Thread => {
         return ProfileData.filterThreadToCategory(thread, categoryFilter);
       }
     );
     const _getPlatformFilteredThread = createSelector(
       _getCategoryFilteredThread,
-      URLState.getPlatformFilter,
+      UrlState.getPlatformFilter,
       (thread, platformFilter): Thread => {
         return ProfileData.filterThreadToPlatform(thread, platformFilter);
       }
     );
     const _getRunnableFilteredThread = createSelector(
       _getPlatformFilteredThread,
-      URLState.getRunnableFilter,
+      UrlState.getRunnableFilter,
       (thread, runnableFilter): Thread => {
         return ProfileData.filterThreadToRunnable(thread, runnableFilter);
       }
     );
     const _getUserInteractingFilteredThread = createSelector(
       _getRunnableFilteredThread,
-      URLState.getOnlyUserInteracting,
+      UrlState.getOnlyUserInteracting,
       (thread, onlyUserInteracting): Thread => {
         return onlyUserInteracting ? ProfileData.filterThreadToUserInteracting(thread, true) : thread;
       }
     );
     const getFilteredThread = createSelector(
       _getUserInteractingFilteredThread,
-      URLState.getInvertCallstack,
+      UrlState.getInvertCallstack,
       (thread, shouldInvertCallstack): Thread => {
         return shouldInvertCallstack ? ProfileData.invertCallstack(thread) : thread;
       }
@@ -340,20 +449,20 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
         return ProfileData.filterThreadToRange(thread, usageHoursByDate, selectionStart, selectionEnd);
       }
     );
-    const _getSelectedStackAsFuncArray = createSelector(
+    const getSelectedStackAsFuncArray = createSelector(
       getViewOptions,
       (threadViewOptions): IndexIntoFuncTable[] => threadViewOptions.selectedStack
     );
     const getSelectedStack = createSelector(
       getFilteredThread,
-      _getSelectedStackAsFuncArray,
+      getSelectedStackAsFuncArray,
       ({stackTable}, funcArray): IndexIntoStackTable => {
         return ProfileData.getStackFromFuncArray(funcArray, stackTable);
       }
     );
     const _getExpandedStacksAsFuncArrays = createSelector(
       getViewOptions,
-      (threadViewOptions): Array<IndexIntoFuncTable[]> => threadViewOptions.expandedStacks
+      (threadViewOptions): Array<IndexIntoFuncTable[]> => Array.from(threadViewOptions.expandedStacks)
     );
     const getExpandedStacks = createSelector(
       getFilteredThread,
@@ -379,15 +488,16 @@ export const selectorsForThread = (threadIndex: ThreadIndex): SelectorsForThread
       getUsageHoursByDate,
       getFriendlyThreadName,
       getViewOptions,
-      getCallTreeFilters,
-      getCallTreeFilterLabels,
       getRangeFilteredThread,
+      getRangeAndTransformFilteredThread,
       getFilteredThread,
       getRangeSelectionFilteredThread,
+      getSelectedStackAsFuncArray,
       getSelectedStack,
       getExpandedStacks,
       getPlatforms,
       getCallTree,
+      getTransformLabels,
     };
   }
   return selectorsForThreads[threadIndex];
@@ -397,7 +507,7 @@ export const selectedThreadSelectors: SelectorsForThread = (() => {
   const anyThreadSelectors: SelectorsForThread = selectorsForThread(0);
   const result: {[key: string]: State => any} = {};
   for (const key in anyThreadSelectors) {
-    result[key] = (state: State) => selectorsForThread(URLState.getSelectedThreadIndex(state))[key](state);
+    result[key] = (state: State) => selectorsForThread(UrlState.getSelectedThreadIndex(state))[key](state);
   }
   const result2: SelectorsForThread = result;
   return result2;

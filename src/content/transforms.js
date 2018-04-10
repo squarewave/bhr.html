@@ -9,7 +9,7 @@ import {
 } from '../content/uintarray-encoding';
 import {
   toValidImplementationFilter,
-  getStackIndexFromPath,
+  getStackFromFuncArray,
 } from './profile-data';
 import { timeCode } from '../common/time-code';
 import { ProfileTree } from '../content/profile-tree';
@@ -30,13 +30,13 @@ import type {
  * to profile data.
  */
 
-function convertToTransformType(type: string): TransformType | null {
+export function convertToTransformType(type: string): TransformType | null {
   // Coerce this into a TransformType even if it's not one.
   const coercedType = ((type: any): TransformType);
   switch (coercedType) {
     // Exhaustively check each TransformType. The default arm will assert that
     // we have been exhaustive.
-    case 'merge-call-node':
+    case 'merge-path-into-caller':
     case 'merge-function':
     case 'focus-subtree':
     case 'focus-function':
@@ -522,8 +522,8 @@ export function invertFuncPath(
   profileTree: ProfileTree,
   stackTable: StackTable
 ): number[] {
-  let stackIndex = getStackIndexFromPath(path, stackTable);
-  if (stackIndex === null) {
+  let stackIndex = getStackFromFuncArray(path, stackTable);
+  if (stackIndex === -1) {
     // No path was found, return an empty number[].
     return [];
   }
@@ -546,6 +546,78 @@ export function invertFuncPath(
   );
 }
 
+export function postProcessTransforms(thread: Thread) {
+  return timeCode('postProcessTransforms', () => {
+    const { stackTable, funcTable, sampleTable } = thread;
+    const oldStackToNewStack = new Map();
+    const funcCount = funcTable.length;
+    // Maps can't key off of two items, so combine the prefixCallNode and the funcIndex
+    // using the following formula: prefixCallNode * funcCount + funcIndex => callNode
+    const prefixCallNodeAndFuncToCallNodeMap = new Map();
+
+    // The callNodeTable components.
+    const prefix: Array<number> = [];
+    const func: Array<number> = [];
+    let length = 0;
+
+    function addCallNode(
+      prefixIndex: IndexIntoCallNodeTable,
+      funcIndex: IndexIntoFuncTable
+    ) {
+      const index = length++;
+      prefix[index] = prefixIndex;
+      func[index] = funcIndex;
+    }
+
+    oldStackToNewStack.set(-1, -1);
+
+    // Go through each stack, and create a new callNode table, which is based off of
+    // functions rather than frames.
+    for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
+      const prefixStack = stackTable.prefix[stackIndex];
+      // We know that at this point the following condition holds:
+      // assert(prefixStack === null || prefixStack < stackIndex);
+      const prefixCallNode = oldStackToNewStack.get(prefixStack);
+      const funcIndex = stackTable.func[stackIndex];
+      const prefixCallNodeAndFuncIndex = prefixCallNode * funcCount + funcIndex;
+      let callNodeIndex = prefixCallNodeAndFuncToCallNodeMap.get(
+        prefixCallNodeAndFuncIndex
+      );
+      if (callNodeIndex === undefined) {
+        callNodeIndex = length;
+        addCallNode(prefixCallNode, funcIndex);
+        prefixCallNodeAndFuncToCallNodeMap.set(
+          prefixCallNodeAndFuncIndex,
+          callNodeIndex
+        );
+      }
+      oldStackToNewStack.set(stackIndex, callNodeIndex);
+    }
+
+    const newStacks = {
+      prefix: new Int32Array(prefix),
+      func: new Int32Array(func),
+      length,
+    };
+
+    const newSamples = Object.assign({}, sampleTable, {
+      stack: sampleTable.stack.map(oldStack => {
+        const newStack = oldStack === null ? null : oldStackToNewStack.get(oldStack);
+        if (newStack === undefined) {
+          throw new Error(
+            'Converting from the old stack to a new stack cannot be undefined'
+          );
+        }
+        return newStack;
+      }),
+    });
+    return Object.assign({}, thread, {
+      sampleTable: newSamples,
+      stackTable: newStacks,
+    });
+  });
+}
+
 /**
  * Transform a thread's stacks to merge stacks that match the number[] into
  * the calling stack. See `src/types/transforms.js` for more information about the
@@ -561,12 +633,12 @@ export function mergePathIntoCaller(
     // Depth here is 0 indexed.
     const depthAtFuncPathLeaf = funcPath.length - 1;
     const oldStackToNewStack: Map<
-      number | null,
-      number | null
+      number,
+      number
     > = new Map();
-    // A root stack's prefix will be null. Maintain that relationship from old to new
-    // stacks by mapping from null to null.
-    oldStackToNewStack.set(null, null);
+    // A root stack's prefix will be -1. Maintain that relationship from old to new
+    // stacks by mapping from -1 to -1.
+    oldStackToNewStack.set(-1, -1);
     const newStackTable = {
       length: 0,
       prefix: [],
@@ -581,8 +653,8 @@ export function mergePathIntoCaller(
       const prefix = stackTable.prefix[stackIndex];
       const funcIndex = stackTable.func[stackIndex];
 
-      const doesPrefixMatch = prefix === null ? true : stackMatches[prefix];
-      const prefixDepth = prefix === null ? -1 : stackDepths[prefix];
+      const doesPrefixMatch = prefix === -1 ? true : stackMatches[prefix];
+      const prefixDepth = prefix === -1 ? -1 : stackDepths[prefix];
       const currentFuncOnPath = funcPath[prefixDepth + 1];
 
       let doMerge = false;
@@ -621,20 +693,20 @@ export function mergePathIntoCaller(
         const newStackPrefix = oldStackToNewStack.get(prefix);
         oldStackToNewStack.set(
           stackIndex,
-          newStackPrefix === undefined ? null : newStackPrefix
+          newStackPrefix === undefined ? -1 : newStackPrefix
         );
       } else {
         const newStackIndex = newStackTable.length++;
         const newStackPrefix = oldStackToNewStack.get(prefix);
         newStackTable.prefix[newStackIndex] =
-          newStackPrefix === undefined ? null : newStackPrefix;
+          newStackPrefix === undefined ? -1 : newStackPrefix;
         newStackTable.func[newStackIndex] = funcIndex;
         oldStackToNewStack.set(stackIndex, newStackIndex);
       }
     }
     const newSamples = Object.assign({}, sampleTable, {
       stack: sampleTable.stack.map(oldStack => {
-        const newStack = oldStackToNewStack.get(oldStack);
+        const newStack = oldStack === null ? null : oldStackToNewStack.get(oldStack);
         if (newStack === undefined) {
           throw new Error(
             'Converting from the old stack to a new stack cannot be undefined'
@@ -659,13 +731,10 @@ export function mergeFunction(
   funcIndexToMerge: number
 ) {
   const { stackTable, sampleTable } = thread;
-  const oldStackToNewStack: Map<
-    number | null,
-    number | null
-  > = new Map();
+  const oldStackToNewStack: Map<number, number> = new Map();
   // A root stack's prefix will be null. Maintain that relationship from old to new
   // stacks by mapping from null to null.
-  oldStackToNewStack.set(null, null);
+  oldStackToNewStack.set(-1, -1);
   const newStackTable = {
     length: 0,
     prefix: [],
@@ -679,20 +748,20 @@ export function mergeFunction(
       const newStackPrefix = oldStackToNewStack.get(prefix);
       oldStackToNewStack.set(
         stackIndex,
-        newStackPrefix === undefined ? null : newStackPrefix
+        newStackPrefix === undefined ? -1 : newStackPrefix
       );
     } else {
       const newStackIndex = newStackTable.length++;
       const newStackPrefix = oldStackToNewStack.get(prefix);
       newStackTable.prefix[newStackIndex] =
-        newStackPrefix === undefined ? null : newStackPrefix;
+        newStackPrefix === undefined ? -1 : newStackPrefix;
       newStackTable.func[newStackIndex] = funcIndex;
       oldStackToNewStack.set(stackIndex, newStackIndex);
     }
   }
   const newSamples = Object.assign({}, sampleTable, {
     stack: sampleTable.stack.map(oldStack => {
-      const newStack = oldStackToNewStack.get(oldStack);
+      const newStack = oldStack === null ? null : oldStackToNewStack.get(oldStack);
       if (newStack === undefined) {
         throw new Error(
           'Converting from the old stack to a new stack cannot be undefined'
@@ -725,7 +794,7 @@ export function dropFunction(
       // This is the function we want to remove.
       funcIndex === funcIndexToDrop ||
       // The parent of this stack contained the function.
-      (prefix !== null && stackContainsFunc[prefix])
+      (prefix !== -1 && stackContainsFunc[prefix])
     ) {
       stackContainsFunc[stackIndex] = true;
     }
@@ -760,19 +829,19 @@ export function collapseLib(
     func: [],
   };
   const oldStackToNewStack: Map<
-    number | null,
-    number | null
+    number,
+    number
   > = new Map();
   const prefixStackToCollapsedStack: Map<
-    number | null, // prefix stack index
-    number | null // collapsed stack index
+    number, // prefix stack index
+    number // collapsed stack index
   > = new Map();
-  const collapsedStacks: Set<number | null> = new Set();
+  const collapsedStacks: Set<number> = new Set();
   const funcMatchesImplementation = FUNC_MATCHES[implementation];
 
-  // A root stack's prefix will be null. Maintain that relationship from old to new
-  // stacks by mapping from null to null.
-  oldStackToNewStack.set(null, null);
+  // A root stack's prefix will be -1. Maintain that relationship from old to new
+  // stacks by mapping from -1 to -1.
+  oldStackToNewStack.set(-1, -1);
   // A new func will be created on the first stack that is found that includes
   // the given lib.
   let collapsedFuncIndex;
@@ -815,8 +884,8 @@ export function collapseLib(
           newStackTable.func.push(collapsedFuncIndex);
         } else {
           // A collapsed stack at this level already exists, use that one.
-          if (existingCollapsedStack === null) {
-            throw new Error('existingCollapsedStack cannot be null');
+          if (existingCollapsedStack === -1) {
+            throw new Error('existingCollapsedStack cannot be -1');
           }
           oldStackToNewStack.set(stackIndex, existingCollapsedStack);
         }
@@ -827,7 +896,7 @@ export function collapseLib(
     } else {
       if (
         !funcMatchesImplementation(thread, funcIndex) &&
-        newStackPrefix !== null
+        newStackPrefix !== -1
       ) {
         // This function doesn't match the implementation filter.
         const prefixFunc = newStackTable.func[newStackPrefix];
@@ -850,7 +919,7 @@ export function collapseLib(
 
   const newSamples = Object.assign({}, sampleTable, {
     stack: sampleTable.stack.map(oldStack => {
-      const newStack = oldStackToNewStack.get(oldStack);
+      const newStack = oldStack === null ? null : oldStackToNewStack.get(oldStack);
       if (newStack === undefined) {
         throw new Error(
           'Converting from the old stack to a new stack cannot be undefined'
@@ -872,14 +941,14 @@ export function collapseDirectRecursion(
   funcToCollapse: number,
   implementation: string
 ): Thread {
-  const { stackTable, samples } = thread;
+  const { stackTable, sampleTable } = thread;
   const oldStackToNewStack: Map<
-    number | null,
-    number | null
+    number,
+    number
   > = new Map();
-  // A root stack's prefix will be null. Maintain that relationship from old to new
-  // stacks by mapping from null to null.
-  oldStackToNewStack.set(null, null);
+  // A root stack's prefix will be -1. Maintain that relationship from old to new
+  // stacks by mapping from -1 to -1.
+  oldStackToNewStack.set(-1, -1);
   const recursiveStacks = new Set();
   const newStackTable = {
     length: 0,
@@ -929,9 +998,9 @@ export function collapseDirectRecursion(
       }
     }
   }
-  const newSamples = Object.assign({}, samples, {
-    stack: samples.stack.map(oldStack => {
-      const newStack = oldStackToNewStack.get(oldStack);
+  const newSamples = Object.assign({}, sampleTable, {
+    stack: sampleTable.stack.map(oldStack => {
+      const newStack = oldStack === null ? null : oldStackToNewStack.get(oldStack);
       if (newStack === undefined) {
         throw new Error(
           'Converting from the old stack to a new stack cannot be undefined'
@@ -942,29 +1011,30 @@ export function collapseDirectRecursion(
   });
   return Object.assign({}, thread, {
     stackTable: newStackTable,
-    samples: newSamples,
+    sampleTable: newSamples,
   });
 }
 const FUNC_MATCHES = {
   combined: (_thread: Thread, _funcIndex: number) => true,
   cpp: (thread: Thread, funcIndex: number): boolean => {
     const { funcTable, stringTable } = thread;
-    // Return quickly if this is a JS frame.
-    if (thread.funcTable.isJS[funcIndex]) {
-      return false;
-    }
 
     // Regular C++ functions are associated with a resource that describes the
     // shared library that these C++ functions were loaded from. Jitcode is not
     // loaded from shared libraries but instead generated at runtime, so Jitcode
     // frames are not associated with a shared library and thus have no resource
     const locationString = stringTable.getString(funcTable.name[funcIndex]);
+    if (locationString.includes(".js")) {
+      return false;
+    }
     const isProbablyJitCode =
-      funcTable.resource[funcIndex] === -1 && locationString.startsWith('0x');
+      funcTable.lib[funcIndex] === -1; // TODO
     return !isProbablyJitCode;
   },
   js: (thread: Thread, funcIndex: number): boolean => {
-    return thread.funcTable.isJS[funcIndex];
+    const { funcTable, stringTable } = thread;
+    const locationString = stringTable.getString(funcTable.name[funcIndex]);
+    return locationString.includes(".js");
   },
 };
 
@@ -972,14 +1042,14 @@ export function collapseFunctionSubtree(
   thread: Thread,
   funcToCollapse: number
 ): Thread {
-  const { stackTable, frameTable, samples } = thread;
+  const { stackTable, sampleTable } = thread;
   const oldStackToNewStack: Map<
-    number | null,
-    number | null
+    number,
+    number
   > = new Map();
-  // A root stack's prefix will be null. Maintain that relationship from old to new
-  // stacks by mapping from null to null.
-  oldStackToNewStack.set(null, null);
+  // A root stack's prefix will be -1. Maintain that relationship from old to new
+  // stacks by mapping from -1 to -1.
+  oldStackToNewStack.set(-1, -1);
   const collapsedStacks = new Set();
   const newStackTable = {
     length: 0,
@@ -1025,9 +1095,9 @@ export function collapseFunctionSubtree(
       }
     }
   }
-  const newSamples = Object.assign({}, samples, {
-    stack: samples.stack.map(oldStack => {
-      const newStack = oldStackToNewStack.get(oldStack);
+  const newSamples = Object.assign({}, sampleTable, {
+    stack: sampleTable.stack.map(oldStack => {
+      const newStack = oldStack === null ? null : oldStackToNewStack.get(oldStack);
       if (newStack === undefined) {
         throw new Error(
           'Converting from the old stack to a new stack cannot be undefined'
@@ -1038,7 +1108,7 @@ export function collapseFunctionSubtree(
   });
   return Object.assign({}, thread, {
     stackTable: newStackTable,
-    samples: newSamples,
+    sampleTable: newSamples,
   });
 }
 
@@ -1053,32 +1123,31 @@ export function focusSubtree(
   implementation: string
 ): Thread {
   return timeCode('focusSubtree', () => {
-    const { stackTable, frameTable, samples } = thread;
+    const { stackTable, sampleTable } = thread;
     const prefixDepth = funcPath.length;
     const stackMatches = new Int32Array(stackTable.length);
     const funcMatchesImplementation = FUNC_MATCHES[implementation];
     const oldStackToNewStack: Map<
-      number | null,
-      number | null
+      number,
+      number
     > = new Map();
-    // A root stack's prefix will be null. Maintain that relationship from old to new
-    // stacks by mapping from null to null.
-    oldStackToNewStack.set(null, null);
+    // A root stack's prefix will be -1. Maintain that relationship from old to new
+    // stacks by mapping from -1 to -1.
+    oldStackToNewStack.set(-1, -1);
     const newStackTable = {
       length: 0,
       prefix: [],
-      frame: [],
+      func: [],
     };
     for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
       const prefix = stackTable.prefix[stackIndex];
-      const prefixMatchesUpTo = prefix !== null ? stackMatches[prefix] : 0;
+      const prefixMatchesUpTo = prefix !== -1 ? stackMatches[prefix] : 0;
       let stackMatchesUpTo = -1;
       if (prefixMatchesUpTo !== -1) {
-        const frame = stackTable.frame[stackIndex];
+        const funcIndex = stackTable.func[stackIndex];
         if (prefixMatchesUpTo === prefixDepth) {
           stackMatchesUpTo = prefixDepth;
         } else {
-          const funcIndex = frameTable.func[frame];
           if (funcIndex === funcPath[prefixMatchesUpTo]) {
             stackMatchesUpTo = prefixMatchesUpTo + 1;
           } else if (!funcMatchesImplementation(thread, funcIndex)) {
@@ -1089,15 +1158,15 @@ export function focusSubtree(
           const newStackIndex = newStackTable.length++;
           const newStackPrefix = oldStackToNewStack.get(prefix);
           newStackTable.prefix[newStackIndex] =
-            newStackPrefix !== undefined ? newStackPrefix : null;
-          newStackTable.frame[newStackIndex] = frame;
+            newStackPrefix !== undefined ? newStackPrefix : -1;
+          newStackTable.func[newStackIndex] = funcIndex;
           oldStackToNewStack.set(stackIndex, newStackIndex);
         }
       }
       stackMatches[stackIndex] = stackMatchesUpTo;
     }
-    const newSamples = Object.assign({}, samples, {
-      stack: samples.stack.map(oldStack => {
+    const newSamples = Object.assign({}, sampleTable, {
+      stack: sampleTable.stack.map(oldStack => {
         if (oldStack === null || stackMatches[oldStack] !== prefixDepth) {
           return null;
         }
@@ -1112,7 +1181,7 @@ export function focusSubtree(
     });
     return Object.assign({}, thread, {
       stackTable: newStackTable,
-      samples: newSamples,
+      sampleTable: newSamples,
     });
   });
 }
@@ -1129,13 +1198,12 @@ export function focusInvertedSubtree(
 ): Thread {
   return timeCode('focusInvertedSubtree', () => {
     const postfixDepth = postfixFuncPath.length;
-    const { stackTable, frameTable, samples } = thread;
+    const { stackTable, sampleTable } = thread;
     const funcMatchesImplementation = FUNC_MATCHES[implementation];
     function convertStack(leaf) {
       let matchesUpToDepth = 0; // counted from the leaf
       for (let stack = leaf; stack !== null; stack = stackTable.prefix[stack]) {
-        const frame = stackTable.frame[stack];
-        const funcIndex = frameTable.func[frame];
+        const funcIndex = stackTable.func[stack];
         if (funcIndex === postfixFuncPath[matchesUpToDepth]) {
           matchesUpToDepth++;
           if (matchesUpToDepth === postfixDepth) {
@@ -1152,8 +1220,8 @@ export function focusInvertedSubtree(
     // A root stack's prefix will be null. Maintain that relationship from old to new
     // stacks by mapping from null to null.
     oldStackToNewStack.set(null, null);
-    const newSamples = Object.assign({}, samples, {
-      stack: samples.stack.map(stackIndex => {
+    const newSamples = Object.assign({}, sampleTable, {
+      stack: sampleTable.stack.map(stackIndex => {
         let newStackIndex = oldStackToNewStack.get(stackIndex);
         if (newStackIndex === undefined) {
           newStackIndex = convertStack(stackIndex);
@@ -1163,7 +1231,7 @@ export function focusInvertedSubtree(
       }),
     });
     return Object.assign({}, thread, {
-      samples: newSamples,
+      sampleTable: newSamples,
     });
   });
 }
@@ -1172,23 +1240,22 @@ export function focusFunction(
   funcIndexToFocus: number
 ): Thread {
   return timeCode('focusSubtree', () => {
-    const { stackTable, frameTable, samples } = thread;
+    const { stackTable, sampleTable } = thread;
     const oldStackToNewStack: Map<
-      number | null,
-      number | null
+      number,
+      number
     > = new Map();
-    // A root stack's prefix will be null. Maintain that relationship from old to new
-    // stacks by mapping from null to null.
-    oldStackToNewStack.set(null, null);
+    // A root stack's prefix will be -1. Maintain that relationship from old to new
+    // stacks by mapping from -1 to -1.
+    oldStackToNewStack.set(-1, -1);
     const newStackTable = {
       length: 0,
       prefix: [],
-      frame: [],
+      func: [],
     };
     for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
       const prefix = stackTable.prefix[stackIndex];
-      const frameIndex = stackTable.frame[stackIndex];
-      const funcIndex = frameTable.func[frameIndex];
+      const funcIndex = stackTable.func[stackIndex];
       const matchesFocusFunc = funcIndex === funcIndexToFocus;
 
       const newPrefix = oldStackToNewStack.get(prefix);
@@ -1196,17 +1263,17 @@ export function focusFunction(
         throw new Error('The prefix should not map to an undefined value');
       }
 
-      if (newPrefix !== null || matchesFocusFunc) {
+      if (newPrefix !== -1 || matchesFocusFunc) {
         const newStackIndex = newStackTable.length++;
         newStackTable.prefix[newStackIndex] = newPrefix;
-        newStackTable.frame[newStackIndex] = frameIndex;
+        newStackTable.func[newStackIndex] = funcIndex;
         oldStackToNewStack.set(stackIndex, newStackIndex);
       } else {
-        oldStackToNewStack.set(stackIndex, null);
+        oldStackToNewStack.set(stackIndex, -1);
       }
     }
-    const newSamples = Object.assign({}, samples, {
-      stack: samples.stack.map(oldStack => {
+    const newSamples = Object.assign({}, sampleTable, {
+      stack: sampleTable.stack.map(oldStack => {
         if (oldStack === null) {
           return null;
         }
@@ -1221,7 +1288,7 @@ export function focusFunction(
     });
     return Object.assign({}, thread, {
       stackTable: newStackTable,
-      samples: newSamples,
+      sampleTable: newSamples,
     });
   });
 }
@@ -1238,19 +1305,18 @@ export function restoreAllFunctionsInFuncPath(
   previousImplementationFilter: string,
   funcPath: number[]
 ): number[] {
-  const { stackTable, frameTable } = thread;
+  const { stackTable } = thread;
   const funcMatchesImplementation = FUNC_MATCHES[previousImplementationFilter];
   // For every stackIndex, matchesUpToDepth[stackIndex] will be:
   //  - null if stackIndex does not match the funcPath
   //  - <depth> if stackIndex matches funcPath up to (and including) funcPath[<depth>]
   const matchesUpToDepth = [];
-  let tipStackIndex = null;
+  let tipStackIndex = -1;
   // Try to find the tip most stackIndex in the number[], but skip anything
   // that doesn't match the previous implementation filter.
   for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
     const prefix = stackTable.prefix[stackIndex];
-    const frameIndex = stackTable.frame[stackIndex];
-    const funcIndex = frameTable.func[frameIndex];
+    const funcIndex = stackTable.func[stackIndex];
     const prefixPathDepth = prefix === null ? -1 : matchesUpToDepth[prefix];
 
     if (prefixPathDepth === null) {
@@ -1277,17 +1343,16 @@ export function restoreAllFunctionsInFuncPath(
   }
 
   // Turn the stack index into a number[]
-  if (tipStackIndex === null) {
+  if (tipStackIndex === -1) {
     return [];
   }
   const newFuncPath = [];
   for (
     let stackIndex = tipStackIndex;
-    stackIndex !== null;
+    stackIndex !== -1;
     stackIndex = stackTable.prefix[stackIndex]
   ) {
-    const frameIndex = stackTable.frame[stackIndex];
-    const funcIndex = frameTable.func[frameIndex];
+    const funcIndex = stackTable.func[stackIndex];
     newFuncPath.push(funcIndex);
   }
   return newFuncPath.reverse();
@@ -1296,7 +1361,7 @@ export function restoreAllFunctionsInFuncPath(
 export function getStackType(
   thread: Thread,
   funcIndex: number
-): StackType {
+): string {
   if (FUNC_MATCHES.cpp(thread, funcIndex)) {
     return 'native';
   } else if (FUNC_MATCHES.js(thread, funcIndex)) {
@@ -1325,14 +1390,13 @@ export function funcHasRecursiveCall(
   implementation: string,
   funcToCheck: number
 ) {
-  const { stackTable, frameTable } = thread;
+  const { stackTable } = thread;
   const recursiveStacks = new Set();
   const funcMatchesImplementation = FUNC_MATCHES[implementation];
 
   for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
-    const frameIndex = stackTable.frame[stackIndex];
+    const funcIndex = stackTable.func[stackIndex];
     const prefix = stackTable.prefix[stackIndex];
-    const funcIndex = frameTable.func[frameIndex];
     const recursivePrefix = recursiveStacks.has(prefix);
 
     if (funcToCheck === funcIndex) {
