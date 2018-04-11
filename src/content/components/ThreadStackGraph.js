@@ -5,7 +5,7 @@ import actions from '../actions';
 import shallowCompare from 'react-addons-shallow-compare';
 import classNames from 'classnames';
 import { timeCode } from '../../common/time-code';
-import { getDateGraph } from '../reducers/date-graph';
+import { getDateGraph, getTotalDateGraph } from '../reducers/date-graph';
 import { getUsageHoursByDate } from '../reducers/profile-view';
 import Tooltip from './Tooltip'
 
@@ -66,7 +66,7 @@ class ThreadStackGraph extends Component {
   }
 
   drawCanvas(c) {
-    let { rangeStart, rangeEnd, dateGraph } = this.props;
+    let { rangeStart, rangeEnd, dateGraph, totalDateGraph } = this.props;
     let { pickedItem } = this.state;
 
     const devicePixelRatio = c.ownerDocument ? c.ownerDocument.defaultView.devicePixelRatio : 1;
@@ -82,14 +82,67 @@ class ThreadStackGraph extends Component {
     const yDevicePixelsPerHangMs = c.height / maxHangMs;
     const yDevicePixelsPerHangCount = c.height / maxHangCount;
 
+    ctx.beginPath();
+    ctx.fillStyle = colors.GREY_20;
+    let leftmostPointSet = false;
+    let leftmostPoint = 0;
+    let rightmostPoint = 0;
+    for (let i = rangeStart; i <= rangeEnd; i++) {
+      const countHeight = totalDateGraph.totalCount[i] * yDevicePixelsPerHangCount;
+      const countY = c.height - countHeight;
+      const countX = (i - rangeStart) * xDevicePixelsPerDay;
+      if (totalDateGraph.totalCount[i] > 0) {
+        rightmostPoint = countX;
+        if (!leftmostPointSet) {
+          leftmostPointSet = true;
+          leftmostPoint = countX;
+        }
+      }
+      if (i == rangeStart || totalDateGraph.totalCount[i - 1] === 0) {
+        ctx.moveTo(countX, countY);
+      } else {
+        ctx.lineTo(countX, countY);
+      }
+    }
+    ctx.lineTo(rightmostPoint, c.height);
+    ctx.lineTo(leftmostPoint, c.height);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.fillStyle = colors.GREY_30;
+    leftmostPointSet = false;
+    leftmostPoint = 0;
+    rightmostPoint = 0;
+    for (let i = rangeStart; i <= rangeEnd; i++) {
+      const timeHeight = totalDateGraph.totalTime[i] * yDevicePixelsPerHangMs;
+      const timeY = c.height - timeHeight;
+      const timeX = (i - rangeStart) * xDevicePixelsPerDay;
+      if (totalDateGraph.totalTime[i] > 0) {
+        rightmostPoint = timeX;
+        if (!leftmostPointSet) {
+          leftmostPointSet = true;
+          leftmostPoint = timeX;
+        }
+      }
+      if (i == rangeStart || totalDateGraph.totalTime[i - 1] === 0) {
+        ctx.moveTo(timeX, timeY);
+      } else {
+        ctx.lineTo(timeX, timeY);
+      }
+    }
+    ctx.lineTo(rightmostPoint, c.height);
+    ctx.lineTo(leftmostPoint, c.height);
+    ctx.fill();
+
+    ctx.beginPath();
     ctx.lineWidth = 2 * devicePixelRatio;
     ctx.strokeStyle = colors.BLUE_50;
     ctx.fillStyle = colors.BLUE_50;
     for (let i = rangeStart; i <= rangeEnd; i++) {
       const countHeight = dateGraph.totalCount[i] * yDevicePixelsPerHangCount;
       const countY = c.height - countHeight;
-      if (i == 0) {
-        ctx.moveTo(0, countY);
+      if (i == rangeStart || dateGraph.totalCount[i - 1] === 0) {
+        ctx.moveTo((i - rangeStart) * xDevicePixelsPerDay, countY);
       } else {
         ctx.lineTo((i - rangeStart) * xDevicePixelsPerDay, countY);
       }
@@ -101,53 +154,59 @@ class ThreadStackGraph extends Component {
       const isPicked = pickedItem && pickedItem.dateIndex == i;
       const countHeight = dateGraph.totalCount[i] * yDevicePixelsPerHangCount;
       const countY = c.height - countHeight;
-      ctx.beginPath();
-      ctx.arc((i - rangeStart) * xDevicePixelsPerDay, countY, 5 * devicePixelRatio, 0, 2 * Math.PI);
-      ctx.fill();
-      if (isPicked) {
-        ctx.stroke();
+      if (dateGraph.totalCount[i]) {
+        ctx.beginPath();
+        ctx.arc((i - rangeStart) * xDevicePixelsPerDay, countY, 5 * devicePixelRatio, 0, 2 * Math.PI);
+        ctx.fill();
+        if (isPicked) {
+          ctx.stroke();
+        }
       }
     }
 
+    ctx.beginPath();
     ctx.lineWidth = 2 * devicePixelRatio;
     ctx.strokeStyle = colors.BLUE_70;
     ctx.fillStyle = colors.BLUE_70;
     for (let i = rangeStart; i <= rangeEnd; i++) {
       const timeHeight = dateGraph.totalTime[i] * yDevicePixelsPerHangMs;
       const timeY = c.height - timeHeight;
-      if (i == 0) {
-        ctx.moveTo(0, timeY);
+      if (i == rangeStart || dateGraph.totalTime[i - 1] === 0) {
+        ctx.moveTo((i - rangeStart) * xDevicePixelsPerDay, timeY);
       } else {
         ctx.lineTo((i - rangeStart) * xDevicePixelsPerDay, timeY);
       }
     }
     ctx.stroke();
+
     ctx.lineWidth = 1 * devicePixelRatio;
     ctx.strokeStyle = colors.BLUE_40;
     for (let i = rangeStart; i <= rangeEnd; i++) {
       const isPicked = pickedItem && pickedItem.dateIndex == i;
       const timeHeight = dateGraph.totalTime[i] * yDevicePixelsPerHangMs;
       const timeY = c.height - timeHeight;
-      ctx.beginPath();
-      ctx.arc((i - rangeStart) * xDevicePixelsPerDay, timeY, 5 * devicePixelRatio, 0, 2 * Math.PI);
-      ctx.fill();
-      if (isPicked) {
-        ctx.stroke();
+      if (dateGraph.totalTime[i]) {
+        ctx.beginPath();
+        ctx.arc((i - rangeStart) * xDevicePixelsPerDay, timeY, 5 * devicePixelRatio, 0, 2 * Math.PI);
+        ctx.fill();
+        if (isPicked) {
+          ctx.stroke();
+        }
       }
     }
   }
 
   _getMaxGraphValues() {
-    let { rangeStart, rangeEnd, dateGraph } = this.props;
+    let { rangeStart, rangeEnd, totalDateGraph } = this.props;
 
     let maxHangMs = 0;
     let maxHangCount = 0;
     for (let i = rangeStart; i <= rangeEnd; i++) {
-      if (dateGraph.totalTime[i] > maxHangMs) {
-        maxHangMs = dateGraph.totalTime[i];
+      if (totalDateGraph.totalTime[i] > maxHangMs) {
+        maxHangMs = totalDateGraph.totalTime[i];
       }
-      if (dateGraph.totalCount[i] > maxHangCount) {
-        maxHangCount = dateGraph.totalCount[i];
+      if (totalDateGraph.totalCount[i] > maxHangCount) {
+        maxHangCount = totalDateGraph.totalCount[i];
       }
     }
 
@@ -301,6 +360,7 @@ ThreadStackGraph.propTypes = {
   rangeStart: PropTypes.number.isRequired,
   rangeEnd: PropTypes.number.isRequired,
   dateGraph: PropTypes.object.isRequired,
+  totalDateGraph: PropTypes.object.isRequired,
   dates: PropTypes.array.isRequired,
   usageHoursByDate: PropTypes.object.isRequired,
   className: PropTypes.string,
@@ -308,5 +368,6 @@ ThreadStackGraph.propTypes = {
 
 export default connect(state => ({
   dateGraph: getDateGraph(state),
+  totalDateGraph: getTotalDateGraph(state),
   usageHoursByDate: getUsageHoursByDate(state),
 }), actions)(ThreadStackGraph);

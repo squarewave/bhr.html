@@ -12,7 +12,11 @@ const messages = {};
 export default messages;
 
 messages.REBUILD_DATE_GRAPH = function(message, call) {
-  call(rebuildDateGraph, message.thread, message.selectedStack);
+  call(rebuildDateGraph, message.thread, message.selectedStack, 'DATE_GRAPH_REBUILT', true);
+};
+
+messages.REBUILD_TOTAL_DATE_GRAPH = function(message, call) {
+  call(rebuildDateGraph, message.thread, -1, 'TOTAL_DATE_GRAPH_REBUILT', false);
 };
 
 messages.SET_WORKER_INFORMATION = function(message, call) {

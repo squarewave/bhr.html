@@ -10,29 +10,41 @@ import { getProfile } from './profile-view';
 import { createSelector } from 'reselect';
 
 export default function dateGraphReducer(
-  state: DateGraph = { length: 0, totalTime: new Float32Array(), totalCount: new Float32Array() },
-  action: ThunkAction
+  state: DateGraphState = {
+    dateGraph: { length: 0, totalTime: new Float32Array(), totalCount: new Float32Array() },
+    totalDateGraph: { length: 0, totalTime: new Float32Array(), totalCount: new Float32Array() },
+  }, action: ThunkAction
 ) {
+  let key = (action.type === 'TOTAL_DATE_GRAPH_REBUILT') ? 'totalDateGraph' : 'dateGraph';
   switch (action.type) {
+    case 'TOTAL_DATE_GRAPH_REBUILT':
     case 'DATE_GRAPH_REBUILT': {
-      const newState = {
+      const dateGraph = {
         length: action.dateGraph.length,
-        totalTime: action.dateGraph.length === state.length ?
-          Float32Array.from(state.totalTime) : new Float32Array(action.dateGraph.length),
-        totalCount: action.dateGraph.length === state.length ?
-          Float32Array.from(state.totalCount) : new Float32Array(action.dateGraph.length),
+        totalTime: action.dateGraph.length === state[key].length ?
+          Float32Array.from(state[key].totalTime) : new Float32Array(action.dateGraph.length),
+        totalCount: action.dateGraph.length === state[key].length ?
+          Float32Array.from(state[key].totalCount) : new Float32Array(action.dateGraph.length),
       };
       for (let i = 0; i < action.dateGraph.length; i++) {
         if (i % action.numWorkers === action.workerIndex) {
-          newState.totalTime[i] = action.dateGraph.totalTime[i];
-          newState.totalCount[i] = action.dateGraph.totalCount[i];
+          dateGraph.totalTime[i] = action.dateGraph.totalTime[i];
+          dateGraph.totalCount[i] = action.dateGraph.totalCount[i];
         }
       }
-      return newState;
+      return Object.assign({}, state, {
+        [key]: dateGraph,
+      });
     }
     default:
       return state;
   }
 }
 
-export const getDateGraph = (state: State): DateGraph => state.dateGraph;
+export const getDateGraph = (state: State): DateGraph => {
+  return state.dateGraph.dateGraph;
+};
+
+export const getTotalDateGraph = (state: State): DateGraph => {
+  return state.dateGraph.totalDateGraph;
+};

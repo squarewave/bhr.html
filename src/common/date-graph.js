@@ -25,7 +25,7 @@ export function buildDateGraph(thread, stack, dateIndex) {
     for (let j = stackTable.length - 1; j >= 0; j--) {
       totalTime[j] += selfTime[j];
       totalCount[j] += selfCount[j];
-      if (j == stack) {
+      if (j === stack) {
         graph.totalTime = totalTime[j];
         graph.totalCount = totalCount[j];
         break;
@@ -34,6 +34,9 @@ export function buildDateGraph(thread, stack, dateIndex) {
       if (prefix !== -1) {
         totalTime[prefix] += totalTime[j];
         totalCount[prefix] += totalCount[j];
+      } else if (stack === -1) {
+        graph.totalTime += totalTime[j];
+        graph.totalCount += totalCount[j];
       }
     }
 

@@ -6,6 +6,11 @@ export type DateGraph = {
   length: number,
 };
 
+export type DateGraphState = {
+  dateGraph: DateGraph,
+  totalDateGraph: DateGraph,
+};
+
 export type CategorySummaryDate = {
   category: string,
   percentage: number,

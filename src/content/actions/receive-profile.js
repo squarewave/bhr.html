@@ -55,6 +55,12 @@ export function receiveProfileFromTelemetry(profile: Profile): ThunkAction {
     });
 
     dispatch({
+      type: 'REBUILD_TOTAL_DATE_GRAPH',
+      toDateGraphWorker: true,
+      thread: selectedThreadSelectors.getThread(getState()),
+    });
+
+    dispatch({
       type: 'REBUILD_DATE_GRAPH',
       toDateGraphWorker: true,
       thread: selectedThreadSelectors.getFilteredThread(getState()),

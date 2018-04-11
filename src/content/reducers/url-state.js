@@ -75,16 +75,6 @@ function selectedThread(state: ThreadIndex = 0, action: Action) {
   switch (action.type) {
     case 'CHANGE_SELECTED_THREAD':
       return action.selectedThread;
-    case 'RECEIVE_PROFILE_FROM_TELEMETRY': {
-      // When loading in a brand new profile, select either the GeckoMain [tab] thread,
-      // or the first thread in the thread order. For profiles from the Web, the
-      // selectedThread has already been initialized from the URL and does not require
-      // looking at the profile.
-      const contentThreadId = action.profile.threads.findIndex(thread => {
-        return thread.name === 'GeckoMain' && thread.processType === 'tab';
-      });
-      return contentThreadId !== -1 ? contentThreadId : defaultThreadOrder(action.profile.threads)[0];
-    }
     default:
       return state;
   }

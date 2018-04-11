@@ -97,12 +97,13 @@ type WorkerAction =
   { type: 'PROFILE_PROCESSED', toSummaryWorker: boolean, profile: Profile } |
   { type: 'SUMMARIZE_PROFILE', toSummaryWorker: boolean } |
   { type: 'REBUILD_DATE_GRAPH', toDateGraphWorker: boolean, thread?: Thread, selectedStack: number } |
+  { type: 'REBUILD_TOTAL_DATE_GRAPH', toDateGraphWorker: boolean, thread?: Thread, selectedStack: number } |
   { type: 'PROFILE_SUMMARY_EXPAND', threadIndex: number } |
   { type: 'DATE_GRAPH_REBUILT', dateGraph: DateGraph } |
   { type: 'PROFILE_CATEGORIES_PROCESSED', categories: CategorySummary[] } |
   { type: 'PROFILE_SUMMARY_COLLAPSE', threadIndex: number };
 
-type RunnablesAction = 
+type RunnablesAction =
   { type: 'PROFILE_RUNNABLES_PROCESSED', runnables: Object[] };
 
 export type Action =

@@ -458,14 +458,14 @@ body, #root, .profileViewer {
 }
 
 .threadStackGraph {
-  height: 180px;
+  height: 360px;
   width: 100%;
   position: relative;
 }
 
 .threadStackGraphCanvas {
   display: block;
-  height: 180px;
+  height: 360px;
   width: 100%;
 }
 

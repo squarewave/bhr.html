@@ -6,7 +6,7 @@ import React, { PureComponent, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import { selectedThreadSelectors } from '../reducers/profile-view';
 import { getDurationSpec, getHistorical } from '../reducers/url-state';
-import { getDateGraph } from '../reducers/date-graph';
+import { getDateGraph, getTotalDateGraph } from '../reducers/date-graph';
 import sigData from '../../common/data/signatures';
 import actions from '../actions';
 import ArrowPanel from './ArrowPanel';
@@ -258,6 +258,7 @@ export default connect(
     selectedStack: selectedThreadSelectors.getSelectedStack(state),
     tree: selectedThreadSelectors.getCallTree(state),
     dateGraph: getDateGraph(state),
+    totalDateGraph: getTotalDateGraph(state),
   }),
   actions
 )(ProfileTopBarActions);

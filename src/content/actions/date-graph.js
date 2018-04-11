@@ -10,3 +10,12 @@ export function dateGraphRebuilt(dateGraph: DateGraph, workerIndex: number, numW
     numWorkers,
   };
 }
+
+export function totalDateGraphRebuilt(dateGraph: DateGraph, workerIndex: number, numWorkers: number): Action {
+  return {
+    type: 'TOTAL_DATE_GRAPH_REBUILT',
+    dateGraph,
+    workerIndex,
+    numWorkers,
+  };
+}

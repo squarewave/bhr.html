@@ -59,6 +59,12 @@ export function changeSelectedThread(selectedThread: ThreadIndex): ThunkAction {
     });
 
     dispatch({
+      type: 'REBUILD_TOTAL_DATE_GRAPH',
+      toDateGraphWorker: true,
+      thread: selectedThreadSelectors.getThread(getState()),
+    });
+
+    dispatch({
       type: 'REBUILD_DATE_GRAPH',
       toDateGraphWorker: true,
       thread: selectedThreadSelectors.getFilteredThread(getState()),

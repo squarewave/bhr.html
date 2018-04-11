@@ -4,7 +4,7 @@
 
 import { profileCategoriesProcessed } from './actions/categories-view';
 import { profileRunnablesProcessed } from './actions/runnables-view';
-import { dateGraphRebuilt } from './actions/date-graph';
+import { dateGraphRebuilt, totalDateGraphRebuilt } from './actions/date-graph';
 /**
  * Messages are the translation layer from actions dispatched by the worker
  * thread to the content thread. This de-couples the state of the two threads.
@@ -22,4 +22,8 @@ messages.PROFILE_RUNNABLES_PROCESSED = function(message, call) {
 
 messages.DATE_GRAPH_REBUILT = function(message, call) {
   call(dateGraphRebuilt, message.dateGraph, message.workerIndex, message.numWorkers);
+};
+
+messages.TOTAL_DATE_GRAPH_REBUILT = function(message, call) {
+  call(totalDateGraphRebuilt, message.dateGraph, message.workerIndex, message.numWorkers);
 };
