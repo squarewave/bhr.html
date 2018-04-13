@@ -151,15 +151,15 @@ class TrackedDataThreadSection extends PureComponent {
     let chartDatasets;
     if (splitByHangDuration) {
       // $FlowFixMe
-      chartDatasets = categories.flatMap(([category, data]) => [4,3,2,1,0].map(m => {
+      chartDatasets = categories.map(([category, data]) => [4,3,2,1,0].map(m => {
         let hangGroup = 128 << m;
         return getDatasetForBucket(category, data, `${category} > ${hangGroup}ms`, m);
-      }));
+      })).reduce((a, b) => a.concat(b), []);
     } else {
       // $FlowFixMe
-      chartDatasets = categories.flatMap(([category, data]) => {
+      chartDatasets = categories.map(([category, data]) => {
         return getDatasetForBucket(category, data, category, 0);
-      });
+      }).reduce((a, b) => a.concat(b), []);
     }
 
     let chartLabels = objectEntries(categories[0][1]).map(([date, hist]) => date).slice(start);
@@ -227,7 +227,7 @@ class TrackedDataViewer extends PureComponent {
         </h1>
         <div>
           {objectEntries(trackedStatData[1]).map(([threadName, threadData]) => (
-            <TrackedDataThreadSection threadName={threadName} threadData={threadData} />
+            <TrackedDataThreadSection key={threadName} threadName={threadName} threadData={threadData} />
           ))}
         </div>
       </div>
