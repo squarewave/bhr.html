@@ -68,8 +68,17 @@ function colorForHangGroup(category, m) {
     80,
     90,
   ];
-  let saturated = colors[`${hues[categoryColorCache[category]]}_${values[m]}`];
-  return desaturate(saturated, .5);
+  let saturations = [
+    0.6,
+    0.4,
+    0.2,
+    0.1,
+  ];
+  let hueIndex = categoryColorCache[category] % hues.length;
+  let saturationIndex = Math.floor(categoryColorCache[category] / hues.length);
+  let saturated = colors[`${hues[categoryColorCache[category] % hues.length]}_${values[m]}`];
+  console.log(saturationIndex);
+  return desaturate(saturated, saturations[saturationIndex]);
 }
 
 function sumHistogram(hist, startN) {
@@ -131,6 +140,15 @@ class TrackedDataThreadSection extends PureComponent {
     let { threadName, threadData } = this.props;
     let { useWeeklyAverage, splitByHangDuration, hideLegend } = this.state;
     let categories = objectEntries(threadData);
+    let dates = new Set();
+    for (let [_, data] of categories) {
+      for (let [date, _] of objectEntries(data)) {
+        dates.add(date);
+      }
+    }
+    dates = Array.from(dates.values());
+    dates.sort();
+
     let start = useWeeklyAverage ? 7 : 0;
     let postProcessData = useWeeklyAverage ? movingAverage : (x => x);
 
@@ -139,12 +157,11 @@ class TrackedDataThreadSection extends PureComponent {
     };
 
     let getDatasetForBucket = (category, data, label, m) => {
-      let entries = objectEntries(data);
-      entries.sort(([ka,va], [kb,vb]) => ka.localeCompare(kb));
       return {
         label,
         backgroundColor: colorForHangGroup(category, m),
-        data: postProcessData(entries.map(([date, hist]) => getHistogramBucket(hist, m)), 7).slice(start),
+        data: postProcessData(dates.map(date => (date in data) ? getHistogramBucket(data[date], m) : 0),
+                              7).slice(start),
       }
     };
 
@@ -162,7 +179,7 @@ class TrackedDataThreadSection extends PureComponent {
       }).reduce((a, b) => a.concat(b), []);
     }
 
-    let chartLabels = objectEntries(categories[0][1]).map(([date, hist]) => date).slice(start);
+    let chartLabels = dates.slice(start);
     return (
       <div key={threadName}>
         <h2>{friendlyThreadName(threadName)}</h2>
@@ -175,7 +192,7 @@ class TrackedDataThreadSection extends PureComponent {
         ))}
 
         <Line data={{labels: chartLabels, datasets: chartDatasets}}
-              width={1000}
+              width={window.innerWidth * 0.8}
               height={300}
               options={{
                 maintainAspectRatio: false,
@@ -226,7 +243,10 @@ class TrackedDataViewer extends PureComponent {
           Hang data over time for {trackedStat}
         </h1>
         <div>
-          {objectEntries(trackedStatData[1]).map(([threadName, threadData]) => (
+          {objectEntries(trackedStatData[1])
+            // there's only one data point for WindowsVsyncThread - just ignore
+            .filter(([threadName, threadData]) => threadName !== 'WindowsVsyncThread')
+            .map(([threadName, threadData]) => (
             <TrackedDataThreadSection key={threadName} threadName={threadName} threadData={threadData} />
           ))}
         </div>
